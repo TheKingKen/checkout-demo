@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', function () {
             price = 12900;
             phone_country_code = '+852';
         } else {
-            amount = 1500; // 15.00 EUR in cents
-            currency = 'EUR';
+            amount = 1500; // 15.00 USD in cents
+            currency = 'USD';
             price = 1500;
             phone_country_code = '+31';
         }
@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Not ok: show server-provided details (helpful during debug)
             console.error('Create payment link failed', resp.status, data);
+            console.error('payload', payload);
             const errMsg = data.error || data.details || data.message || JSON.stringify(data);
             alert('Error creating payment link: ' + errMsg);
         } catch (err) {

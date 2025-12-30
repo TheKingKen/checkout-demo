@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Insurance Policy Application Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .terms-section {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 6px;
+        }
+
+        .terms-section h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .terms-section p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .terms-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="text"]::placeholder,
+        input[type="email"]::placeholder,
+        input[type="tel"]::placeholder {
+            color: #aaa;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-confirmation {
+            display: none;
+            width: 100%;
+            padding: 14px;
+            background: #e6f4ea;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .pay-btn {
+            display: none;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 16px;
+        }
+
+        .pay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .pay-btn:active {
+            transform: translateY(0);
+        }
+
+        .pay-btn.show {
+            display: block;
+        }
+
+        .success-message {
+            display: none;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .error-message {
+            display: none;
+            color: #b81736;
+            background: #ffe4e6;
+            border: 1px solid #f5a4b4;
+            padding: .6em 1em;
+            border-radius: 8px;
+            margin: 12px 0 0 0;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="form-container">
+    <h1>Insurance Policy Application</h1>
+    <p class="subtitle">Please fill out the form below to apply for our Comprehensive Insurance Coverage</p>
+
+    <div class="terms-section">
+        <h3>Terms and Conditions</h3>
+        <p>By submitting this application, you agree to our Comprehensive Insurance policy terms and conditions. Our coverage includes protection against unforeseen circumstances and provides peace of mind for you and your family.</p>
+        <p>We are committed to providing transparent and fair insurance services. All information provided in this form will be kept confidential and used solely for processing your policy application.</p>
+        <p>Please ensure all information is accurate and complete. Submitting false information may result in policy cancellation.</p>
+    </div>
+
+    <form id="insurance-form">
+        <div class="form-group">
+            <label for="customer-name">Full Name *</label>
+            <input type="text" id="customer-name" name="name" placeholder="Enter your full name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="customer-email">Email Address *</label>
+            <input type="email" id="customer-email" name="email" placeholder="Enter your email address" required>
+        </div>
+
+        <div class="form-group">
+            <label for="customer-phone">Mobile Phone Number *</label>
+            <input type="tel" id="customer-phone" name="phone" placeholder="Enter your mobile phone number" required>
+        </div>
+        <button type="submit" class="submit-btn">Submit Application</button>
+        <div id="submit-confirmation" class="submit-confirmation" aria-hidden="true">Application Submitted</div>
+    </form>
+
+    <div class="error-message" id="error-message"></div>
+
+    <div class="success-message" id="success-message">
+        Thank you! Your application has been submitted successfully. Please continue to the payment page by clicking the button below.
+    </div>
+    <!--<div class="success-message" id="success-message">
+        Thank you! Your application has been submitted successfully. Please continue to the payment page by scanning the QR code below.
+    </div>-->
+
+    <button class="pay-btn" id="pay-btn" onclick="redirectToPayment()">Pay</button>
+
+</div>
+<script src="insurance-form-app.js"></script>
+</body>
+</html>
