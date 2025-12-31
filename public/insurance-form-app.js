@@ -6,6 +6,26 @@ let payload;
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('insurance-form');
     const errorMessage = document.getElementById('error-message');
+    const level2Toggle = document.getElementById('level2-toggle');
+    const qrContainer = document.getElementById('qr-container');
+
+    // Initialize Level-2 toggle state and UI
+    if (level2Toggle) {
+        const level2Enabled = localStorage.getItem('level2Mode') === 'true';
+        level2Toggle.innerText = level2Enabled ? 'Level-2: ON' : 'Enable Level-2 Mode';
+        level2Toggle.classList.toggle('active', level2Enabled);
+        level2Toggle.addEventListener('click', () => {
+            const now = !(localStorage.getItem('level2Mode') === 'true');
+            localStorage.setItem('level2Mode', now ? 'true' : 'false');
+            level2Toggle.innerText = now ? 'Level-2: ON' : 'Enable Level-2 Mode';
+            level2Toggle.classList.toggle('active', now);
+            // hide QR if toggled off
+            if (!now && qrContainer) {
+                qrContainer.style.display = 'none';
+                qrContainer.innerHTML = '';
+            }
+        });
+    }
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -76,11 +96,96 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('amount:', amount);
         console.log('amount:', country);
         
-        // Show success message
-        document.getElementById('success-message').classList.add('show');
+        // Define success message
+        const successMessage = document.getElementById('success-message');
 
-        // Show pay button
-        document.getElementById('pay-btn').classList.add('show');
+        // If Level-2 mode is enabled, generate and show QR code instead of pay button
+        const level2EnabledAfterSubmit = localStorage.getItem('level2Mode') === 'true';
+        const payBtn = document.getElementById('pay-btn');
+        const loadingContainer = document.getElementById('loading-container');
+        if (level2EnabledAfterSubmit) {
+            // generate base64 of payload safely
+            function base64EncodeUnicode(str) {
+                return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                    return String.fromCharCode('0x' + p1);
+                }));
+            }
+            const encoded = base64EncodeUnicode(JSON.stringify(payload));
+            const link = `${window.location.origin}/payment-flow.html?data=${encodeURIComponent(encoded)}`;
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(link)}&size=240x240`;
+            if (qrContainer) {
+                // Display loading spinner while we load the QR image
+                if (loadingContainer) {
+                    loadingContainer.style.display = 'block';
+                    loadingContainer.setAttribute('role', 'status');
+                    loadingContainer.setAttribute('aria-live', 'polite');
+                    loadingContainer.setAttribute('aria-label', 'Loading QR code');
+                }
+
+                // Set accessibility attributes on QR container
+                qrContainer.setAttribute('role', 'region');
+                qrContainer.setAttribute('aria-label', 'QR code for payment');
+                qrContainer.setAttribute('aria-live', 'polite');
+
+                // Create an Image and wait for it to load before inserting into DOM
+                const img = new Image();
+                img.alt = 'QR code: Scan to continue payment';
+                // When image finishes loading, hide spinner and append image inside a link
+                img.onload = () => {
+                    // Clear any previous content
+                    qrContainer.innerHTML = '';
+                    const a = document.createElement('a');
+                    a.href = link;
+                    a.setAttribute('aria-label', 'Link to payment page (or scan QR code)');
+                    a.appendChild(img);
+                    qrContainer.appendChild(a);
+                    qrContainer.style.display = 'block';
+
+                    // Update success message with scanning instruction
+                    successMessage.textContent = 'Thank you! Your application has been submitted successfully. Please scan the QR code above with another device to continue the payment.';
+                    successMessage.setAttribute('role', 'status');
+                    successMessage.setAttribute('aria-live', 'polite');
+
+                    if (loadingContainer) loadingContainer.style.display = 'none';
+                };
+
+                // Handle loading errors (show a fallback link and hide spinner)
+                img.onerror = () => {
+                    qrContainer.innerHTML = `<div class="note">Unable to load QR code image. <a href="${link}" aria-label="Open payment link">Open payment link</a></div>`;
+                    qrContainer.style.display = 'block';
+                    qrContainer.setAttribute('aria-label', 'QR code loading failed, use payment link instead');
+                    successMessage.textContent = 'Thank you! Your application has been submitted. Click the link to continue the payment.';
+                    successMessage.setAttribute('role', 'alert');
+                    if (loadingContainer) loadingContainer.style.display = 'none';
+                };
+
+                // Fallback timeout: if image doesn't load in 10s, show link and hide spinner
+                const fallbackTimer = setTimeout(() => {
+                    if (!img.complete) {
+                        img.onload = img.onerror = null; // prevent later handlers
+                        qrContainer.innerHTML = `<div class="note">QR generation is taking longer than expected. <a href="${link}" aria-label="Open payment link (QR timeout)">Open payment link</a></div>`;
+                        qrContainer.style.display = 'block';
+                        qrContainer.setAttribute('aria-label', 'QR code loading timeout, use payment link instead');
+                        successMessage.textContent = 'Thank you! Your application has been submitted. Use the link to continue the payment.';
+                        successMessage.setAttribute('role', 'alert');
+                        if (loadingContainer) loadingContainer.style.display = 'none';
+                    }
+                }, 10000);
+
+                // Start loading the QR image (this triggers onload/onerror)
+                img.src = qrSrc;
+            }
+            if (payBtn) payBtn.classList.remove('show');
+        } else {
+            // Show pay button for same-device flow
+            if (payBtn) payBtn.classList.add('show');
+
+            // Reset success message for pay button flow
+            successMessage.textContent = 'Thank you! Your application has been submitted successfully. Please continue the payment by clicking the button below.';
+        }
+
+        // Show success message
+        successMessage.classList.add('show');
 
         // Replace submit button with a non-clickable confirmation label
         const confirmationEl = document.getElementById('submit-confirmation');

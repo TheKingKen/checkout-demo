@@ -8,6 +8,27 @@ document.addEventListener('DOMContentLoaded', function () {
     // Show loading state
     loadingContainer.style.display = 'block';
 
+    // If payload is passed via URL (level-2 QR scan), decode and store into sessionStorage
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('data')) {
+            const data = params.get('data');
+            try {
+                // decode base64 (handles UTF-8)
+                const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(data))));
+                const parsed = JSON.parse(jsonStr);
+                sessionStorage.setItem('paymentPayload', JSON.stringify(parsed));
+                console.log('Loaded payment payload from URL data param');
+                // Remove query string to keep URL clean
+                history.replaceState(null, '', window.location.pathname);
+            } catch (e) {
+                console.warn('Failed to decode payment payload from URL', e);
+            }
+        }
+    } catch (e) {
+        console.warn('No URL params to process', e);
+    }
+
     // Simulate a small delay for better UX
     setTimeout(() => {
         loadPaymentData();
@@ -84,6 +105,7 @@ function loadPaymentData() {
 function toggleActionButtons() {
     const checkbox = document.getElementById('confirm-checkbox');
     const actionButtons = document.getElementById('action-buttons');
+    const backButton = actionButtons.querySelector('.btn-back');
     
     if (!checkbox.checked) {
         actionButtons.style.display = 'none';
@@ -92,6 +114,16 @@ function toggleActionButtons() {
         if (flowContainer) flowContainer.innerHTML = '';
     } else {
         actionButtons.style.display = 'flex';
+        
+        // Hide the back button initially and show it after 3 seconds
+        if (backButton) {
+            backButton.style.display = 'none';
+            setTimeout(() => {
+                if (backButton) {
+                    backButton.style.display = 'block';
+                }
+            }, 3000);
+        }
 
         (async () => {
             try {
