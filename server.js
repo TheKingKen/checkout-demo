@@ -28,6 +28,7 @@ console.log('Environment check - CK_PUBLIC exists:', !!CHECKOUT_PUBLIC_KEY);
 console.log('Environment check - PROCESSING_CHANNEL_ID exists:', !!PROCESSING_CHANNEL_ID);
 
 const HPP_API_URL = 'https://api.sandbox.checkout.com/hosted-payments';
+const PAYMENT_SESSIONS_API_URL = 'https://api.sandbox.checkout.com/payment-sessions';
 
 app.post('/create-payment-link', async (req, res) => {
     const { country, customer, amount, currency, product } = req.body;
@@ -35,6 +36,8 @@ app.post('/create-payment-link', async (req, res) => {
     // Dynamic logic: assign currency & payment methods based on country
     //let allow_payment_methods = ['card', 'applepay', 'googlepay'];
     let allow_payment_methods = ['card'];
+
+
     let billing = { address: { country } };
     /*if (country === 'NL') {
     /    allow_payment_methods.push('ideal');
@@ -134,6 +137,106 @@ app.post('/create-payment-link', async (req, res) => {
     }
 });
 
+app.post('/create-payment-link2', async (req, res) => {
+    const { country, customer, amount, currency, product } = req.body;
+
+    let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk'];
+    let disable_payment_methods = ['card'];
+
+    // Prepare the payment request body
+    const body = {
+        amount: amount,                      // in minor units, e.g. cents
+        currency: currency,
+        reference: `ORDER-${Date.now()}`,
+        billing: {
+            address: {
+                address_line1: 'Billing Address',
+                country: country || 'HK',
+            }
+        },
+        billing_descriptor: {
+            name: customer.name,
+            city: country || 'Unknown',
+        },
+        customer: {
+            name: customer.name,
+            email: customer.email,
+            phone: {
+                number: customer.phone_number || '',
+                country_code: customer.phone_country_code || '+852',
+            }
+        },
+        /*shipping: {
+            address: {
+                address_line1: 'Shipping Address',
+                country: country || 'HK',
+            }
+        },*/
+        risk: {
+            enabled: true,
+        },
+        products: [
+            {
+                name: product.name,
+                quantity: product.quantity,
+                price: product.unit_price,
+                reference: product.reference
+            }
+        ],
+        metadata: {
+            product_reference: product.reference,
+            product_quantity: product.quantity,
+        },
+        payment_method_configuration: {
+            "card": {
+                "store_payment_details": "collect_consent"
+            }
+        },
+        processing_channel_id: PROCESSING_CHANNEL_ID,
+        allow_payment_methods: allow_payment_methods,
+        disable_payment_methods: disable_payment_methods,
+        success_url: "http://localhost:4242/success.html",
+        failure_url: "http://localhost:4242/failure.html",
+        cancel_url: "http://localhost:4242/cancel.html",
+        display_name: "Insurance Policy Payment",
+        description: `${product.name} (${currency})`
+    };
+
+    try {
+        const response = await axios.post(HPP_API_URL, body, {
+            headers: {
+                Authorization: `Bearer ${CHECKOUT_SECRET_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Log full response for debugging
+        console.log('Checkout payment-link response:', JSON.stringify(response.data, null, 2));
+
+        const link = response.data && response.data._links && response.data._links.redirect && response.data._links.redirect.href;
+        if (!link) {
+          console.error('No redirect link in Checkout response:', JSON.stringify(response.data, null, 2));
+          return res.status(500).json({ error: 'No redirect link returned from Checkout', details: response.data });
+        }
+
+        // Return only the link to the frontend
+        return res.status(200).json({ link });
+    } catch (err) {
+        //return res.status(500).json({ error: error.message });
+        // Log details for debugging
+        console.error('Error creating payment link:', err.message);
+        if (err.response) {
+          console.error('Checkout API status:', err.response.status);
+          console.error('Checkout API body:', JSON.stringify(err.response.data, null, 2));
+        } else {
+          console.error(err);
+        }
+
+        const details = err.response?.data || err.message || 'Unknown server error';
+        return res.status(500).json({ error: 'Failed to create payment link', details });
+    }
+});
+
 app.post("/create-payment-sessions", async (req, res) => {
   try {
     const { customer, amount, currency, product, country } = req.body;
@@ -199,6 +302,7 @@ app.post("/create-payment-sessions", async (req, res) => {
           unit_price: product.unit_price,
         },
       ],
+      enabled_payment_methods: enable_payment_methods,
       //disabled_payment_methods: disable_payment_methods,
       processing_channel_id: PROCESSING_CHANNEL_ID
     };
@@ -208,7 +312,7 @@ app.post("/create-payment-sessions", async (req, res) => {
 
     // Send request to Checkout.com API using axios
     const response = await axios.post(
-      "https://api.sandbox.checkout.com/payment-sessions",
+      PAYMENT_SESSIONS_API_URL,
       paymentSessionBody,
       {
         headers: {
@@ -243,9 +347,9 @@ app.post("/create-payment-sessions", async (req, res) => {
   }
 });
 
-// Serve the frontend
+// Serve the frontend - entrance portal
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'insurance-form.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Endpoint to provide Checkout public key to frontend

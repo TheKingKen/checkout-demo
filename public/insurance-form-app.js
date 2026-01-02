@@ -27,6 +27,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Initialize Flow/HPP toggle state and UI
+    const flowHppToggle = document.getElementById('flow-hpp-toggle');
+    if (flowHppToggle) {
+        const useFlow = localStorage.getItem('useFlow') !== 'false'; // default to Flow
+        flowHppToggle.innerText = useFlow ? 'Flow' : 'HPP';
+        flowHppToggle.classList.toggle('active', useFlow);
+        flowHppToggle.addEventListener('click', () => {
+            const now = localStorage.getItem('useFlow') === 'false'; // toggle from current state
+            localStorage.setItem('useFlow', now ? 'true' : 'false');
+            flowHppToggle.innerText = now ? 'Flow' : 'HPP';
+            flowHppToggle.classList.toggle('active', now);
+        });
+    }
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         errorMessage.textContent = "";
@@ -110,9 +124,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     return String.fromCharCode('0x' + p1);
                 }));
             }
-            const encoded = base64EncodeUnicode(JSON.stringify(payload));
-            const link = `${window.location.origin}/payment-flow.html?data=${encodeURIComponent(encoded)}`;
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(link)}&size=240x240`;
+
+            
+            // Check if using Flow or HPP
+            const useFlow = localStorage.getItem('useFlow') !== 'false'; // default to Flow
+
             if (qrContainer) {
                 // Display loading spinner while we load the QR image
                 if (loadingContainer) {
@@ -121,71 +137,141 @@ document.addEventListener('DOMContentLoaded', function () {
                     loadingContainer.setAttribute('aria-live', 'polite');
                     loadingContainer.setAttribute('aria-label', 'Loading QR code');
                 }
-
-                // Set accessibility attributes on QR container
-                qrContainer.setAttribute('role', 'region');
-                qrContainer.setAttribute('aria-label', 'QR code for payment');
-                qrContainer.setAttribute('aria-live', 'polite');
-
-                // Create an Image and wait for it to load before inserting into DOM
-                const img = new Image();
-                img.alt = 'QR code: Scan to continue payment';
-                // When image finishes loading, hide spinner and append image inside a link
-                img.onload = () => {
-                    // Clear any previous content
-                    qrContainer.innerHTML = '';
-                    const a = document.createElement('a');
-                    a.href = link;
-                    a.setAttribute('aria-label', 'Link to payment page (or scan QR code)');
-                    a.appendChild(img);
-                    qrContainer.appendChild(a);
-                    qrContainer.style.display = 'block';
-
-                    // Update success message with scanning instruction
-                    successMessage.textContent = 'Thank you! Your application has been submitted successfully. Please scan the QR code above with another device to continue the payment.';
-                    successMessage.setAttribute('role', 'status');
-                    successMessage.setAttribute('aria-live', 'polite');
-
-                    if (loadingContainer) loadingContainer.style.display = 'none';
-                };
-
-                // Handle loading errors (show a fallback link and hide spinner)
-                img.onerror = () => {
-                    qrContainer.innerHTML = `<div class="note">Unable to load QR code image. <a href="${link}" aria-label="Open payment link">Open payment link</a></div>`;
-                    qrContainer.style.display = 'block';
-                    qrContainer.setAttribute('aria-label', 'QR code loading failed, use payment link instead');
-                    successMessage.textContent = 'Thank you! Your application has been submitted. Click the link to continue the payment.';
-                    successMessage.setAttribute('role', 'alert');
-                    if (loadingContainer) loadingContainer.style.display = 'none';
-                };
-
-                // Fallback timeout: if image doesn't load in 10s, show link and hide spinner
-                const fallbackTimer = setTimeout(() => {
-                    if (!img.complete) {
-                        img.onload = img.onerror = null; // prevent later handlers
-                        qrContainer.innerHTML = `<div class="note">QR generation is taking longer than expected. <a href="${link}" aria-label="Open payment link (QR timeout)">Open payment link</a></div>`;
-                        qrContainer.style.display = 'block';
-                        qrContainer.setAttribute('aria-label', 'QR code loading timeout, use payment link instead');
-                        successMessage.textContent = 'Thank you! Your application has been submitted. Use the link to continue the payment.';
-                        successMessage.setAttribute('role', 'alert');
-                        if (loadingContainer) loadingContainer.style.display = 'none';
-                    }
-                }, 10000);
-
-                // Start loading the QR image (this triggers onload/onerror)
-                img.src = qrSrc;
             }
+            
+            // Function to generate and display QR code
+            const generateQRCode = (link) => {
+                const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(link)}&size=240x240`;
+                if (qrContainer) {
+                //     // Display loading spinner while we load the QR image
+                //     if (loadingContainer) {
+                //         loadingContainer.style.display = 'block';
+                //         loadingContainer.setAttribute('role', 'status');
+                //         loadingContainer.setAttribute('aria-live', 'polite');
+                //         loadingContainer.setAttribute('aria-label', 'Loading QR code');
+                //     }
+
+                    // Set accessibility attributes on QR container
+                    qrContainer.setAttribute('role', 'region');
+                    qrContainer.setAttribute('aria-label', 'QR code for payment');
+                    qrContainer.setAttribute('aria-live', 'polite');
+
+                    // Create an Image and wait for it to load before inserting into DOM
+                    const img = new Image();
+                    img.alt = 'QR code: Scan to continue payment';
+                    // When image finishes loading, hide spinner and append image inside a link
+                    img.onload = () => {
+                        // Clear any previous content
+                        qrContainer.innerHTML = '';
+                        const a = document.createElement('a');
+                        a.href = link;
+                        a.setAttribute('aria-label', 'Link to payment page (or scan QR code)');
+                        a.appendChild(img);
+                        qrContainer.appendChild(a);
+                        qrContainer.style.display = 'block';
+
+                        // Update success message with scanning instruction
+                        successMessage.textContent = 'Thank you! Your application has been submitted successfully. Please scan the QR code above with another device to continue the payment.';
+                        successMessage.setAttribute('role', 'status');
+                        successMessage.setAttribute('aria-live', 'polite');
+                        successMessage.classList.add('show');
+                        if (loadingContainer) loadingContainer.style.display = 'none';
+                    };
+
+                    // Handle loading errors (show a fallback link and hide spinner)
+                    img.onerror = () => {
+                        qrContainer.innerHTML = `<div class="note">Unable to load QR code image. <a href="${link}" aria-label="Open payment link">Open payment link</a></div>`;
+                        qrContainer.style.display = 'block';
+                        qrContainer.setAttribute('aria-label', 'QR code loading failed, use payment link instead');
+                        successMessage.textContent = 'Thank you! Your application has been submitted. Click the link to continue the payment.';
+                        successMessage.setAttribute('role', 'alert');
+                        successMessage.classList.add('show');
+                        if (loadingContainer) loadingContainer.style.display = 'none';
+                    };
+
+                    // Fallback timeout: if image doesn't load in 10s, show link and hide spinner
+                    const fallbackTimer = setTimeout(() => {
+                        if (!img.complete) {
+                            img.onload = img.onerror = null; // prevent later handlers
+                            qrContainer.innerHTML = `<div class="note">QR generation is taking longer than expected. <a href="${link}" aria-label="Open payment link (QR timeout)">Open payment link</a></div>`;
+                            qrContainer.style.display = 'block';
+                            qrContainer.setAttribute('aria-label', 'QR code loading timeout, use payment link instead');
+                            successMessage.textContent = 'Thank you! Your application has been submitted. Use the link to continue the payment.';
+                            successMessage.setAttribute('role', 'alert');
+                            successMessage.classList.add('show');
+                            if (loadingContainer) loadingContainer.style.display = 'none';
+                        }
+                    }, 10000);
+
+                    // Start loading the QR image (this triggers onload/onerror)
+                    img.src = qrSrc;
+                }
+            };
+
+            // Generate QR code based on Flow/HPP mode
+            if (useFlow) {
+                // Flow mode: generate QR with encoded payload and payment-flow.html URL
+                const encoded = base64EncodeUnicode(JSON.stringify(payload));
+                const link = `${window.location.origin}/payment-flow.html?data=${encodeURIComponent(encoded)}`;
+                generateQRCode(link);
+            } else {
+                // HPP mode: fetch payment link from /create-payment-link2 and generate QR with that link
+                (async () => {
+                    try {
+                        const response = await fetch('/create-payment-link2', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const text = await response.text();
+                        let data;
+                        try { data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+
+                        if (response.ok && data.link) {
+                            // Generate QR with HPP link
+                            generateQRCode(data.link);
+                        } else {
+                            // Error: show fallback message
+                            const errMsg = data.error || data.details || data.message || JSON.stringify(data);
+                            if (qrContainer) {
+                                qrContainer.innerHTML = `<div class="note">Error creating payment link: ${errMsg}</div>`;
+                                qrContainer.style.display = 'block';
+                                qrContainer.setAttribute('aria-label', 'Error generating QR code');
+                            }
+                            if (loadingContainer) loadingContainer.style.display = 'none';
+                            successMessage.textContent = 'Error creating payment link. Please try again.';
+                            successMessage.setAttribute('role', 'alert');
+                            successMessage.classList.add('show');
+                        }
+                    } catch (err) {
+                        // Network error
+                        const errMsg = err.message || err;
+                        if (qrContainer) {
+                            qrContainer.innerHTML = `<div class="note">Network error: ${errMsg}</div>`;
+                            qrContainer.style.display = 'block';
+                            qrContainer.setAttribute('aria-label', 'Network error generating QR code');
+                        }
+                        if (loadingContainer) loadingContainer.style.display = 'none';
+                        successMessage.textContent = 'Network error creating payment link. Please try again.';
+                        successMessage.setAttribute('role', 'alert');
+                        successMessage.classList.add('show');
+                    }
+                })();
+            }
+
+            // Hide pay button when Level-2 is enabled
             if (payBtn) payBtn.classList.remove('show');
         } else {
             // Show pay button for same-device flow
             if (payBtn) payBtn.classList.add('show');
 
-            // Reset success message for pay button flow
+            // Set success message for pay button flow
             successMessage.textContent = 'Thank you! Your application has been submitted successfully. Please continue the payment by clicking the button below.';
+            successMessage.setAttribute('role', 'status');
+            successMessage.setAttribute('aria-live', 'polite');
+            successMessage.classList.add('show');
         }
-
-        // Show success message
-        successMessage.classList.add('show');
 
         // Replace submit button with a non-clickable confirmation label
         const confirmationEl = document.getElementById('submit-confirmation');
@@ -203,11 +289,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Function to redirect to payment page with payload data
 function redirectToPayment() {
-    // Store payload in sessionStorage for secure transfer
-    if (typeof payload !== 'undefined') {
+    // Disable the Pay button while redirecting to HPP
+    const payBtn = document.getElementById('pay-btn');
+    payBtn.disabled = true;
+    payBtn.innerText = 'Redirecting...';
+
+    // Check if using Flow or HPP
+    const useFlow = localStorage.getItem('useFlow') !== 'false'; // default to Flow
+    
+    if (typeof payload === 'undefined') {
+        alert('Payment data not found. Please submit the form again.');
+        return;
+    }
+
+    if (useFlow) {
+        // Flow mode: redirect to payment-flow.html via sessionStorage
         sessionStorage.setItem('paymentPayload', JSON.stringify(payload));
         window.location.href = '/payment-flow.html';
     } else {
-        alert('Payment data not found. Please submit the form again.');
+        // HPP mode: call /create-payment-link2 and redirect to HPP
+        (async () => {
+            try {
+                const response = await fetch('/create-payment-link2', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const text = await response.text();
+                let data;
+                try { data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+
+                if (response.ok && data.link) {
+                    // Redirect to Hosted Payments Page
+                    window.location.href = data.link;
+                    return;
+                }
+
+                // Not ok: show server-provided details
+                console.error('Create payment link failed', response.status, data);
+                console.error('payload', payload);
+                const errMsg = data.error || data.details || data.message || JSON.stringify(data);
+                alert('Error creating payment link: ' + errMsg);
+            } catch (err) {
+                console.error('Network or unexpected error:', err);
+                alert('Network error creating payment link: ' + (err.message || err));
+            }
+        })();
     }
 }
