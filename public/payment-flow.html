@@ -65,6 +65,9 @@
 
         <!-- Confirmation Checkbox Section -->
         <div class="confirmation-section">
+                <div class="level2-control" style="margin-bottom:10px;">
+                    <button id="flow-hpp-toggle" class="level2-toggle" type="button" title="Toggle between Flow and HPP payment methods">Flow/HPP</button>
+                </div>
             <label class="checkbox-label">
                 <input type="checkbox" id="confirm-checkbox" onchange="toggleActionButtons()">
                 <span>I confirm that all the above information is correct and accurate.</span>
@@ -80,8 +83,6 @@
                 <span id="error-message"></span>
                 <span id="successful-payment-message"></span>
             </form>
-
-            <!-- Back to Form button below Flow -->
             <button class="btn btn-back" onclick="goBackToForm()">Back to Form</button>
         </div>
     </div>

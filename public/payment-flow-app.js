@@ -5,6 +5,41 @@ document.addEventListener('DOMContentLoaded', function () {
     const contentContainer = document.getElementById('content-container');
     const errorContainer = document.getElementById('error-container');
 
+    // Initialize Flow/HPP toggle (default to Flow)
+    try {
+        const flowHppToggle = document.getElementById('flow-hpp-toggle');
+        if (flowHppToggle) {
+            const useFlow = localStorage.getItem('useFlow') !== 'false';
+            flowHppToggle.innerText = useFlow ? 'Flow' : 'HPP';
+            flowHppToggle.classList.toggle('active', useFlow);
+            flowHppToggle.addEventListener('click', () => {
+                const now = !(localStorage.getItem('useFlow') === 'true');
+                localStorage.setItem('useFlow', now ? 'true' : 'false');
+                flowHppToggle.innerText = now ? 'Flow' : 'HPP';
+                flowHppToggle.classList.toggle('active', now);
+            });
+        }
+    } catch (e) {
+        console.warn('Flow/HPP toggle init failed', e);
+    }
+
+    // Keep the toggle enabled/disabled based on confirm-checkbox state
+    try {
+        const confirmCheckbox = document.getElementById('confirm-checkbox');
+        const flowHppToggleEl = document.getElementById('flow-hpp-toggle');
+        if (confirmCheckbox && flowHppToggleEl) {
+            // Initialize state (toggle enabled when unchecked)
+            flowHppToggleEl.disabled = !!confirmCheckbox.checked;
+
+            // Update when checkbox changes
+            confirmCheckbox.addEventListener('change', (e) => {
+                flowHppToggleEl.disabled = !!e.target.checked;
+            });
+        }
+    } catch (e) {
+        console.warn('Error wiring toggle enable/disable', e);
+    }
+
     // Show loading state
     loadingContainer.style.display = 'block';
 
@@ -114,91 +149,143 @@ function toggleActionButtons() {
         if (flowContainer) flowContainer.innerHTML = '';
     } else {
         actionButtons.style.display = 'flex';
-        
-        // Hide the back button initially and show it after 3 seconds
-        if (backButton) {
-            backButton.style.display = 'none';
-            setTimeout(() => {
-                if (backButton) {
-                    backButton.style.display = 'block';
-                }
-            }, 3000);
-        }
 
-        (async () => {
-            try {
-                // Retrieve payload from sessionStorage
-                const payloadStr = sessionStorage.getItem('paymentPayload');
-                if (!payloadStr) {
-                    alert('Payment data not found. Please complete the insurance application form first.');
-                    return;
-                }
+        // Decide Flow vs HPP mode based on toggle
+        const useFlow = localStorage.getItem('useFlow') !== 'false';
 
-                const payload = JSON.parse(payloadStr);
-
-                // POST the payload to the server endpoint that creates a payment session
-                const response = await fetch('/create-payment-sessions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const paymentSession = await response.json();
-
-                if (!response.ok) {
-                    console.error('Error creating payment session', paymentSession);
-                    alert('Failed to create payment session: ' + (paymentSession.error || JSON.stringify(paymentSession)));
-                    return;
-                }
-
-                console.log('Payment session created:', paymentSession);
-
-                // Try to initialize Checkout Flow if the library is loaded
-                try {
-                    // Fetch the Checkout public key from the server
-                    const configResponse = await fetch('/api/checkout-config');
-                    const config = await configResponse.json();
-                    const CHECKOUT_PUBLIC_KEY = config.publicKey;
-
-                    if (!CHECKOUT_PUBLIC_KEY) {
-                        throw new Error('Checkout public key not configured. Please set CK_PUBLIC in .env file.');
+        if (useFlow) {
+            // Hide the back button initially and show it after 3 seconds
+            if (backButton) {
+                backButton.style.display = 'none';
+                setTimeout(() => {
+                    if (backButton) {
+                        backButton.style.display = 'block';
                     }
+                }, 2000);
+            }
 
-                    const checkout = await CheckoutWebComponents({
-                        publicKey: CHECKOUT_PUBLIC_KEY,
-                        environment: 'sandbox',
-                        locale: 'en-GB',
-                        paymentSession,
-                        onReady: () => console.log('Checkout ready'),
-                        onPaymentCompleted: (_component, paymentResponse) => {
-                            console.log('Payment completed', paymentResponse);
-                            // Redirect to success page after payment completion
-                            setTimeout(() => {
-                                window.location.href = '/success.html';
-                            }, 1000);
-                        },
-                        onChange: (component) => console.log('onChange', component.type, component.isValid && component.isValid()),
-                        onError: (component, error) => console.log('onError', error, component && component.type),
+            // Flow: create payment session and initialize the Checkout Flow component
+            (async () => {
+                try {
+                    const payloadStr = sessionStorage.getItem('paymentPayload');
+                    if (!payloadStr) {
+                        alert('Payment data not found. Please complete the insurance application form first.');
+                        return;
+                    }
+                    const payload = JSON.parse(payloadStr);
+
+                    const response = await fetch('/create-payment-sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
                     });
 
-                    const flowComponent = checkout.create('flow');
-                    flowComponent.mount(document.getElementById('flow-container'));
-                } catch (initErr) {
-                    // If Flow library isn't available or initialization fails, show the session payload for debugging
-                    console.warn('Checkout Flow init failed or not available:', initErr);
-                    const flowContainer = document.getElementById('flow-container');
-                    if (flowContainer) {
-                        flowContainer.innerHTML = '<div style="padding:12px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;">Payment session created. Server response:<pre style="white-space:pre-wrap">' +
-                            JSON.stringify(paymentSession, null, 2) +
-                            '</pre></div>';
-                    }
-                }
+                    const paymentSession = await response.json();
 
-            } catch (err) {
-                console.error('Error in toggleActionButtons flow initialization:', err);
-                alert('Unexpected error creating payment session: ' + (err.message || err));
+                    if (!response.ok) {
+                        console.error('Error creating payment session', paymentSession);
+                        alert('Failed to create payment session: ' + (paymentSession.error || JSON.stringify(paymentSession)));
+                        return;
+                    }
+
+                    console.log('Payment session created:', paymentSession);
+
+                    try {
+                        const configResponse = await fetch('/api/checkout-config');
+                        const config = await configResponse.json();
+                        const CHECKOUT_PUBLIC_KEY = config.publicKey;
+
+                        if (!CHECKOUT_PUBLIC_KEY) {
+                            throw new Error('Checkout public key not configured. Please set CK_PUBLIC in .env file.');
+                        }
+
+                        const checkout = await CheckoutWebComponents({
+                            publicKey: CHECKOUT_PUBLIC_KEY,
+                            environment: 'sandbox',
+                            locale: 'en-GB',
+                            paymentSession,
+                            onReady: () => console.log('Checkout ready'),
+                            onPaymentCompleted: (_component, paymentResponse) => {
+                                console.log('Payment completed', paymentResponse);
+                                setTimeout(() => {
+                                    window.location.href = '/success.html';
+                                }, 1000);
+                            },
+                            onChange: (component) => console.log('onChange', component.type, component.isValid && component.isValid()),
+                            onError: (component, error) => console.log('onError', error, component && component.type),
+                        });
+
+                        const flowComponent = checkout.create('flow');
+                        flowComponent.mount(document.getElementById('flow-container'));
+                    } catch (initErr) {
+                        console.warn('Checkout Flow init failed or not available:', initErr);
+                        const flowContainer = document.getElementById('flow-container');
+                        if (flowContainer) {
+                            flowContainer.innerHTML = '<div style="padding:12px;background:#fff;border-radius:6px;border:1px solid #e0e0e0;">Payment session created. Server response:<pre style="white-space:pre-wrap">' +
+                                JSON.stringify(paymentSession, null, 2) +
+                                '</pre></div>';
+                        }
+                    }
+
+                } catch (err) {
+                    console.error('Error in toggleActionButtons flow initialization:', err);
+                    alert('Unexpected error creating payment session: ' + (err.message || err));
+                }
+            })();
+        } else {
+            // HPP: show a Pay button inside flow-container that calls create-payment-link2 and redirects
+            const flowContainer = document.getElementById('flow-container');
+            if (flowContainer) {
+                flowContainer.innerHTML = '';
+                const pay = document.createElement('button');
+                pay.id = 'hpp-pay-btn';
+                // Use the same pay button styling as the insurance form
+                pay.className = 'pay-btn show';
+                pay.textContent = 'Pay';
+                flowContainer.appendChild(pay);
+
+                pay.addEventListener('click', async () => {
+                    try {
+                        pay.disabled = true;
+                        pay.textContent = 'Redirecting...';
+
+                        const payloadStr = sessionStorage.getItem('paymentPayload');
+                        if (!payloadStr) {
+                            alert('Payment data not found. Please complete the insurance application form first.');
+                            pay.disabled = false;
+                            pay.textContent = 'Pay';
+                            return;
+                        }
+                        const payload = JSON.parse(payloadStr);
+
+                        const response = await fetch('/create-payment-link2', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const text = await response.text();
+                        let data;
+                        try { data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+
+                        if (response.ok && data.link) {
+                            window.location.href = data.link;
+                            return;
+                        }
+
+                        const errMsg = data.error || data.details || data.message || JSON.stringify(data);
+                        alert('Error creating payment link: ' + errMsg);
+                        pay.disabled = false;
+                        pay.textContent = 'Pay';
+                    } catch (err) {
+                        console.error('HPP pay error', err);
+                        alert('Network error creating payment link: ' + (err.message || err));
+                        pay.disabled = false;
+                        pay.textContent = 'Pay';
+                    }
+                });
             }
-        })();
+        }
     }
 }
 

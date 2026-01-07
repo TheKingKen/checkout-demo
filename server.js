@@ -30,8 +30,56 @@ console.log('Environment check - PROCESSING_CHANNEL_ID exists:', !!PROCESSING_CH
 const HPP_API_URL = 'https://api.sandbox.checkout.com/hosted-payments';
 const PAYMENT_SESSIONS_API_URL = 'https://api.sandbox.checkout.com/payment-sessions';
 
+const fs = require('fs');
+const os = require('os');
+
+// Helper: determine the correct base URL for redirect targets
+// If the client is accessing via the public tunnel URL, use that for redirects.
+// Otherwise, use the request origin (localhost) so redirects stay consistent with the client's access method.
+function resolvePublicBase(req) {
+  // Get the incoming request host
+  const incomingHost = (req.get && req.get('host')) || (req.headers['host']) || '';
+  
+  // Try to read the public tunnel URL from the file
+  let publicUrl = null;
+  try {
+    const cfgPath = path.join(os.homedir(), '.cloudflared', 'current_tunnel_url.txt');
+    if (fs.existsSync(cfgPath)) {
+      const raw = fs.readFileSync(cfgPath, 'utf8').trim();
+      if (raw) publicUrl = raw.replace(/\/+$/,'');
+    }
+  } catch (err) {
+    // ignore and fall back
+  }
+
+  // Check if the incoming request is already via the public tunnel URL
+  // Extract the hostname from the public URL and compare with the incoming Host header
+  if (publicUrl) {
+    try {
+      const publicUrlObj = new URL(publicUrl);
+      const publicHost = publicUrlObj.host; // includes port if present
+      
+      // If the client accessed via the public URL, use it for redirects
+      if (incomingHost.includes(publicHost) || incomingHost === publicHost) {
+        return publicUrl;
+      }
+    } catch (e) {
+      // ignore URL parse errors
+    }
+  }
+
+  // Fallback: construct origin from the incoming request
+  // This ensures redirects go back to the same place the client came from
+  const protoHeader = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  const proto = String(protoHeader).startsWith('http') ? protoHeader : 'http';
+  const host = incomingHost || `localhost:${process.env.PORT || 4242}`;
+  return `${proto}://${host}`;
+}
 app.post('/create-payment-link', async (req, res) => {
     const { country, customer, amount, currency, product } = req.body;
+
+  // Determine base URL for redirect targets (prefer public tunnel when available)
+  const baseUrl = resolvePublicBase(req);
 
     // Dynamic logic: assign currency & payment methods based on country
     //let allow_payment_methods = ['card', 'applepay', 'googlepay'];
@@ -75,9 +123,9 @@ app.post('/create-payment-link', async (req, res) => {
         },
         processing_channel_id: PROCESSING_CHANNEL_ID,
         allow_payment_methods: allow_payment_methods,
-        success_url: "http://localhost:4242/success.html",
-        failure_url: "http://localhost:4242/failure.html",
-        cancel_url: "http://localhost:4242/cancel.html",
+        success_url: `${baseUrl}/success.html`,
+        failure_url: `${baseUrl}/failure.html`,
+        cancel_url: `${baseUrl}/cancel.html`,
         display_name: "iPhone Case Shop",
         description: `${product.name} (${country === 'HK' ? 'HKD' : 'USD'})`
     };
@@ -143,6 +191,9 @@ app.post('/create-payment-link2', async (req, res) => {
     let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk'];
     let disable_payment_methods = ['card'];
 
+    // Determine base URL for redirect targets (prefer public tunnel when available)
+    const baseUrl = resolvePublicBase(req);
+
     // Prepare the payment request body
     const body = {
         amount: amount,                      // in minor units, e.g. cents
@@ -195,9 +246,9 @@ app.post('/create-payment-link2', async (req, res) => {
         processing_channel_id: PROCESSING_CHANNEL_ID,
         allow_payment_methods: allow_payment_methods,
         disable_payment_methods: disable_payment_methods,
-        success_url: "http://localhost:4242/success.html",
-        failure_url: "http://localhost:4242/failure.html",
-        cancel_url: "http://localhost:4242/cancel.html",
+        success_url: `${baseUrl}/success.html`,
+        failure_url: `${baseUrl}/failure.html`,
+        cancel_url: `${baseUrl}/cancel.html`,
         display_name: "Insurance Policy Payment",
         description: `${product.name} (${currency})`
     };
@@ -252,6 +303,9 @@ app.post("/create-payment-sessions", async (req, res) => {
       });
     }
 
+    // Determine base URL for redirect targets (prefer public tunnel when available)
+    const baseUrl = resolvePublicBase(req);
+
     // Construct the payment session request body dynamically from the incoming payload
     const paymentSessionBody = {
       amount: amount,                        // in minor units (cents)
@@ -289,8 +343,9 @@ app.post("/create-payment-sessions", async (req, res) => {
       risk: {
         enabled: true,
       },
-      success_url: "http://localhost:4242/success.html",
-      failure_url: "http://localhost:4242/failure.html",
+      // redirect targets
+      success_url: `${baseUrl}/success.html`,
+      failure_url: `${baseUrl}/failure.html`,
       metadata: {
         product_reference: product.reference,
         product_quantity: product.quantity,
@@ -358,6 +413,22 @@ app.get('/api/checkout-config', (req, res) => {
         publicKey: CHECKOUT_PUBLIC_KEY || '',
         environment: 'sandbox'
     });
+});
+
+// Endpoint to return current cloudflared tunnel URL (if present)
+app.get('/tunnel-url', async (req, res) => {
+  try {
+    const cfgPath = path.join(os.homedir(), '.cloudflared', 'current_tunnel_url.txt');
+    if (!fs.existsSync(cfgPath)) {
+      return res.status(404).json({ url: null, error: 'tunnel url file not found' });
+    }
+    const url = (await fs.promises.readFile(cfgPath, 'utf8')).trim();
+    if (!url) return res.status(404).json({ url: null, error: 'tunnel url empty' });
+    return res.json({ url });
+  } catch (err) {
+    console.error('Error reading tunnel url file:', err);
+    return res.status(500).json({ url: null, error: 'unable to read tunnel url' });
+  }
 });
 
 // For local testing

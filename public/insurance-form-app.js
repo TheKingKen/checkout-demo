@@ -27,19 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Initialize Flow/HPP toggle state and UI
-    const flowHppToggle = document.getElementById('flow-hpp-toggle');
-    if (flowHppToggle) {
-        const useFlow = localStorage.getItem('useFlow') !== 'false'; // default to Flow
-        flowHppToggle.innerText = useFlow ? 'Flow' : 'HPP';
-        flowHppToggle.classList.toggle('active', useFlow);
-        flowHppToggle.addEventListener('click', () => {
-            const now = localStorage.getItem('useFlow') === 'false'; // toggle from current state
-            localStorage.setItem('useFlow', now ? 'true' : 'false');
-            flowHppToggle.innerText = now ? 'Flow' : 'HPP';
-            flowHppToggle.classList.toggle('active', now);
-        });
-    }
+    // Flow/HPP toggle moved to payment-flow page; default to Flow here
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -49,6 +37,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerText = 'Submitting...';
+        }
+        // Disable Level-2 toggle once the form is submitted to prevent changing modes mid-flow
+        const level2ToggleEl = document.getElementById('level2-toggle');
+        if (level2ToggleEl) {
+            level2ToggleEl.disabled = true;
+            level2ToggleEl.setAttribute('aria-disabled', 'true');
         }
         
         // Get form values
@@ -126,8 +120,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             
-            // Check if using Flow or HPP
-            const useFlow = localStorage.getItem('useFlow') !== 'false'; // default to Flow
+            // Flow/HPP toggle is on the payment-flow page; always use Flow for insurance-form
+            const useFlow = true;
 
             if (qrContainer) {
                 // Display loading spinner while we load the QR image
@@ -211,9 +205,48 @@ document.addEventListener('DOMContentLoaded', function () {
             // Generate QR code based on Flow/HPP mode
             if (useFlow) {
                 // Flow mode: generate QR with encoded payload and payment-flow.html URL
+                // Try to fetch a public tunnel URL from the server (if cloudflared is running)
                 const encoded = base64EncodeUnicode(JSON.stringify(payload));
-                const link = `${window.location.origin}/payment-flow.html?data=${encodeURIComponent(encoded)}`;
-                generateQRCode(link);
+                const buildAndGenerate = (base) => {
+                    const link = `${base.replace(/\/$/, '')}/payment-flow.html?data=${encodeURIComponent(encoded)}`;
+                    generateQRCode(link);
+                };
+
+                // Try to fetch a public tunnel URL from the server (if cloudflared is running)
+                // If the public URL exists but is not reachable from this client (VPN or network blocking),
+                // fall back to using the current origin so the developer can test on the same device.
+                const probeUrlReachable = async (baseUrl, timeout = 3000) => {
+                    try {
+                        const probe = `${baseUrl.replace(/\/+$/,'')}/payment-flow.html`;
+                        const controller = new AbortController();
+                        const id = setTimeout(() => controller.abort(), timeout);
+                        const resp = await fetch(probe, { method: 'GET', cache: 'no-store', signal: controller.signal });
+                        clearTimeout(id);
+                        return resp.ok;
+                    } catch (e) {
+                        return false;
+                    }
+                };
+
+                fetch('/tunnel-url').then(r => {
+                    if (!r.ok) throw new Error('no tunnel');
+                    return r.json();
+                }).then(async (json) => {
+                    if (json && json.url) {
+                        const ok = await probeUrlReachable(json.url, 3000);
+                        if (ok) {
+                            buildAndGenerate(json.url);
+                        } else {
+                            // public URL not reachable from this client; fallback to origin
+                            buildAndGenerate(window.location.origin);
+                        }
+                    } else {
+                        buildAndGenerate(window.location.origin);
+                    }
+                }).catch(() => {
+                    // fallback to current origin if tunnel URL not available
+                    buildAndGenerate(window.location.origin);
+                });
             } else {
                 // HPP mode: fetch payment link from /create-payment-link2 and generate QR with that link
                 (async () => {
@@ -294,9 +327,9 @@ function redirectToPayment() {
     payBtn.disabled = true;
     payBtn.innerText = 'Redirecting...';
 
-    // Check if using Flow or HPP
-    const useFlow = localStorage.getItem('useFlow') !== 'false'; // default to Flow
-    
+    // Insurance form always uses Flow for redirecting to payment-flow
+    const useFlow = true;
+
     if (typeof payload === 'undefined') {
         alert('Payment data not found. Please submit the form again.');
         return;
