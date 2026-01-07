@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Authentication</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-with-gradient">
+<div class="payment-container">
+    <div class="header-section">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Logo_FWD.svg/1200px-Logo_FWD.svg.png" alt="FWD Logo">
+        <div class="header-content">
+            <h1>User Authentication</h1>
+        </div>
+    </div>
+
+    <div id="error-container"></div>
+
+    <div id="loading-container" class="loading" style="display:none;">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <div id="content-container">
+        <div class="section">
+            <div class="section-title">Customer</div>
+            <div class="detail-row">
+                <span class="detail-label">Name</span>
+                <span class="detail-value" id="display-name">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Phone</span>
+                <span class="detail-value" id="display-phone">-</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Verify Your Phone</div>
+
+            <div style="margin-bottom:24px;">
+                <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Phone Number</label>
+                <div class="digit-row">
+                    <div id="phone-first4-d1" class="digit-box">-</div>
+                    <div id="phone-first4-d2" class="digit-box">-</div>
+                    <div id="phone-first4-d3" class="digit-box">-</div>
+                    <div id="phone-first4-d4" class="digit-box">-</div>
+                    <input id="phone-last4-d1" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
+                    <input id="phone-last4-d2" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
+                    <input id="phone-last4-d3" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
+                    <input id="phone-last4-d4" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <button id="send-otp" class="pay-btn" style="display:block;" disabled>Send OTP</button>
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">OTP Code</label>
+                <div class="digit-row">
+                    <input id="otp-input-d1" type="tel" class="digit-input" maxlength="1" placeholder="0" />
+                    <input id="otp-input-d2" type="tel" class="digit-input" maxlength="1" placeholder="0" />
+                    <input id="otp-input-d3" type="tel" class="digit-input" maxlength="1" placeholder="0" />
+                    <input id="otp-input-d4" type="tel" class="digit-input" maxlength="1" placeholder="0" />
+                    <input id="otp-input-d5" type="tel" class="digit-input" maxlength="1" placeholder="0" />
+                    <input id="otp-input-d6" type="tel" class="digit-input" maxlength="1" placeholder="0" />
+                </div>
+            </div>
+
+            <div>
+                <button id="confirm-btn" class="pay-btn" style="display:block;" disabled>Confirm</button>
+            </div>
+
+            <div class="action-buttons">
+                <button id="back-btn" class="btn btn-back" onclick="window.location.href='/insurance-form.html'" style="display:none;">Back to Form</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="user-auth-app.js"></script>
+</body>
+</html>
