@@ -410,29 +410,43 @@ input::placeholder { color: #aaa; }
 /* Align first4 and last4 on a single row */
 .phone-row {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
     width: 100%;
 }
 
-.phone-first4 {
-    font-size: 18px; /* match phone-last4 inputs */
-    font-weight: 600;
-    color: #333;
-    padding: 10px 12px;
-    background: #f6f7fb;
-    border: 1px solid #e6e9f2;
-    border-radius: 6px;
-    min-width: 64px;
-    text-align: center;
-    letter-spacing: 1px;
+/* Container for first 4 digits */
+.phone-first4-row {
+    display: flex;
+    gap: 8px;
+    flex: 1;
 }
 
-/* Make the last4 inputs a bit wider and consistent */
+/* Individual phone digit styling to match input boxes */
+.phone-digit {
+    flex: 1;
+    padding: 14px 6px;
+    border: 1px solid #e6e6e6;
+    border-radius: 6px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    color: #333;
+    background: transparent;
+}
+
+/* Make the last4 inputs consistent */
+.phone-last4-row {
+    flex: 1;
+}
+
 .phone-last4-row .digit-input {
-    flex: 1 1 0;
-    min-width: 52px;
-    max-width: 72px;
+    flex: 1;
 }
 
 .digit-box {

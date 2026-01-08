@@ -45,10 +45,14 @@ document.addEventListener('DOMContentLoaded', function () {
   const first4Digits = digits.slice(0, 4);
   const last4Digits = digits.slice(-4);
 
-  // Populate first4 as plain text
-  const phone_first4 = first4Digits.split('').join('');
-  const displayFirst4 = phone_first4 || '----';
-  document.getElementById('phone-first4').textContent = displayFirst4;
+  // Populate first4 as individual digit spans
+  const first4DigitArray = first4Digits.split('');
+  for (let i = 1; i <= 4; i++) {
+    const digitSpan = document.getElementById(`phone-first4-d${i}`);
+    if (digitSpan) {
+      digitSpan.textContent = first4DigitArray[i - 1] || '-';
+    }
+  }
 
   // Setup last4 input boxes
   const last4Inputs = [

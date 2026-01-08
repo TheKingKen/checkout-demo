@@ -41,7 +41,12 @@
             <div style="margin-bottom:24px;">
                 <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Enter the last 4-digit of your phone number to receive a one-time passcode.</label>
                 <div class="phone-row">
-                    <span id="phone-first4" class="phone-first4">----</span>
+                    <div class="digit-row phone-first4-row">
+                        <span id="phone-first4-d1" class="phone-digit">-</span>
+                        <span id="phone-first4-d2" class="phone-digit">-</span>
+                        <span id="phone-first4-d3" class="phone-digit">-</span>
+                        <span id="phone-first4-d4" class="phone-digit">-</span>
+                    </div>
                     <div class="digit-row phone-last4-row">
                         <input id="phone-last4-d1" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
                         <input id="phone-last4-d2" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
@@ -69,7 +74,7 @@
 
             <div>
                 <button id="confirm-btn" class="pay-btn" style="display:block;" disabled>Verify</button>
-                <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Didn't receive code? Resend</label>
+                <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Didn't receive code? <a href="#" id="resend-link" style="color:#667eea;text-decoration:underline;cursor:pointer;">Resend</a></label>
             </div>
 
             <div class="action-buttons">
