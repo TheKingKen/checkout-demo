@@ -188,7 +188,7 @@ app.post('/create-payment-link', async (req, res) => {
 app.post('/create-payment-link2', async (req, res) => {
     const { country, customer, amount, currency, product } = req.body;
 
-    let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk'];
+    let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'wechatpay', 'tamara'];
     let disable_payment_methods = ['card'];
 
     // Determine base URL for redirect targets (prefer public tunnel when available)
@@ -292,7 +292,7 @@ app.post("/create-payment-sessions", async (req, res) => {
   try {
     const { customer, amount, currency, product, country } = req.body;
 
-    let enable_payment_methods = ['applepay', 'googlepay', 'alipay_hk'];
+    let enable_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'wechatpay', 'tamara'];
     let disable_payment_methods = ['card'];
 
     // Validate incoming payload

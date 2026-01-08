@@ -402,6 +402,39 @@ input::placeholder { color: #aaa; }
     width: 100%;
 }
 
+/* Phone number digit row - wider input boxes */
+.digit-row:has(#phone-last4-d1) {
+    gap: 6px;
+}
+
+/* Align first4 and last4 on a single row */
+.phone-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+}
+
+.phone-first4 {
+    font-size: 18px; /* match phone-last4 inputs */
+    font-weight: 600;
+    color: #333;
+    padding: 10px 12px;
+    background: #f6f7fb;
+    border: 1px solid #e6e9f2;
+    border-radius: 6px;
+    min-width: 64px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* Make the last4 inputs a bit wider and consistent */
+.phone-last4-row .digit-input {
+    flex: 1 1 0;
+    min-width: 52px;
+    max-width: 72px;
+}
+
 .digit-box {
     flex: 1;
     padding: 16px 8px;
@@ -410,7 +443,7 @@ input::placeholder { color: #aaa; }
     border-radius: 6px;
     text-align: center;
     font-weight: 600;
-    font-size: 18px;
+    font-size: 14px;
     color: #333;
     display: flex;
     align-items: center;
@@ -420,17 +453,27 @@ input::placeholder { color: #aaa; }
 
 .digit-input {
     flex: 1;
-    padding: 16px 8px;
+    padding: 12px 4px;
     border: 1px solid #e6e6e6;
     border-radius: 6px;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     text-align: center;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
-    min-height: 50px;
+    min-height: 56px;
     -webkit-appearance: none;
     appearance: none;
+    width: 100%;
+    box-sizing: border-box;
+    color: #333;
+}
+
+/* Phone last4 input boxes - extra spacing for better visibility */
+#phone-last4-d1, #phone-last4-d2, #phone-last4-d3, #phone-last4-d4 {
+    min-height: 60px;
+    padding: 14px 6px;
+    font-size: 18px;
 }
 
 .digit-input:focus {
@@ -442,5 +485,14 @@ input::placeholder { color: #aaa; }
     background: #f5f5f5;
     color: #999;
     cursor: not-allowed;
+}
+
+/* Mobile: ensure digit inputs display properly on small screens */
+@media (max-width: 480px) {
+    .digit-input {
+        padding: 10px 2px;
+        font-size: 18px;
+        min-height: 48px;
+    }
 }
 

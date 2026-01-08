@@ -2942,3 +2942,277 @@ t=2026-01-07T15:51:52+0800 lvl=eror msg="heartbeat timeout, terminating session"
 t=2026-01-07T15:51:52+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="session closed"
 t=2026-01-07T15:51:54+0800 lvl=info msg="client session established" obj=tunnels.session
 t=2026-01-07T15:51:54+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T18:25:28+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:60816->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-07T18:25:30+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T18:25:30+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T18:25:42+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=cb545e860014 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T18:43:21+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:63285->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-07T18:43:24+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T18:43:24+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T18:43:36+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=c6e6b3cdbe02 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T18:54:27+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:63816->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-07T18:54:29+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:54:29+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:54:31+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:54:33+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:54:37+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:54:42+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=e6337feae5cd clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T18:54:45+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:55:01+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:55:31+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:56:02+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:56:32+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:57:02+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:57:32+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:58:02+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:58:33+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T18:59:05+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T18:59:05+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T19:22:08+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:64642->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: no route to host"
+t=2026-01-07T19:22:08+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-07T19:25:49+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=21c4e2f49a46 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T19:25:49+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-07T19:25:50+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-07T19:25:52+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-07T19:25:56+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-07T19:39:55+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-07T19:57:56+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp 122.248.247.123:443: connect: connection refused"
+t=2026-01-07T20:14:21+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T21:45:46+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: read tcp [2606:4700:cf1:1000::496]:51173->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-07T21:51:10+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T21:51:10+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T21:55:42+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:51899->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-07T21:55:43+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T21:55:43+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T21:55:55+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=3e0162268a15 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T22:00:46+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:51927->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-07T22:00:47+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T22:00:50+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T22:00:54+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T22:00:56+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T22:01:01+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-07T22:01:01+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=c8806de8b524 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T22:01:11+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T22:01:11+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T22:20:47+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=39dec4e26d25 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T22:20:47+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="session closed"
+t=2026-01-07T22:20:47+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp 54.169.118.152:443: connect: connection refused"
+t=2026-01-07T22:20:48+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp 54.169.118.152:443: connect: connection refused"
+t=2026-01-07T22:30:52+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: read tcp [2606:4700:cf1:1000::496]:52544->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-07T22:30:55+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T22:30:55+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-07T22:35:43+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:53143->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-07T22:52:30+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: session closed"
+t=2026-01-07T23:25:06+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=0b33ee98d538 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-07T23:25:08+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: session closed"
+t=2026-01-07T23:41:16+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-07T23:41:16+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T00:12:41+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp 192.168.0.166:53838->122.248.247.123:443: read: connection reset by peer"
+t=2026-01-08T00:12:41+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp 122.248.247.123:443: connect: connection refused"
+t=2026-01-08T00:12:43+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T00:12:43+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T00:29:13+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:54192->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-08T00:29:14+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T00:29:14+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T00:29:15+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=1757b2c0d487 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T00:29:27+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=e341cc0defb5 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T00:44:46+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:54357->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T00:44:48+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T00:44:48+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T00:45:01+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=964af3e30501 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T00:55:27+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:54619->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T00:55:28+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T00:55:28+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T00:55:42+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=b29fe51b90b4 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T01:03:39+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:54748->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T01:03:40+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T01:03:40+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T01:03:54+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=d888bfdffff3 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T01:05:26+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55002->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T01:05:27+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T01:05:27+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T01:05:40+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=564e177104f3 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T01:10:31+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55056->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T01:10:33+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T01:10:33+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T01:10:46+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=804e94546d57 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T01:27:34+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55178->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T01:27:36+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T01:27:36+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T01:30:24+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55325->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-08T01:30:25+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T01:30:25+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T01:30:34+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=1b2ae6721f64 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T01:30:44+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=ff31a840d46d clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T01:35:29+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55379->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T01:35:30+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T01:35:30+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T01:35:44+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=41fc0bbd4053 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T01:53:15+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55482->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T01:53:16+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T01:53:16+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T02:09:01+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=3f9a8008b1ff clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T02:09:07+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55787->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T02:09:08+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T02:09:08+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T02:09:22+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=85370b855b34 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T02:35:19+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55990->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-08T02:35:20+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T02:35:20+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T02:35:33+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=5ffa69728a9d clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T02:40:25+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:56242->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T02:40:27+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T02:40:27+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T02:40:40+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=544c70055708 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T02:57:35+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:56353->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-08T02:57:37+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T02:57:37+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T02:57:51+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=f65002eec84b clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T03:13:00+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:56594->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-08T03:13:01+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T03:13:01+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T03:13:13+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=b7cbb085a52c clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T03:30:06+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:56776->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T03:30:07+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T03:30:07+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T03:30:21+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=82a3c4372a7f clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T03:35:16+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:57114->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T03:35:17+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T03:35:17+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T03:35:31+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=a4de70261b84 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T03:40:21+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:57205->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T03:40:21+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T03:40:22+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T03:40:23+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T03:40:25+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T03:40:29+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T03:40:36+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=2a1775d2d51b clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T03:55:12+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T03:55:12+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T04:12:08+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:57400->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T04:12:10+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T04:12:10+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T04:12:23+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=ce06e392335a clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T04:27:48+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:57628->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-08T04:27:50+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T04:27:50+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T04:44:18+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:57879->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T04:44:19+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T04:44:19+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T04:44:21+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=87e34f47d93e clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T04:50:06+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=d5f1c5ffefc9 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T04:50:13+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:58081->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-08T05:07:15+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: session closed"
+t=2026-01-08T05:07:16+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T05:07:16+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T05:35:04+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:58317->[2406:da18:27f:c801:65ad:b035:643d:590f]:443: read: connection reset by peer"
+t=2026-01-08T05:35:05+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T05:35:05+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T05:35:06+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=4788511bb6c7 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T05:40:04+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:58627->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T05:40:06+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T05:40:06+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T05:40:08+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=4d4a20ef750c clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T05:40:19+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=24901685a9fe clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T05:58:02+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:58737->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-08T05:58:04+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T05:58:04+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T05:58:16+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=827e0706315c clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T06:15:25+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:58973->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T06:15:25+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T06:15:26+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T06:15:28+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T06:15:30+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T06:15:34+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T06:15:40+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=59f2e5f18cbc clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T06:20:00+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: session closed"
+t=2026-01-08T06:20:16+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T06:25:20+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T06:50:01+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T06:50:01+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T06:51:13+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:59779->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T06:51:14+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T06:51:14+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T07:08:20+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:59834->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T07:08:21+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T07:08:21+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T07:08:23+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=a71179ccf466 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T07:41:50+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:60041->[2406:da18:27f:c800:5b25:8a0b:c732:c95f]:443: read: connection reset by peer"
+t=2026-01-08T07:41:53+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T07:41:53+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T07:41:53+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=d498d599922d clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T07:52:15+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:60491->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T07:52:17+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=7ce724d88a1d clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T07:52:18+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp [2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: connect: software caused connection abort"
+t=2026-01-08T07:52:20+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T07:52:20+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T08:09:55+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=d872e429fcd9 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T08:09:56+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:60686->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-08T08:09:57+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T08:09:57+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T08:10:10+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=7dd71a01b5c5 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T08:44:53+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:60898->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T08:44:55+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T08:44:55+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T08:53:15+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:61337->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-08T09:08:23+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=ae50bfdfef35 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T09:16:36+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="session closed"
+t=2026-01-08T09:16:39+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T09:16:39+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T09:16:40+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=fdf65f7e5cbc clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T09:38:59+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:61678->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: no route to host"
+t=2026-01-08T09:38:59+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T09:39:00+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T09:39:01+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T09:39:03+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T09:44:46+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=c6a5b84c509f clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T09:44:47+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T09:49:43+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T09:58:11+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T09:59:59+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T09:59:59+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T11:22:12+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:62121->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T11:22:13+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T11:22:13+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T11:22:27+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=2b2fe160fcd0 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T12:18:28+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:50240->[2406:da18:27f:c800:eda3:909a:b688:ce9c]:443: read: connection reset by peer"
+t=2026-01-08T12:18:29+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T12:18:29+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T12:18:42+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=80ced30afe2a clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T12:36:27+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:54652->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T12:36:28+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T12:36:28+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T12:36:42+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=fc287318e436 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T12:52:10+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55209->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T12:52:12+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T12:52:12+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T12:52:25+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=7431de5df664 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T12:54:32+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55483->[2406:da18:27f:c801:53c4:c4db:20ca:a15f]:443: read: connection reset by peer"
+t=2026-01-08T12:54:34+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T12:54:34+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T12:54:48+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=398fc1b856df clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T12:59:32+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp [2606:4700:cf1:1000::496]:55742->[2406:da18:27f:c802:e93a:1ce:45d6:f098]:443: read: connection reset by peer"
+t=2026-01-08T12:59:32+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T12:59:33+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T12:59:35+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T12:59:37+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T12:59:41+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T12:59:47+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=d7cdf71bab76 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T12:59:50+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T13:00:06+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T13:17:20+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to send authentication request: tls: failed to verify certificate: x509: certificate signed by unknown authority"
+t=2026-01-08T13:22:34+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T13:22:34+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T13:24:49+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=0486b7c02678 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T13:24:49+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="session closed"
+t=2026-01-08T13:24:49+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T13:24:49+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T13:47:52+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="read tcp 192.168.16.40:56989->3.1.215.86:443: read: connection reset by peer"
+t=2026-01-08T13:47:52+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T13:47:52+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T13:48:07+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=16163783c807 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e
+t=2026-01-08T14:20:12+0800 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=42386d6b783f err="write tcp 192.168.16.40:57873->3.1.215.86:443: write: broken pipe"
+t=2026-01-08T14:20:12+0800 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-01-08T14:20:15+0800 lvl=info msg="client session established" obj=tunnels.session
+t=2026-01-08T14:20:15+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-01-08T14:20:27+0800 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=618b97cf54c6 clientid=8cef227e44b4c84c8a7a9fecadfd7f9e

@@ -38,20 +38,17 @@ document.addEventListener('DOMContentLoaded', function () {
   // Populate customer info
   document.getElementById('display-name').textContent = payload.customer?.name || '-';
   const phoneFull = (payload.customer?.phone_country_code || '') + ' ' + (payload.customer?.phone_number || '');
-  document.getElementById('display-phone').textContent = phoneFull;
+//   document.getElementById('display-phone').textContent = phoneFull;
 
   // Extract digits for phone first4 and last4
   const digits = (payload.customer?.phone_number || '').replace(/\D/g, '');
   const first4Digits = digits.slice(0, 4);
   const last4Digits = digits.slice(-4);
 
-  // Populate first4 display boxes
-  for (let i = 0; i < 4; i++) {
-    const box = document.getElementById(`phone-first4-d${i + 1}`);
-    if (box) {
-      box.textContent = first4Digits[i] || '-';
-    }
-  }
+  // Populate first4 as plain text
+  const phone_first4 = first4Digits.split('').join('');
+  const displayFirst4 = phone_first4 || '----';
+  document.getElementById('phone-first4').textContent = displayFirst4;
 
   // Setup last4 input boxes
   const last4Inputs = [
