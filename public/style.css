@@ -422,6 +422,10 @@ input::placeholder { color: #aaa; }
     flex: 1;
 }
 
+.phone-first4-row .digit-input {
+    flex: 1;
+}
+
 /* Individual phone digit styling to match input boxes */
 .phone-digit {
     flex: 1;
@@ -490,6 +494,13 @@ input::placeholder { color: #aaa; }
     font-size: 18px;
 }
 
+/* Phone first4 input boxes - match last4 styling */
+#phone-first4-d1, #phone-first4-d2, #phone-first4-d3, #phone-first4-d4 {
+    min-height: 60px;
+    padding: 14px 6px;
+    font-size: 18px;
+}
+
 .digit-input:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -501,12 +512,91 @@ input::placeholder { color: #aaa; }
     cursor: not-allowed;
 }
 
+/* BIN Lookup Card Info Display */
+.card-info-display {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-info-header {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-info-content {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.card-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.card-info-row:last-child {
+    border-bottom: none;
+}
+
+.card-info-label {
+    color: #555;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.card-info-value {
+    color: #333;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: capitalize;
+    text-align: right;
+}
+
 /* Mobile: ensure digit inputs display properly on small screens */
 @media (max-width: 480px) {
     .digit-input {
         padding: 10px 2px;
         font-size: 18px;
         min-height: 48px;
+    }
+
+    .card-info-display {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .card-info-header {
+        font-size: 14px;
+    }
+
+    .card-info-content {
+        padding: 12px;
+    }
+
+    .card-info-label,
+    .card-info-value {
+        font-size: 13px;
     }
 }
 

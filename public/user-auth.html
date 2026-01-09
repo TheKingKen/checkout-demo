@@ -24,28 +24,16 @@
 
     <div id="content-container">
         <div class="section">
-            <div class="section-title">Customer</div>
-            <div class="detail-row">
-                <span class="detail-label">Name</span>
-                <span class="detail-value" id="display-name">-</span>
-            </div>
-            <!-- <div class="detail-row">
-                <span class="detail-label">Phone</span>
-                <span class="detail-value" id="display-phone">-</span>
-            </div> -->
-        </div>
-
-        <div class="section">
             <div class="section-title">Mobile Phone Verification</div>
 
             <div style="margin-bottom:24px;">
-                <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Enter the last 4-digit of your phone number to receive a one-time passcode.</label>
+                <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;">Enter your phone number to receive a one-time passcode.</label>
                 <div class="phone-row">
                     <div class="digit-row phone-first4-row">
-                        <span id="phone-first4-d1" class="phone-digit">-</span>
-                        <span id="phone-first4-d2" class="phone-digit">-</span>
-                        <span id="phone-first4-d3" class="phone-digit">-</span>
-                        <span id="phone-first4-d4" class="phone-digit">-</span>
+                        <input id="phone-first4-d1" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
+                        <input id="phone-first4-d2" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
+                        <input id="phone-first4-d3" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
+                        <input id="phone-first4-d4" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />
                     </div>
                     <div class="digit-row phone-last4-row">
                         <input id="phone-last4-d1" type="tel" class="digit-input" maxlength="1" placeholder="0" value="" />

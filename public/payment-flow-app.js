@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
         const flowHppToggle = document.getElementById('flow-hpp-toggle');
         if (flowHppToggle) {
-            const useFlow = localStorage.getItem('useFlow') !== 'false';
+            const useFlow = localStorage.getItem('useFlow') === 'true';
             flowHppToggle.innerText = useFlow ? 'Flow' : 'HPP';
             flowHppToggle.classList.toggle('active', useFlow);
             flowHppToggle.addEventListener('click', () => {
@@ -147,11 +147,14 @@ function toggleActionButtons() {
         // clear any mounted flow UI
         const flowContainer = document.getElementById('flow-container');
         if (flowContainer) flowContainer.innerHTML = '';
+        // clear card info display
+        const cardInfoDisplay = document.getElementById('card-info-display');
+        if (cardInfoDisplay) cardInfoDisplay.style.display = 'none';
     } else {
         actionButtons.style.display = 'flex';
 
         // Decide Flow vs HPP mode based on toggle
-        const useFlow = localStorage.getItem('useFlow') !== 'false';
+        const useFlow = localStorage.getItem('useFlow') === 'true';
 
         if (useFlow) {
             // Hide the back button initially and show it after 3 seconds
@@ -211,8 +214,44 @@ function toggleActionButtons() {
                                     window.location.href = '/success.html';
                                 }, 1000);
                             },
-                            onChange: (component) => console.log('onChange', component.type, component.isValid && component.isValid()),
-                            onError: (component, error) => console.log('onError', error, component && component.type),
+                            onChange: (component) => {
+                                console.log('onChange', component.type, component.isValid && component.isValid());
+                                
+                                // Hide card info display if payment method is not card
+                                if (component.type !== 'card') {
+                                    const cardInfoDisplay = document.getElementById('card-info-display');
+                                    if (cardInfoDisplay && cardInfoDisplay.style.display === 'block') {
+                                        cardInfoDisplay.style.display = 'none';
+                                        console.log('Card info hidden - switched to:', component.type);
+                                    }
+                                }
+                            },
+                            onCardBinChanged: (_component, cardMetadata) => {
+                                console.log('BIN changed:', cardMetadata);
+                                // If cardMetadata is empty/null, it means the card number was cleared
+                                if (!cardMetadata || Object.keys(cardMetadata).length === 0) {
+                                    updateCardInfoDisplay(null);
+                                } else {
+                                    updateCardInfoDisplay(cardMetadata);
+                                }
+                                // Accept the card by default (return nothing or { continue: true })
+                                return { continue: true };
+                            },
+                            onError: (component, error) => {
+                                console.log('onError', error, component && component.type);
+                                try {
+                                    const errEl = document.getElementById('error-message');
+                                    if (errEl) {
+                                        const msg = (error && (error.message || error.reason || error.code))
+                                            ? (error.message || error.reason || String(error.code))
+                                            : 'Payment error occurred';
+                                        errEl.textContent = msg;
+                                        errEl.style.color = '#b81736';
+                                    }
+                                } catch (uiErr) {
+                                    console.warn('Failed to display error message', uiErr);
+                                }
+                            },
                         });
 
                         const flowComponent = checkout.create('flow');
@@ -235,6 +274,10 @@ function toggleActionButtons() {
         } else {
             // HPP: show a Pay button inside flow-container that calls create-payment-link2 and redirects
             const flowContainer = document.getElementById('flow-container');
+            // Clear card info display (only relevant for Flow mode)
+            const cardInfoDisplay = document.getElementById('card-info-display');
+            if (cardInfoDisplay) cardInfoDisplay.style.display = 'none';
+            
             if (flowContainer) {
                 flowContainer.innerHTML = '';
                 const pay = document.createElement('button');
@@ -292,6 +335,73 @@ function toggleActionButtons() {
 function goBackToForm() {
     // Return to the insurance form
     window.location.href = '/insurance-form.html';
+}
+
+// Helper function to update card info display with BIN lookup metadata
+function updateCardInfoDisplay(cardMetadata) {
+    const cardInfoDisplay = document.getElementById('card-info-display');
+    
+    // Hide if no metadata or if metadata indicates insufficient card number digits
+    if (!cardMetadata || Object.keys(cardMetadata).length === 0) {
+        if (cardInfoDisplay) {
+            cardInfoDisplay.style.display = 'none';
+        }
+        // Hide all rows
+        const rows = ['card-bin-row', 'card-brand-row', 'card-type-row', 'card-category-row', 'card-issuer-row'];
+        rows.forEach(rowId => {
+            const row = document.getElementById(rowId);
+            if (row) row.style.display = 'none';
+        });
+        return;
+    }
+
+    // Helper to show/hide and update a row
+    const updateRow = (rowId, valueId, value) => {
+        const row = document.getElementById(rowId);
+        const valueEl = document.getElementById(valueId);
+        
+        if (value && value !== '-' && value !== 'unknown' && value !== '' && value !== null && value !== undefined) {
+            if (row) row.style.display = 'flex';
+            if (valueEl) valueEl.textContent = value;
+        } else {
+            if (row) row.style.display = 'none';
+        }
+    };
+
+    // Count how many fields have valid data
+    let validFieldCount = 0;
+    const checkField = (value) => {
+        if (value && value !== '-' && value !== 'unknown' && value !== '' && value !== null && value !== undefined) {
+            validFieldCount++;
+            return value;
+        }
+        return null;
+    };
+
+    const binValue = checkField(cardMetadata.bin);
+    const brandValue = checkField(cardMetadata.scheme || cardMetadata.brand);
+    const typeValue = checkField(cardMetadata.card_type || cardMetadata.type);
+    const categoryValue = checkField(cardMetadata.card_category || cardMetadata.category);
+    const issuerValue = checkField(cardMetadata.issuer || cardMetadata.issuer_name);
+
+    // Only show the display if at least one field has valid data
+    if (validFieldCount > 0) {
+        if (cardInfoDisplay) {
+            cardInfoDisplay.style.display = 'block';
+        }
+        
+        // Update each field
+        updateRow('card-bin-row', 'card-bin-value', binValue);
+        updateRow('card-brand-row', 'card-brand-value', brandValue);
+        updateRow('card-type-row', 'card-type-value', typeValue);
+        updateRow('card-category-row', 'card-category-value', categoryValue);
+        updateRow('card-issuer-row', 'card-issuer-value', issuerValue);
+    } else {
+        // No valid fields, hide the entire display
+        if (cardInfoDisplay) {
+            cardInfoDisplay.style.display = 'none';
+        }
+    }
 }
 
 /*function proceedToCheckout() {

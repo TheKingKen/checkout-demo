@@ -35,24 +35,13 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('content-container').style.display = 'block';
   document.getElementById('back-btn').style.display = 'block';
 
-  // Populate customer info
-  document.getElementById('display-name').textContent = payload.customer?.name || '-';
-  const phoneFull = (payload.customer?.phone_country_code || '') + ' ' + (payload.customer?.phone_number || '');
-//   document.getElementById('display-phone').textContent = phoneFull;
-
-  // Extract digits for phone first4 and last4
-  const digits = (payload.customer?.phone_number || '').replace(/\D/g, '');
-  const first4Digits = digits.slice(0, 4);
-  const last4Digits = digits.slice(-4);
-
-  // Populate first4 as individual digit spans
-  const first4DigitArray = first4Digits.split('');
-  for (let i = 1; i <= 4; i++) {
-    const digitSpan = document.getElementById(`phone-first4-d${i}`);
-    if (digitSpan) {
-      digitSpan.textContent = first4DigitArray[i - 1] || '-';
-    }
-  }
+  // Setup first4 input boxes
+  const first4Inputs = [
+    document.getElementById('phone-first4-d1'),
+    document.getElementById('phone-first4-d2'),
+    document.getElementById('phone-first4-d3'),
+    document.getElementById('phone-first4-d4')
+  ];
 
   // Setup last4 input boxes
   const last4Inputs = [
@@ -61,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('phone-last4-d3'),
     document.getElementById('phone-last4-d4')
   ];
+
+  // Combine all phone inputs for continuous focus flow
+  const allPhoneInputs = [...first4Inputs, ...last4Inputs];
 
   // Keep inputs empty by default - user must fill them
 
@@ -81,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const getAllDigits = (inputs) => inputs.map(inp => inp.value).join('');
 
   // Helper: move focus to next input on digit entry
-  const setupDigitInput = (inputs) => {
+  const setupDigitInput = (inputs, allInputs = null) => {
     inputs.forEach((input, index) => {
       input.addEventListener('input', (e) => {
         // Allow only digits
@@ -89,8 +81,13 @@ document.addEventListener('DOMContentLoaded', function () {
         e.target.value = val.slice(0, 1); // Only 1 digit max
 
         // Move to next input if digit entered
-        if (val.length > 0 && index < inputs.length - 1) {
-          inputs[index + 1].focus();
+        if (val.length > 0) {
+          // Use allInputs for continuous focus flow (first4 -> last4)
+          const focusArray = allInputs || inputs;
+          const focusIndex = focusArray.indexOf(input);
+          if (focusIndex < focusArray.length - 1) {
+            focusArray[focusIndex + 1].focus();
+          }
         }
 
         // Check if confirm should be enabled (all OTP filled)
@@ -99,30 +96,37 @@ document.addEventListener('DOMContentLoaded', function () {
           confirmBtn.disabled = !allFilled;
         }
 
-        // Check if send-otp should be enabled (all last4 filled)
-        if (inputs === last4Inputs) {
-          const allFilled = getAllDigits(last4Inputs).length === 4;
+        // Check if send-otp should be enabled (all 8 digits filled)
+        if (inputs === first4Inputs || inputs === last4Inputs) {
+          const allFilled = getAllDigits(first4Inputs).length === 4 && getAllDigits(last4Inputs).length === 4;
           sendOtpBtn.disabled = !allFilled;
         }
       });
 
       // Handle backspace
       input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !input.value && index > 0) {
-          inputs[index - 1].focus();
+        if (e.key === 'Backspace' && !input.value) {
+          // Use allInputs for continuous backspace flow (last4 -> first4)
+          const focusArray = allInputs || inputs;
+          const focusIndex = focusArray.indexOf(input);
+          if (focusIndex > 0) {
+            focusArray[focusIndex - 1].focus();
+          }
         }
       });
     });
   };
 
-  setupDigitInput(last4Inputs);
+  setupDigitInput(first4Inputs, allPhoneInputs);
+  setupDigitInput(last4Inputs, allPhoneInputs);
   setupDigitInput(otpInputs);
 
-  // Send OTP: validate last4 is filled (4 digits), then auto-fill OTP with 260121 after 2s
+  // Send OTP: validate all 8 digits filled, then auto-fill OTP with 260121 after 2s
   sendOtpBtn.addEventListener('click', () => {
+    const first4Val = getAllDigits(first4Inputs);
     const last4Val = getAllDigits(last4Inputs);
-    if (last4Val.length !== 4) {
-      alert('Please enter the last 4 digits of your phone.');
+    if (first4Val.length !== 4 || last4Val.length !== 4) {
+      alert('Please enter all 8 digits of your phone number.');
       return;
     }
     sendOtpBtn.disabled = true;
