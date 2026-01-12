@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorMessage = document.getElementById('error-message');
     const hkdElem = document.querySelector('.hkd-price');
     const eurElem = document.querySelector('.eur-price');
+    const sarElem = document.querySelector('.sar-price');
     const countryRadios = document.getElementsByName('country');
 
     // Update price based on country selection
@@ -12,9 +13,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (document.querySelector('input[name="country"]:checked').value === 'HK') {
             hkdElem.classList.add('active');
             eurElem.classList.remove('active');
-        } else {
+            sarElem.classList.remove('active');
+        } else if (document.querySelector('input[name="country"]:checked').value === 'CN') {
             hkdElem.classList.remove('active');
             eurElem.classList.add('active');
+            sarElem.classList.remove('active');
+        } else {
+            hkdElem.classList.remove('active');
+            eurElem.classList.remove('active');
+            sarElem.classList.add('active');
         }
     }
 
@@ -35,11 +42,16 @@ document.addEventListener('DOMContentLoaded', function () {
             currency = 'HKD';
             price = 12900;
             phone_country_code = '+852';
+        } else if (country === 'CN') {
+            amount = 12000; // 120.00 CNY in cents
+            currency = 'CNY';
+            price = 12000;
+            phone_country_code = '+86';
         } else {
-            amount = 1500; // 15.00 USD in cents
-            currency = 'USD';
-            price = 1500;
-            phone_country_code = '+31';
+            amount = 6200; // 62.00 SAR in cents
+            currency = 'SAR';
+            price = 6200;
+            phone_country_code = '+966';
         }
 
         // Basic client-side validation

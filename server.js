@@ -82,11 +82,11 @@ app.post('/create-payment-link', async (req, res) => {
   const baseUrl = resolvePublicBase(req);
 
     // Dynamic logic: assign currency & payment methods based on country
-    //let allow_payment_methods = ['card', 'applepay', 'googlepay'];
-    let allow_payment_methods = ['card'];
+    let allow_payment_methods = ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn', 'tamara', 'octopus'];
+    //let allow_payment_methods = ['card'];
 
 
-    let billing = { address: { country } };
+    // let billing = { address: { country } };
     /*if (country === 'NL') {
     /    allow_payment_methods.push('ideal');
     }*/
@@ -96,7 +96,24 @@ app.post('/create-payment-link', async (req, res) => {
         amount: amount,                      // in minor units, e.g. cents
         currency: currency,
         reference: `ORDER-${Date.now()}`,
-        billing: billing,
+        billing: {
+            address: {
+                address_line1: 'Billing Address',
+                country: country || 'HK',
+                city: 'Billing City'
+            }
+        },
+        shipping: {
+          address: {
+            address_line1: 'Shipping Address',
+            country: country || 'HK',
+            city: 'Shipping City'
+          },
+          phone: {
+            number: customer.phone_number || '',
+            country_code: customer.phone_country_code || '+852',
+          },
+        },
         customer: {
             name: customer.name,
             email: customer.email,
@@ -110,17 +127,19 @@ app.post('/create-payment-link', async (req, res) => {
                 name: product.name,
                 quantity: product.quantity,
                 price: product.unit_price,
-                reference: product.reference
+                reference: product.reference,
+                unit_price: product.unit_price
             }
         ],
-        "payment_method_configuration": {
-            "card": {
-            "store_payment_details": "enabled"
-            }
-        },
-        "stored_card": {
-            "customer_id": "cus_dbompbxe6gfuxosnb62bopwjnm"
-        },
+        payment_type: `Regular`,
+        // "payment_method_configuration": {
+        //     "card": {
+        //     "store_payment_details": "enabled"
+        //     }
+        // },
+        // "stored_card": {
+        //     "customer_id": "cus_dbompbxe6gfuxosnb62bopwjnm"
+        // },
         processing_channel_id: PROCESSING_CHANNEL_ID,
         allow_payment_methods: allow_payment_methods,
         success_url: `${baseUrl}/success.html`,
@@ -148,6 +167,7 @@ app.post('/create-payment-link', async (req, res) => {
         });
 
         // Log full response for debugging
+        console.log('Checkout payment-link response:', JSON.stringify(body, null, 2));
         console.log('Checkout payment-link response:', JSON.stringify(response.data, null, 2));
 
         /*if (!response.ok) {
@@ -188,7 +208,7 @@ app.post('/create-payment-link', async (req, res) => {
 app.post('/create-payment-link2', async (req, res) => {
     const { country, customer, amount, currency, product } = req.body;
 
-    let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'tamara'];
+    let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
     let disable_payment_methods = ['card'];
 
     // Determine base URL for redirect targets (prefer public tunnel when available)
@@ -223,6 +243,17 @@ app.post('/create-payment-link2', async (req, res) => {
                 country: country || 'HK',
             }
         },*/
+        shipping: {
+          address: {
+            address_line1: 'Shipping Address',
+            country: country || 'HK',
+            city: 'Shipping City'
+          },
+          phone: {
+            number: customer.phone_number || '',
+            country_code: customer.phone_country_code || '+852',
+          },
+        },
         risk: {
             enabled: true,
         },
@@ -239,6 +270,7 @@ app.post('/create-payment-link2', async (req, res) => {
             product_reference: product.reference,
             product_quantity: product.quantity,
         },
+        payment_type: `Regular`,
         payment_method_configuration: {
             "card": {
                 "store_payment_details": "collect_consent"
@@ -293,8 +325,7 @@ app.post("/create-payment-sessions", async (req, res) => {
   try {
     const { customer, amount, currency, product, country } = req.body;
 
-    // let enable_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'tamara'];
-    let enable_payment_methods = ['card', 'applepay', 'googlepay', 'alipay_hk', 'tamara'];
+    let enable_payment_methods = ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
     let disable_payment_methods = ['card'];
 
     // Validate incoming payload
@@ -357,8 +388,10 @@ app.post("/create-payment-sessions", async (req, res) => {
           name: product.name,
           quantity: product.quantity,
           unit_price: product.unit_price,
+          reference: product.reference
         },
       ],
+      payment_type: `Regular`,
       enabled_payment_methods: enable_payment_methods,
       //disabled_payment_methods: disable_payment_methods,
       processing_channel_id: PROCESSING_CHANNEL_ID
