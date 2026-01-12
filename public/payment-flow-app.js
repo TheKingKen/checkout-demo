@@ -1,5 +1,66 @@
 // public/payment-flow-app.js
 
+// Helper: Get stored customer ID based on email (returns null for new customers)
+// Customer IDs are provided by Checkout.com after first successful payment
+function getCustomerId(email) {
+    if (!email) return null;
+    
+    // Check if we have a customer ID for this email
+    const storageKey = `customer_id_${btoa(email).replace(/=/g, '')}`;
+    const customerId = localStorage.getItem(storageKey);
+    
+    if (customerId) {
+        console.log('Returning customer detected. Customer ID:', customerId);
+    } else {
+        console.log('New customer detected. No customer ID stored yet.');
+    }
+    
+    return customerId; // null for new customers
+}
+
+// Helper: Store customer ID after successful payment
+function storeCustomerId(email, customerId) {
+    if (!email || !customerId) return;
+    
+    const storageKey = `customer_id_${btoa(email).replace(/=/g, '')}`;
+    localStorage.setItem(storageKey, customerId);
+    console.log('Stored customer ID:', customerId, 'for email:', email);
+}
+
+// Helper: Check if customer is returning (has made a payment before)
+function isReturningCustomer(email) {
+    if (!email) return false;
+    const storageKey = `customer_id_${btoa(email).replace(/=/g, '')}`;
+    return !!localStorage.getItem(storageKey);
+}
+
+// Helper: Fetch payment details from Checkout.com and store customer ID
+async function fetchAndStoreCustomerId(paymentId, customerEmail) {
+    try {
+        console.log('Fetching payment details for payment ID:', paymentId);
+        
+        const response = await fetch(`/get-payment-details/${paymentId}`);
+        
+        if (!response.ok) {
+            console.warn('Failed to fetch payment details:', response.status);
+            return;
+        }
+        
+        const paymentDetails = await response.json();
+        console.log('Payment details received:', paymentDetails);
+        
+        // Extract customer.id from payment details
+        if (paymentDetails.customer && paymentDetails.customer.id) {
+            storeCustomerId(customerEmail, paymentDetails.customer.id);
+            console.log('Customer ID stored successfully for future use');
+        } else {
+            console.warn('No customer.id found in payment details');
+        }
+    } catch (error) {
+        console.error('Error fetching payment details:', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const loadingContainer = document.getElementById('loading-container');
     const contentContainer = document.getElementById('content-container');
@@ -177,6 +238,23 @@ function toggleActionButtons() {
                     }
                     const payload = JSON.parse(payloadStr);
 
+                    // Check if customer has a stored customer ID (returning customer)
+                    const customerId = getCustomerId(payload.customer.email);
+                    const isReturning = !!customerId;
+                    
+                    // Only include customer.id if it exists (returning customers)
+                    if (customerId) {
+                        payload.customer.id = customerId;
+                    }
+                    
+                    console.log('Customer status:', isReturning ? 'RETURNING' : 'NEW');
+                    if (isReturning) {
+                        console.log('Customer ID:', customerId);
+                        console.log('Saved cards will be displayed automatically');
+                    } else {
+                        console.log('Consent checkbox will be displayed for card storage');
+                    }
+
                     const response = await fetch('/create-payment-sessions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -208,8 +286,15 @@ function toggleActionButtons() {
                             locale: 'en-GB',
                             paymentSession,
                             onReady: () => console.log('Checkout ready'),
-                            onPaymentCompleted: (_component, paymentResponse) => {
+                            onPaymentCompleted: async (_component, paymentResponse) => {
                                 console.log('Payment completed', paymentResponse);
+                                
+                                // Extract payment ID and fetch customer ID from payment details
+                                if (paymentResponse && paymentResponse.id) {
+                                    // Fetch and store customer ID for future use
+                                    await fetchAndStoreCustomerId(paymentResponse.id, payload.customer.email);
+                                }
+                                
                                 setTimeout(() => {
                                     window.location.href = '/success.html';
                                 }, 1000);

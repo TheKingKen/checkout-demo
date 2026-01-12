@@ -272,8 +272,8 @@ app.post('/create-payment-link2', async (req, res) => {
         },
         payment_type: `Regular`,
         payment_method_configuration: {
-            "card": {
-                "store_payment_details": "collect_consent"
+            card: {
+                store_payment_details: `collect_consent`
             }
         },
         processing_channel_id: PROCESSING_CHANNEL_ID,
@@ -339,6 +339,11 @@ app.post("/create-payment-sessions", async (req, res) => {
     // Determine base URL for redirect targets (prefer public tunnel when available)
     const baseUrl = resolvePublicBase(req);
 
+    // Determine if customer is returning (has customer_id) or new
+    // If customer.id exists, assume returning customer with prior consent
+    const isReturningCustomer = !!(customer.id);
+    const storePaymentDetails = isReturningCustomer ? 'enabled' : 'collect_consent';
+
     // Construct the payment session request body dynamically from the incoming payload
     const paymentSessionBody = {
       amount: amount,                        // in minor units (cents)
@@ -352,6 +357,7 @@ app.post("/create-payment-sessions", async (req, res) => {
       customer: {
         email: customer.email,
         name: customer.name,
+        ...(customer.id && { id: customer.id })  // Include customer.id if provided
       },
       shipping: {
         address: {
@@ -392,12 +398,19 @@ app.post("/create-payment-sessions", async (req, res) => {
         },
       ],
       payment_type: `Regular`,
+      payment_method_configuration: {
+        card: {
+          store_payment_details: storePaymentDetails  // 'collect_consent' for new, 'enabled' for returning
+        }
+      },
       enabled_payment_methods: enable_payment_methods,
       //disabled_payment_methods: disable_payment_methods,
       processing_channel_id: PROCESSING_CHANNEL_ID
     };
 
     // Log the request for debugging
+    console.log('Creating payment session for', isReturningCustomer ? 'RETURNING' : 'NEW', 'customer');
+    console.log('store_payment_details:', storePaymentDetails);
     console.log('Creating payment session with payload:', JSON.stringify(paymentSessionBody, null, 2));
 
     // Send request to Checkout.com API using axios
@@ -433,6 +446,41 @@ app.post("/create-payment-sessions", async (req, res) => {
     return res.status(500).json({
       error: 'Internal server error',
       details: error.message,
+    });
+  }
+});
+
+// Endpoint to get payment details from Checkout.com
+app.get('/get-payment-details/:paymentId', async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    
+    console.log('Fetching payment details for:', paymentId);
+    
+    const response = await axios.get(
+      `https://api.sandbox.checkout.com/payments/${paymentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${CHECKOUT_SECRET_KEY}`
+        }
+      }
+    );
+    
+    console.log('Payment details retrieved successfully');
+    return res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching payment details:', error.message);
+    if (error.response) {
+      console.error('Checkout API status:', error.response.status);
+      console.error('Checkout API body:', JSON.stringify(error.response.data, null, 2));
+      return res.status(error.response.status).json({
+        error: 'Failed to fetch payment details',
+        details: error.response.data
+      });
+    }
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message
     });
   }
 });
