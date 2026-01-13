@@ -209,10 +209,21 @@ app.post('/create-payment-link2', async (req, res) => {
     const { country, customer, amount, currency, product } = req.body;
 
     let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
+    // let allow_payment_methods = ['card','applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
     let disable_payment_methods = ['card'];
 
     // Determine base URL for redirect targets (prefer public tunnel when available)
     const baseUrl = resolvePublicBase(req);
+
+    // Always use collect_consent - let Flow/HPP handle saved card display automatically
+    const storePaymentDetails = 'collect_consent';
+    
+    console.log('Creating HPP link with store_payment_details:', storePaymentDetails);
+    if (customer.id) {
+        console.log('Customer ID provided:', customer.id, '- saved cards will be displayed if available');
+    } else {
+        console.log('No customer ID - new card form will be displayed');
+    }
 
     // Prepare the payment request body
     const body = {
@@ -235,7 +246,8 @@ app.post('/create-payment-link2', async (req, res) => {
             phone: {
                 number: customer.phone_number || '',
                 country_code: customer.phone_country_code || '+852',
-            }
+            },
+            ...(customer.id && { id: customer.id })  // Include customer.id if provided
         },
         /*shipping: {
             address: {
@@ -273,8 +285,13 @@ app.post('/create-payment-link2', async (req, res) => {
         payment_type: `Regular`,
         payment_method_configuration: {
             card: {
-                store_payment_details: `collect_consent`
-            }
+                store_payment_details: storePaymentDetails  // Always 'collect_consent'
+            },
+            ...(customer.id && {
+                stored_card: {
+                    customer_id: customer.id  // Display saved cards for this customer
+                }
+            })
         },
         processing_channel_id: PROCESSING_CHANNEL_ID,
         allow_payment_methods: allow_payment_methods,
@@ -323,7 +340,7 @@ app.post('/create-payment-link2', async (req, res) => {
 
 app.post("/create-payment-sessions", async (req, res) => {
   try {
-    const { customer, amount, currency, product, country } = req.body;
+    const { customer, amount, currency, product, country, mode, store_consent_collected, instrument_ids } = req.body;
 
     let enable_payment_methods = ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
     let disable_payment_methods = ['card'];
@@ -339,10 +356,42 @@ app.post("/create-payment-sessions", async (req, res) => {
     // Determine base URL for redirect targets (prefer public tunnel when available)
     const baseUrl = resolvePublicBase(req);
 
-    // Determine if customer is returning (has customer_id) or new
-    // If customer.id exists, assume returning customer with prior consent
-    const isReturningCustomer = !!(customer.id);
-    const storePaymentDetails = isReturningCustomer ? 'enabled' : 'collect_consent';
+    // Determine mode: 'remember_me' (default/RM) or 'stored_card' (SC)
+    const isStoredCardMode = mode === 'stored_card';
+    const isRememberMeMode = !isStoredCardMode; // Default to RM if not specified
+    
+    console.log(`Payment session mode: ${isStoredCardMode ? 'SC (Stored Card)' : 'RM (Remember Me)'}`);
+
+    // Configure store_payment_details based on mode:
+    // - RM mode: Always use 'collect_consent' (Flow's built-in Remember Me checkbox)
+    // - SC mode: Use 'enabled' when consent collected via custom checkbox, otherwise 'disabled'
+    let storePaymentDetails;
+    if (isRememberMeMode) {
+      storePaymentDetails = 'collect_consent'; // RM mode always shows built-in consent
+      console.log('RM mode: Using collect_consent for Remember Me feature');
+    } else {
+      // SC mode: Use custom checkbox consent
+      storePaymentDetails = store_consent_collected ? 'enabled' : 'disabled';
+      console.log(`SC mode: Using ${storePaymentDetails} based on custom checkbox consent:`, store_consent_collected);
+    }
+    
+    // Build stored_card configuration for SC mode
+    let storedCardConfig = null;
+    if (isStoredCardMode && customer.id) {
+      storedCardConfig = { customer_id: customer.id };
+      
+      // Optionally include instrument_ids if provided (alternative way to display specific cards)
+      if (instrument_ids && Array.isArray(instrument_ids) && instrument_ids.length > 0) {
+        storedCardConfig.instrument_ids = instrument_ids;
+        console.log('SC mode - Including instrument IDs:', instrument_ids);
+      }
+      
+      console.log('SC mode - stored_card config:', storedCardConfig);
+    } else if (isRememberMeMode && customer.id) {
+      // RM mode - only use customer_id (no instrument_ids)
+      storedCardConfig = { customer_id: customer.id };
+      console.log('RM mode - stored_card config (for cross-merchant cards):', storedCardConfig);
+    }
 
     // Construct the payment session request body dynamically from the incoming payload
     const paymentSessionBody = {
@@ -400,8 +449,9 @@ app.post("/create-payment-sessions", async (req, res) => {
       payment_type: `Regular`,
       payment_method_configuration: {
         card: {
-          store_payment_details: storePaymentDetails  // 'collect_consent' for new, 'enabled' for returning
-        }
+          store_payment_details: storePaymentDetails
+        },
+        ...(storedCardConfig && { stored_card: storedCardConfig })
       },
       enabled_payment_methods: enable_payment_methods,
       //disabled_payment_methods: disable_payment_methods,
@@ -409,9 +459,20 @@ app.post("/create-payment-sessions", async (req, res) => {
     };
 
     // Log the request for debugging
-    console.log('Creating payment session for', isReturningCustomer ? 'RETURNING' : 'NEW', 'customer');
+    console.log('=== Payment Session Configuration ===');
+    console.log('Mode:', isStoredCardMode ? 'SC (Stored Card)' : 'RM (Remember Me)');
     console.log('store_payment_details:', storePaymentDetails);
-    console.log('Creating payment session with payload:', JSON.stringify(paymentSessionBody, null, 2));
+    console.log('stored_card config:', storedCardConfig);
+    if (customer.id) {
+        console.log('Customer ID:', customer.id);
+    } else {
+        console.log('No customer ID - new customer');
+    }
+    if (instrument_ids && instrument_ids.length > 0) {
+        console.log('Instrument IDs:', instrument_ids);
+    }
+    console.log('=====================================');
+    console.log('Payment session request payload:', JSON.stringify(paymentSessionBody, null, 2));
 
     // Send request to Checkout.com API using axios
     const response = await axios.post(
@@ -481,6 +542,74 @@ app.get('/get-payment-details/:paymentId', async (req, res) => {
     return res.status(500).json({
       error: 'Internal server error',
       details: error.message
+    });
+  }
+});
+
+// Endpoint to validate if a customer exists on Checkout.com by email
+app.get('/validate-customer-by-email/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    console.log('Validating customer by email:', email);
+    
+    // Query Checkout.com customers API using email as identifier in URL path
+    // API Reference: GET /customers/{identifier} where identifier = email
+    const response = await axios.get(
+      `https://api.sandbox.checkout.com/customers/${encodeURIComponent(email)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${CHECKOUT_SECRET_KEY}`
+        }
+      }
+    );
+    
+    console.log('Customer API response:', JSON.stringify(response.data, null, 2));
+    
+    // Check if customer was found (API returns customer object directly, not an array)
+    if (response.data && response.data.id) {
+      console.log('✅ Customer found:', response.data.id);
+      return res.json({ 
+        exists: true, 
+        customer_id: response.data.id,
+        email: response.data.email
+      });
+    } else {
+      console.log('❌ No customer found for email:', email);
+      return res.json({ 
+        exists: false, 
+        email: email 
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error validating customer:', error.message);
+    
+    // Log detailed error information
+    if (error.response) {
+      console.error('Checkout API status:', error.response.status);
+      console.error('Checkout API response:', JSON.stringify(error.response.data, null, 2));
+      console.error('Request URL:', error.config?.url);
+      
+      // If 404 or customer not found, customer doesn't exist
+      if (error.response.status === 404 || error.response.status === 422) {
+        console.log('Customer not found (404/422) for email:', req.params.email);
+        return res.json({ 
+          exists: false, 
+          email: req.params.email 
+        });
+      }
+    } else if (error.request) {
+      console.error('No response received from Checkout API');
+      console.error('Request details:', error.request);
+    } else {
+      console.error('Error setting up request:', error.message);
+    }
+    
+    // For other errors, return error response
+    return res.status(500).json({
+      error: 'Failed to validate customer',
+      details: error.response?.data || error.message,
+      status: error.response?.status
     });
   }
 });

@@ -27,6 +27,103 @@ function storeCustomerId(email, customerId) {
     console.log('Stored customer ID:', customerId, 'for email:', email);
 }
 
+// Helper: Remove customer ID from localStorage
+function removeCustomerId(email) {
+    if (!email) return;
+    
+    const storageKey = `customer_id_${btoa(email).replace(/=/g, '')}`;
+    localStorage.removeItem(storageKey);
+    console.log('Removed customer ID from localStorage for email:', email);
+}
+
+// Helper: Store instrument IDs (source.id from payments) for customer
+function storeInstrumentId(email, instrumentId) {
+    if (!email || !instrumentId) return;
+    
+    const storageKey = `instrument_ids_${btoa(email).replace(/=/g, '')}`;
+    
+    // Get existing instruments or initialize empty array
+    let instruments = [];
+    try {
+        const existing = localStorage.getItem(storageKey);
+        if (existing) {
+            instruments = JSON.parse(existing);
+        }
+    } catch (e) {
+        console.warn('Error parsing existing instruments:', e);
+        instruments = [];
+    }
+    
+    // Add new instrument if not already present
+    if (!instruments.includes(instrumentId)) {
+        instruments.push(instrumentId);
+        localStorage.setItem(storageKey, JSON.stringify(instruments));
+        console.log('Stored instrument ID:', instrumentId, 'for email:', email);
+    }
+}
+
+// Helper: Get stored instrument IDs for customer
+function getInstrumentIds(email) {
+    if (!email) return [];
+    
+    const storageKey = `instrument_ids_${btoa(email).replace(/=/g, '')}`;
+    try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn('Error parsing instrument IDs:', e);
+    }
+    return [];
+}
+
+// Helper: Remove all instrument IDs for customer
+function removeInstrumentIds(email) {
+    if (!email) return;
+    
+    const storageKey = `instrument_ids_${btoa(email).replace(/=/g, '')}`;
+    localStorage.removeItem(storageKey);
+    console.log('Removed instrument IDs from localStorage for email:', email);
+}
+
+// Helper: Retrieve customer ID from Checkout.com by email
+async function validateCustomerByEmail(email) {
+    if (!email) return null;
+    
+    try {
+        console.log('Retrieving customer ID from Checkout.com for email:', email);
+        
+        const response = await fetch(`/validate-customer-by-email/${encodeURIComponent(email)}`);
+        
+        if (!response.ok) {
+            console.warn('Failed to retrieve customer:', response.status);
+            return null;
+        }
+        
+        const result = await response.json();
+        
+        if (result.exists && result.customer_id) {
+            console.log('✅ Customer ID found:', result.customer_id);
+            
+            // Sync with localStorage for reference
+            storeCustomerId(email, result.customer_id);
+            
+            return result.customer_id;
+        } else {
+            console.log('ℹ️ No customer ID found for this email');
+            
+            // Clear localStorage if it has stale data
+            removeCustomerId(email);
+            
+            return null;
+        }
+    } catch (error) {
+        console.error('Error retrieving customer ID:', error);
+        return null;
+    }
+}
+
 // Helper: Check if customer is returning (has made a payment before)
 function isReturningCustomer(email) {
     if (!email) return false;
@@ -34,7 +131,7 @@ function isReturningCustomer(email) {
     return !!localStorage.getItem(storageKey);
 }
 
-// Helper: Fetch payment details from Checkout.com and store customer ID
+// Helper: Fetch payment details from Checkout.com and store customer ID and instrument ID
 async function fetchAndStoreCustomerId(paymentId, customerEmail) {
     try {
         console.log('Fetching payment details for payment ID:', paymentId);
@@ -52,9 +149,18 @@ async function fetchAndStoreCustomerId(paymentId, customerEmail) {
         // Extract customer.id from payment details
         if (paymentDetails.customer && paymentDetails.customer.id) {
             storeCustomerId(customerEmail, paymentDetails.customer.id);
-            console.log('Customer ID stored successfully for future use');
+            console.log('Customer ID stored successfully for future use:', paymentDetails.customer.id);
         } else {
             console.warn('No customer.id found in payment details');
+        }
+        
+        // Extract source.id (payment instrument ID) from payment details
+        // This is the token for the card stored in merchant's vault
+        if (paymentDetails.source && paymentDetails.source.id) {
+            storeInstrumentId(customerEmail, paymentDetails.source.id);
+            console.log('Instrument ID (source.id) stored successfully:', paymentDetails.source.id);
+        } else {
+            console.warn('No source.id found in payment details');
         }
     } catch (error) {
         console.error('Error fetching payment details:', error);
@@ -84,17 +190,48 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn('Flow/HPP toggle init failed', e);
     }
 
-    // Keep the toggle enabled/disabled based on confirm-checkbox state
+    // Initialize RM/SC toggle (default to RM - Remember Me)
+    try {
+        const rmScToggle = document.getElementById('rm-sc-toggle');
+        if (rmScToggle) {
+            const useRM = localStorage.getItem('useRM') !== 'false'; // Default to true (RM mode)
+            rmScToggle.innerText = useRM ? 'RM' : 'SC';
+            rmScToggle.classList.toggle('active', useRM);
+            rmScToggle.addEventListener('click', () => {
+                const now = !(localStorage.getItem('useRM') !== 'false');
+                localStorage.setItem('useRM', now ? 'true' : 'false');
+                rmScToggle.innerText = now ? 'RM' : 'SC';
+                rmScToggle.classList.toggle('active', now);
+                
+                // If changing mode while Flow is mounted, show info message
+                const flowContainer = document.getElementById('flow-container');
+                if (flowContainer && flowContainer.children.length > 0) {
+                    console.log(`Switched to ${now ? 'RM (Remember Me)' : 'SC (Stored Card)'} mode. Uncheck and re-check the confirmation checkbox to apply changes.`);
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('RM/SC toggle init failed', e);
+    }
+
+    // Keep the toggles enabled/disabled based on confirm-checkbox state
     try {
         const confirmCheckbox = document.getElementById('confirm-checkbox');
         const flowHppToggleEl = document.getElementById('flow-hpp-toggle');
+        const rmScToggleEl = document.getElementById('rm-sc-toggle');
         if (confirmCheckbox && flowHppToggleEl) {
-            // Initialize state (toggle enabled when unchecked)
+            // Initialize state (toggles enabled when unchecked)
             flowHppToggleEl.disabled = !!confirmCheckbox.checked;
+            if (rmScToggleEl) {
+                rmScToggleEl.disabled = !!confirmCheckbox.checked;
+            }
 
             // Update when checkbox changes
             confirmCheckbox.addEventListener('change', (e) => {
                 flowHppToggleEl.disabled = !!e.target.checked;
+                if (rmScToggleEl) {
+                    rmScToggleEl.disabled = !!e.target.checked;
+                }
             });
         }
     } catch (e) {
@@ -211,6 +348,9 @@ function toggleActionButtons() {
         // clear card info display
         const cardInfoDisplay = document.getElementById('card-info-display');
         if (cardInfoDisplay) cardInfoDisplay.style.display = 'none';
+        // hide SC consent checkbox
+        const scConsentContainer = document.getElementById('sc-consent-container');
+        if (scConsentContainer) scConsentContainer.style.display = 'none';
     } else {
         actionButtons.style.display = 'flex';
 
@@ -238,21 +378,65 @@ function toggleActionButtons() {
                     }
                     const payload = JSON.parse(payloadStr);
 
-                    // Check if customer has a stored customer ID (returning customer)
-                    const customerId = getCustomerId(payload.customer.email);
-                    const isReturning = !!customerId;
+                    // Retrieve customer ID from Checkout.com (if exists)
+                    const customerId = await validateCustomerByEmail(payload.customer.email);
                     
-                    // Only include customer.id if it exists (returning customers)
-                    if (customerId) {
-                        payload.customer.id = customerId;
+                    // Check RM/SC mode
+                    const useRM = localStorage.getItem('useRM') !== 'false';
+                    console.log(`Flow mode: ${useRM ? 'RM (Remember Me)' : 'SC (Stored Card)'}`);
+                    
+                    // SC mode: show custom consent checkbox
+                    const scConsentContainer = document.getElementById('sc-consent-container');
+                    const scConsentCheckbox = document.getElementById('sc-consent-checkbox');
+                    
+                    if (!useRM && scConsentContainer) {
+                        // SC mode: show consent checkbox
+                        scConsentContainer.style.display = 'block';
+                        
+                        // Pre-check the checkbox for returning customers (who already have cards saved)
+                        if (customerId && scConsentCheckbox) {
+                            scConsentCheckbox.checked = true;
+                        }
+                        
+                        // Add event listener to handle consent checkbox changes
+                        // When unchecked, user doesn't want to save card details
+                        if (scConsentCheckbox) {
+                            scConsentCheckbox.addEventListener('change', (e) => {
+                                console.log('SC consent checkbox changed:', e.target.checked);
+                                console.log('Note: To apply this change, you need to uncheck and re-check the confirmation checkbox');
+                            });
+                        }
+                    } else if (scConsentContainer) {
+                        // RM mode: hide consent checkbox
+                        scConsentContainer.style.display = 'none';
                     }
                     
-                    console.log('Customer status:', isReturning ? 'RETURNING' : 'NEW');
-                    if (isReturning) {
-                        console.log('Customer ID:', customerId);
-                        console.log('Saved cards will be displayed automatically');
+                    // Include customer.id in payload if available - Flow will handle saved card display
+                    if (customerId) {
+                        payload.customer.id = customerId;
+                        console.log('Customer ID will be sent to Flow:', customerId);
+                        
+                        // For SC mode, also retrieve stored instrument IDs
+                        if (!useRM) {
+                            const instrumentIds = getInstrumentIds(payload.customer.email);
+                            if (instrumentIds.length > 0) {
+                                payload.instrument_ids = instrumentIds;
+                                console.log('SC mode - Instrument IDs will be sent:', instrumentIds);
+                            }
+                        }
+                        
+                        console.log('Flow will display saved cards if available for this customer');
                     } else {
-                        console.log('Consent checkbox will be displayed for card storage');
+                        console.log('No customer ID - Flow will show new card form');
+                    }
+                    
+                    // Add mode flag for backend to configure properly
+                    payload.mode = useRM ? 'remember_me' : 'stored_card';
+                    
+                    // For SC mode, include consent status
+                    if (!useRM && scConsentCheckbox) {
+                        payload.store_consent_collected = scConsentCheckbox.checked;
+                        console.log('SC mode - consent collected:', scConsentCheckbox.checked);
                     }
 
                     const response = await fetch('/create-payment-sessions', {
@@ -285,7 +469,9 @@ function toggleActionButtons() {
                             environment: 'sandbox',
                             locale: 'en-GB',
                             paymentSession,
-                            onReady: () => console.log('Checkout ready'),
+                            onReady: () => {
+                                console.log('Checkout ready');
+                            },
                             onPaymentCompleted: async (_component, paymentResponse) => {
                                 console.log('Payment completed', paymentResponse);
                                 
@@ -385,6 +571,18 @@ function toggleActionButtons() {
                             return;
                         }
                         const payload = JSON.parse(payloadStr);
+
+                        // Retrieve customer ID from Checkout.com (if exists)
+                        const customerId = await validateCustomerByEmail(payload.customer.email);
+                        
+                        // Include customer.id in payload if available - HPP will handle saved card display
+                        if (customerId) {
+                            payload.customer.id = customerId;
+                            console.log('HPP mode - Customer ID will be sent:', customerId);
+                            console.log('HPP will display saved payment methods if available for this customer');
+                        } else {
+                            console.log('HPP mode - No customer ID - HPP will show new payment form with save consent checkbox');
+                        }
 
                         const response = await fetch('/create-payment-link2', {
                             method: 'POST',
