@@ -65,9 +65,8 @@
 
         <!-- Confirmation Checkbox Section -->
         <div class="confirmation-section">
-                <div class="level2-control" style="margin-bottom:10px; display: flex; gap: 10px;">
+                <div class="level2-control" style="margin-bottom:10px;">
                     <button id="flow-hpp-toggle" class="level2-toggle" type="button" title="Toggle between Flow and HPP payment methods">Flow/HPP</button>
-                    <button id="rm-sc-toggle" class="level2-toggle" type="button" title="Toggle between Remember Me and Stored Card modes">RM/SC</button>
                 </div>
             <label class="checkbox-label">
                 <input type="checkbox" id="confirm-checkbox" onchange="toggleActionButtons()">
@@ -108,14 +107,6 @@
                     <!-- Authentication Component Container (Remember Me) -->
                     <!-- <div id="authentication-container" style="margin-bottom: 20px;"></div> -->
                     <div id="flow-container"></div>
-                    
-                    <!-- Custom Checkbox for Stored Card Consent (SC mode only) -->
-                    <div id="sc-consent-container" style="display: none; margin-top: 15px; padding: 12px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <label style="display: flex; align-items: flex-start; cursor: pointer; font-size: 14px; color: #2d3748;">
-                            <input type="checkbox" id="sc-consent-checkbox" style="margin-right: 10px; margin-top: 2px; flex-shrink: 0;">
-                            <span>Save my card details securely for faster checkout next time</span>
-                        </label>
-                    </div>
                 </div>
                 <span id="error-message"></span>
                 <span id="successful-payment-message"></span>

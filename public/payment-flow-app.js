@@ -190,48 +190,17 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn('Flow/HPP toggle init failed', e);
     }
 
-    // Initialize RM/SC toggle (default to RM - Remember Me)
-    try {
-        const rmScToggle = document.getElementById('rm-sc-toggle');
-        if (rmScToggle) {
-            const useRM = localStorage.getItem('useRM') !== 'false'; // Default to true (RM mode)
-            rmScToggle.innerText = useRM ? 'RM' : 'SC';
-            rmScToggle.classList.toggle('active', useRM);
-            rmScToggle.addEventListener('click', () => {
-                const now = !(localStorage.getItem('useRM') !== 'false');
-                localStorage.setItem('useRM', now ? 'true' : 'false');
-                rmScToggle.innerText = now ? 'RM' : 'SC';
-                rmScToggle.classList.toggle('active', now);
-                
-                // If changing mode while Flow is mounted, show info message
-                const flowContainer = document.getElementById('flow-container');
-                if (flowContainer && flowContainer.children.length > 0) {
-                    console.log(`Switched to ${now ? 'RM (Remember Me)' : 'SC (Stored Card)'} mode. Uncheck and re-check the confirmation checkbox to apply changes.`);
-                }
-            });
-        }
-    } catch (e) {
-        console.warn('RM/SC toggle init failed', e);
-    }
-
-    // Keep the toggles enabled/disabled based on confirm-checkbox state
+    // Keep the Flow/HPP toggle enabled/disabled based on confirm-checkbox state
     try {
         const confirmCheckbox = document.getElementById('confirm-checkbox');
         const flowHppToggleEl = document.getElementById('flow-hpp-toggle');
-        const rmScToggleEl = document.getElementById('rm-sc-toggle');
         if (confirmCheckbox && flowHppToggleEl) {
-            // Initialize state (toggles enabled when unchecked)
+            // Initialize state (toggle enabled when unchecked)
             flowHppToggleEl.disabled = !!confirmCheckbox.checked;
-            if (rmScToggleEl) {
-                rmScToggleEl.disabled = !!confirmCheckbox.checked;
-            }
 
             // Update when checkbox changes
             confirmCheckbox.addEventListener('change', (e) => {
                 flowHppToggleEl.disabled = !!e.target.checked;
-                if (rmScToggleEl) {
-                    rmScToggleEl.disabled = !!e.target.checked;
-                }
             });
         }
     } catch (e) {
@@ -348,9 +317,6 @@ function toggleActionButtons() {
         // clear card info display
         const cardInfoDisplay = document.getElementById('card-info-display');
         if (cardInfoDisplay) cardInfoDisplay.style.display = 'none';
-        // hide SC consent checkbox
-        const scConsentContainer = document.getElementById('sc-consent-container');
-        if (scConsentContainer) scConsentContainer.style.display = 'none';
     } else {
         actionButtons.style.display = 'flex';
 
@@ -361,11 +327,11 @@ function toggleActionButtons() {
             // Hide the back button initially and show it after 3 seconds
             if (backButton) {
                 backButton.style.display = 'none';
-                setTimeout(() => {
-                    if (backButton) {
-                        backButton.style.display = 'block';
-                    }
-                }, 2000);
+                // setTimeout(() => {
+                //     if (backButton) {
+                //         backButton.style.display = 'block';
+                //     }
+                // }, 2000);
             }
 
             // Flow: create payment session and initialize the Checkout Flow component
@@ -381,62 +347,15 @@ function toggleActionButtons() {
                     // Retrieve customer ID from Checkout.com (if exists)
                     const customerId = await validateCustomerByEmail(payload.customer.email);
                     
-                    // Check RM/SC mode
-                    const useRM = localStorage.getItem('useRM') !== 'false';
-                    console.log(`Flow mode: ${useRM ? 'RM (Remember Me)' : 'SC (Stored Card)'}`);
-                    
-                    // SC mode: show custom consent checkbox
-                    const scConsentContainer = document.getElementById('sc-consent-container');
-                    const scConsentCheckbox = document.getElementById('sc-consent-checkbox');
-                    
-                    if (!useRM && scConsentContainer) {
-                        // SC mode: show consent checkbox
-                        scConsentContainer.style.display = 'block';
-                        
-                        // Pre-check the checkbox for returning customers (who already have cards saved)
-                        if (customerId && scConsentCheckbox) {
-                            scConsentCheckbox.checked = true;
-                        }
-                        
-                        // Add event listener to handle consent checkbox changes
-                        // When unchecked, user doesn't want to save card details
-                        if (scConsentCheckbox) {
-                            scConsentCheckbox.addEventListener('change', (e) => {
-                                console.log('SC consent checkbox changed:', e.target.checked);
-                                console.log('Note: To apply this change, you need to uncheck and re-check the confirmation checkbox');
-                            });
-                        }
-                    } else if (scConsentContainer) {
-                        // RM mode: hide consent checkbox
-                        scConsentContainer.style.display = 'none';
-                    }
+                    console.log('Flow mode: Remember Me (RM)');
                     
                     // Include customer.id in payload if available - Flow will handle saved card display
                     if (customerId) {
                         payload.customer.id = customerId;
                         console.log('Customer ID will be sent to Flow:', customerId);
-                        
-                        // For SC mode, also retrieve stored instrument IDs
-                        if (!useRM) {
-                            const instrumentIds = getInstrumentIds(payload.customer.email);
-                            if (instrumentIds.length > 0) {
-                                payload.instrument_ids = instrumentIds;
-                                console.log('SC mode - Instrument IDs will be sent:', instrumentIds);
-                            }
-                        }
-                        
                         console.log('Flow will display saved cards if available for this customer');
                     } else {
-                        console.log('No customer ID - Flow will show new card form');
-                    }
-                    
-                    // Add mode flag for backend to configure properly
-                    payload.mode = useRM ? 'remember_me' : 'stored_card';
-                    
-                    // For SC mode, include consent status
-                    if (!useRM && scConsentCheckbox) {
-                        payload.store_consent_collected = scConsentCheckbox.checked;
-                        console.log('SC mode - consent collected:', scConsentCheckbox.checked);
+                        console.log('No customer ID - Flow will show new card form with Remember Me consent');
                     }
 
                     const response = await fetch('/create-payment-sessions', {
@@ -471,6 +390,9 @@ function toggleActionButtons() {
                             paymentSession,
                             onReady: () => {
                                 console.log('Checkout ready');
+                                if (backButton) {
+                                    backButton.style.display = 'block';
+                                }
                             },
                             onPaymentCompleted: async (_component, paymentResponse) => {
                                 console.log('Payment completed', paymentResponse);

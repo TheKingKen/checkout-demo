@@ -340,7 +340,7 @@ app.post('/create-payment-link2', async (req, res) => {
 
 app.post("/create-payment-sessions", async (req, res) => {
   try {
-    const { customer, amount, currency, product, country, mode, store_consent_collected, instrument_ids } = req.body;
+    const { customer, amount, currency, product, country } = req.body;
 
     let enable_payment_methods = ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
     let disable_payment_methods = ['card'];
@@ -356,42 +356,10 @@ app.post("/create-payment-sessions", async (req, res) => {
     // Determine base URL for redirect targets (prefer public tunnel when available)
     const baseUrl = resolvePublicBase(req);
 
-    // Determine mode: 'remember_me' (default/RM) or 'stored_card' (SC)
-    const isStoredCardMode = mode === 'stored_card';
-    const isRememberMeMode = !isStoredCardMode; // Default to RM if not specified
-    
-    console.log(`Payment session mode: ${isStoredCardMode ? 'SC (Stored Card)' : 'RM (Remember Me)'}`);
-
-    // Configure store_payment_details based on mode:
-    // - RM mode: Always use 'collect_consent' (Flow's built-in Remember Me checkbox)
-    // - SC mode: Use 'enabled' when consent collected via custom checkbox, otherwise 'disabled'
-    let storePaymentDetails;
-    if (isRememberMeMode) {
-      storePaymentDetails = 'collect_consent'; // RM mode always shows built-in consent
-      console.log('RM mode: Using collect_consent for Remember Me feature');
-    } else {
-      // SC mode: Use custom checkbox consent
-      storePaymentDetails = store_consent_collected ? 'enabled' : 'disabled';
-      console.log(`SC mode: Using ${storePaymentDetails} based on custom checkbox consent:`, store_consent_collected);
-    }
-    
-    // Build stored_card configuration for SC mode
-    let storedCardConfig = null;
-    if (isStoredCardMode && customer.id) {
-      storedCardConfig = { customer_id: customer.id };
-      
-      // Optionally include instrument_ids if provided (alternative way to display specific cards)
-      if (instrument_ids && Array.isArray(instrument_ids) && instrument_ids.length > 0) {
-        storedCardConfig.instrument_ids = instrument_ids;
-        console.log('SC mode - Including instrument IDs:', instrument_ids);
-      }
-      
-      console.log('SC mode - stored_card config:', storedCardConfig);
-    } else if (isRememberMeMode && customer.id) {
-      // RM mode - only use customer_id (no instrument_ids)
-      storedCardConfig = { customer_id: customer.id };
-      console.log('RM mode - stored_card config (for cross-merchant cards):', storedCardConfig);
-    }
+    // Always use Remember Me mode with collect_consent
+    console.log('Payment session mode: Remember Me (RM)');
+    const storePaymentDetails = 'collect_consent';
+    console.log('Using collect_consent for Remember Me feature');
 
     // Construct the payment session request body dynamically from the incoming payload
     const paymentSessionBody = {
@@ -449,9 +417,13 @@ app.post("/create-payment-sessions", async (req, res) => {
       payment_type: `Regular`,
       payment_method_configuration: {
         card: {
-          store_payment_details: storePaymentDetails
+          store_payment_details: storePaymentDetails  // Always 'collect_consent' for Remember Me
         },
-        ...(storedCardConfig && { stored_card: storedCardConfig })
+        ...(customer.id && {
+          stored_card: {
+            customer_id: customer.id  // Display saved cards for this customer
+          }
+        })
       },
       enabled_payment_methods: enable_payment_methods,
       //disabled_payment_methods: disable_payment_methods,
@@ -460,16 +432,12 @@ app.post("/create-payment-sessions", async (req, res) => {
 
     // Log the request for debugging
     console.log('=== Payment Session Configuration ===');
-    console.log('Mode:', isStoredCardMode ? 'SC (Stored Card)' : 'RM (Remember Me)');
+    console.log('Mode: Remember Me (RM)');
     console.log('store_payment_details:', storePaymentDetails);
-    console.log('stored_card config:', storedCardConfig);
     if (customer.id) {
-        console.log('Customer ID:', customer.id);
+        console.log('Customer ID:', customer.id, '- saved cards will be displayed if available');
     } else {
-        console.log('No customer ID - new customer');
-    }
-    if (instrument_ids && instrument_ids.length > 0) {
-        console.log('Instrument IDs:', instrument_ids);
+        console.log('No customer ID - new customer, Remember Me consent will be shown');
     }
     console.log('=====================================');
     console.log('Payment session request payload:', JSON.stringify(paymentSessionBody, null, 2));

@@ -208,14 +208,9 @@ footer {
 }
 .level2-toggle.active { background: rgba(255,255,255,0.18); }
 
-/* Flow/HPP toggle: positioned to the right */
+/* Flow/HPP toggle: positioned in top-right corner */
 #flow-hpp-toggle {
     right: 14px;
-}
-
-/* RM/SC toggle: positioned to the left of Flow/HPP toggle */
-#rm-sc-toggle {
-    right: 100px;
 }
 
 /* Disabled appearance for small toggles */
