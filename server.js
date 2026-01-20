@@ -340,10 +340,14 @@ app.post('/create-payment-link2', async (req, res) => {
 
 app.post("/create-payment-sessions", async (req, res) => {
   try {
-    const { customer, amount, currency, product, country } = req.body;
+    const { customer, amount, currency, product, country, enable_payment_methods, disable_payment_methods } = req.body;
 
-    let enable_payment_methods = ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
-    let disable_payment_methods = ['card'];
+    // Use provided payment methods or default values
+    let enabledMethods = enable_payment_methods || ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
+    let disabledMethods = disable_payment_methods || [];
+
+    console.log('enable payment methods:', enabledMethods);
+    console.log('disable payment methods:', disabledMethods);
 
     // Validate incoming payload
     if (!customer || !amount || !currency || !product) {
@@ -425,8 +429,8 @@ app.post("/create-payment-sessions", async (req, res) => {
           }
         })
       },
-      enabled_payment_methods: enable_payment_methods,
-      //disabled_payment_methods: disable_payment_methods,
+      enabled_payment_methods: enabledMethods,
+      ...(disabledMethods.length > 0 && { disabled_payment_methods: disabledMethods }),
       processing_channel_id: PROCESSING_CHANNEL_ID
     };
 
