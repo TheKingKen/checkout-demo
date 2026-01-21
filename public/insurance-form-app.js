@@ -86,12 +86,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 phone_country_code: phone_country_code,
                 phone_number: customerPhone
             },
-            product: {
-                name: 'Comprehensive Insurance',
-                quantity: 1,
-                unit_price: price,
-                reference: 'comprehensive-insurance-00001'
-            }
+            products: [
+                {
+                    name: 'Comprehensive Insurance',
+                    quantity: 1,
+                    unit_price: price,
+                    reference: 'comprehensive-insurance-00001'
+                }
+            ]
         };
         
         // Log form data (can be replaced with actual submission logic)

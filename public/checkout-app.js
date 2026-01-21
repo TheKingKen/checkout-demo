@@ -323,8 +323,13 @@ async function initializeExpressPayment() {
         const { total } = calculateTotals();
         const amountInMinorUnits = Math.round(total * 100); // Convert to cents
         
-        // Get first item for product info
-        const firstItem = cart[0];
+        // Map all cart items to products array
+        const products = cart.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            unit_price: Math.round(item.price * 100),
+            reference: item.id
+        }));
         
         // Create payment session with only card and applepay enabled
         const paymentSessionResponse = await fetch('/create-payment-sessions', {
@@ -334,7 +339,7 @@ async function initializeExpressPayment() {
             },
             body: JSON.stringify({
                 amount: amountInMinorUnits,
-                currency: 'USD',
+                currency: 'HKD',
                 country: 'HK',
                 customer: {
                     name: 'Guest Customer',
@@ -342,19 +347,16 @@ async function initializeExpressPayment() {
                     phone_number: '12345678',
                     phone_country_code: '+852'
                 },
-                product: {
-                    name: firstItem.name,
-                    quantity: firstItem.quantity,
-                    unit_price: Math.round(firstItem.price * 100),
-                    reference: firstItem.id
-                },
+                products: products,
                 enable_payment_methods: ['card', 'applepay'], // Only enable card and Apple Pay
                 disable_payment_methods: []
             })
         });
         
         if (!paymentSessionResponse.ok) {
-            throw new Error('Failed to create payment session');
+            const errorData = await paymentSessionResponse.json();
+            console.error('Payment session error:', errorData);
+            throw new Error(errorData.details || errorData.error || 'Failed to create payment session');
         }
         
         const paymentSession = await paymentSessionResponse.json();

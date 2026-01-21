@@ -76,7 +76,19 @@ function resolvePublicBase(req) {
   return `${proto}://${host}`;
 }
 app.post('/create-payment-link', async (req, res) => {
-    const { country, customer, amount, currency, product } = req.body;
+    const { country, customer, amount, currency, product, products } = req.body;
+
+    // Backward compatibility: accept both product (singular) and products (array)
+    const productList = products || (product ? [product] : []);
+    
+    if (!productList || productList.length === 0) {
+        return res.status(400).json({ 
+            error: 'Invalid payload', 
+            details: 'Missing required field: product or products' 
+        });
+    }
+    
+    const firstProduct = productList[0];
 
   // Determine base URL for redirect targets (prefer public tunnel when available)
   const baseUrl = resolvePublicBase(req);
@@ -122,15 +134,13 @@ app.post('/create-payment-link', async (req, res) => {
                 number: customer.phone_number
             }
         },
-        products: [
-            {
-                name: product.name,
-                quantity: product.quantity,
-                price: product.unit_price,
-                reference: product.reference,
-                unit_price: product.unit_price
-            }
-        ],
+        products: productList.map(p => ({
+            name: p.name,
+            quantity: p.quantity,
+            price: p.unit_price,
+            reference: p.reference,
+            unit_price: p.unit_price
+        })),
         payment_type: `Regular`,
         // "payment_method_configuration": {
         //     "card": {
@@ -146,8 +156,13 @@ app.post('/create-payment-link', async (req, res) => {
         failure_url: `${baseUrl}/failure.html`,
         cancel_url: `${baseUrl}/cancel.html`,
         display_name: "iPhone Case Shop",
-        description: `${product.name} (${country === 'HK' ? 'HKD' : 'USD'})`
+        description: `${firstProduct.name}${productList.length > 1 ? ` +${productList.length - 1} more` : ''} (${country === 'HK' ? 'HKD' : 'USD'})`
     };
+
+    // Log the request payload for debugging
+    console.log('=== /create-payment-link Request Payload ===');
+    console.log(JSON.stringify(body, null, 2));
+    console.log('==========================================');
 
     try {
         /*const response = await fetch(HPP_API_URL, {
@@ -206,7 +221,19 @@ app.post('/create-payment-link', async (req, res) => {
 });
 
 app.post('/create-payment-link2', async (req, res) => {
-    const { country, customer, amount, currency, product } = req.body;
+    const { country, customer, amount, currency, product, products } = req.body;
+
+    // Backward compatibility: accept both product (singular) and products (array)
+    const productList = products || (product ? [product] : []);
+    
+    if (!productList || productList.length === 0) {
+        return res.status(400).json({ 
+            error: 'Invalid payload', 
+            details: 'Missing required field: product or products' 
+        });
+    }
+    
+    const firstProduct = productList[0];
 
     let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
     // let allow_payment_methods = ['card','applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
@@ -269,18 +296,16 @@ app.post('/create-payment-link2', async (req, res) => {
         risk: {
             enabled: true,
         },
-        products: [
-            {
-                name: product.name,
-                quantity: product.quantity,
-                price: product.unit_price,
-                reference: product.reference,
-                unit_price: product.unit_price
-            }
-        ],
+        products: productList.map(p => ({
+            name: p.name,
+            quantity: p.quantity,
+            price: p.unit_price,
+            reference: p.reference,
+            unit_price: p.unit_price
+        })),
         metadata: {
-            product_reference: product.reference,
-            product_quantity: product.quantity,
+            products_count: productList.length,
+            product_references: productList.map(p => p.reference).join(','),
         },
         payment_type: `Regular`,
         payment_method_configuration: {
@@ -300,8 +325,13 @@ app.post('/create-payment-link2', async (req, res) => {
         failure_url: `${baseUrl}/failure.html`,
         cancel_url: `${baseUrl}/cancel.html`,
         display_name: "Insurance Policy Payment",
-        description: `${product.name} (${currency})`
+        description: `${firstProduct.name}${productList.length > 1 ? ` +${productList.length - 1} more` : ''} (${currency})`
     };
+
+    // Log the request payload for debugging
+    console.log('=== /create-payment-link2 Request Payload ===');
+    console.log(JSON.stringify(body, null, 2));
+    console.log('=============================================');
 
     try {
         const response = await axios.post(HPP_API_URL, body, {
@@ -340,7 +370,7 @@ app.post('/create-payment-link2', async (req, res) => {
 
 app.post("/create-payment-sessions", async (req, res) => {
   try {
-    const { customer, amount, currency, product, country, enable_payment_methods, disable_payment_methods } = req.body;
+    const { customer, amount, currency, products, country, enable_payment_methods, disable_payment_methods } = req.body;
 
     // Use provided payment methods or default values
     let enabledMethods = enable_payment_methods || ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
@@ -350,10 +380,10 @@ app.post("/create-payment-sessions", async (req, res) => {
     console.log('disable payment methods:', disabledMethods);
 
     // Validate incoming payload
-    if (!customer || !amount || !currency || !product) {
+    if (!customer || !amount || !currency || !products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({
         error: 'Invalid payload',
-        details: 'Missing required fields: customer, amount, currency, or product'
+        details: 'Missing required fields: customer, amount, currency, or products (must be a non-empty array)'
       });
     }
 
@@ -370,7 +400,7 @@ app.post("/create-payment-sessions", async (req, res) => {
       amount: amount,                        // in minor units (cents)
       currency: currency,
       reference: `ORDER-${Date.now()}`,
-      description: `${product.name} (${currency})`,
+      description: `${products[0].name}${products.length > 1 ? ` +${products.length - 1} more` : ''} (${currency})`,
       billing_descriptor: {
         name: customer.name,
         city: country || 'Unknown',
@@ -407,17 +437,15 @@ app.post("/create-payment-sessions", async (req, res) => {
       success_url: `${baseUrl}/success.html`,
       failure_url: `${baseUrl}/failure.html`,
       metadata: {
-        product_reference: product.reference,
-        product_quantity: product.quantity,
+        products_count: products.length,
+        product_references: products.map(p => p.reference).join(','),
       },
-      items: [
-        {
-          name: product.name,
-          quantity: product.quantity,
-          unit_price: product.unit_price,
-          reference: product.reference
-        },
-      ],
+      items: products.map(product => ({
+        name: product.name,
+        quantity: product.quantity,
+        unit_price: product.unit_price,
+        reference: product.reference
+      })),
       payment_type: `Regular`,
       payment_method_configuration: {
         card: {

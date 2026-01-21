@@ -253,7 +253,7 @@ function loadPaymentData() {
         const payload = JSON.parse(payloadStr);
 
         // Validate payload structure
-        if (!payload.customer || !payload.product || !payload.amount) {
+        if (!payload.customer || !payload.products || !Array.isArray(payload.products) || payload.products.length === 0 || !payload.amount) {
             throw new Error('Invalid payment data structure.');
         }
 
@@ -266,9 +266,13 @@ function loadPaymentData() {
         
         document.getElementById('display-country').textContent = payload.country || '-';
 
-        // Display product information
-        document.getElementById('display-product').textContent = payload.product.name || '-';
-        document.getElementById('display-reference').textContent = payload.product.reference || '-';
+        // Display product information (show first product, or summary if multiple)
+        const firstProduct = payload.products[0];
+        const productDisplay = payload.products.length > 1 
+            ? `${firstProduct.name} +${payload.products.length - 1} more`
+            : firstProduct.name;
+        document.getElementById('display-product').textContent = productDisplay || '-';
+        document.getElementById('display-reference').textContent = firstProduct.reference || '-';
 
         // Display amount information
         document.getElementById('display-currency').textContent = payload.currency || 'HKD';
