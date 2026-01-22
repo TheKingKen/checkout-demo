@@ -548,6 +548,11 @@ function goBackToForm() {
 
 // Helper function to update card info display with BIN lookup metadata
 function updateCardInfoDisplay(cardMetadata) {
+    // Log the complete cardMetadata object from onCardBinChanged event
+    console.log('=== Card BIN Metadata ===');
+    console.log(JSON.stringify(cardMetadata, null, 2));
+    console.log('========================');
+    
     const cardInfoDisplay = document.getElementById('card-info-display');
     
     // Hide if no metadata or if metadata indicates insufficient card number digits
@@ -556,7 +561,7 @@ function updateCardInfoDisplay(cardMetadata) {
             cardInfoDisplay.style.display = 'none';
         }
         // Hide all rows
-        const rows = ['card-bin-row', 'card-brand-row', 'card-type-row', 'card-category-row', 'card-issuer-row'];
+        const rows = ['card-bin-row', 'card-brand-row', 'card-type-row', 'card-category-row', 'card-issuer-row', 'card-issuer-country-row'];
         rows.forEach(rowId => {
             const row = document.getElementById(rowId);
             if (row) row.style.display = 'none';
@@ -592,6 +597,7 @@ function updateCardInfoDisplay(cardMetadata) {
     const typeValue = checkField(cardMetadata.card_type || cardMetadata.type);
     const categoryValue = checkField(cardMetadata.card_category || cardMetadata.category);
     const issuerValue = checkField(cardMetadata.issuer || cardMetadata.issuer_name);
+    const issuerCountryValue = checkField(cardMetadata.issuer_country_name);
 
     // Only show the display if at least one field has valid data
     if (validFieldCount > 0) {
@@ -605,6 +611,7 @@ function updateCardInfoDisplay(cardMetadata) {
         updateRow('card-type-row', 'card-type-value', typeValue);
         updateRow('card-category-row', 'card-category-value', categoryValue);
         updateRow('card-issuer-row', 'card-issuer-value', issuerValue);
+        updateRow('card-issuer-country-row', 'card-issuer-country-value', issuerCountryValue);
     } else {
         // No valid fields, hide the entire display
         if (cardInfoDisplay) {

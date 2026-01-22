@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('content-container').style.display = 'block';
   document.getElementById('back-btn').style.display = 'block';
 
+  // Initialize Geolocation Fencing
+  initGeolocationFencing();
+
   // Setup first4 input boxes
   const first4Inputs = [
     document.getElementById('phone-first4-d1'),
@@ -153,3 +156,83 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
 });
+
+// Geolocation Fencing initialization
+function initGeolocationFencing() {
+  const geoLoading = document.getElementById('geo-loading');
+  const geoResult = document.getElementById('geo-result');
+  const geoAddress = document.getElementById('geo-address');
+  const geoLat = document.getElementById('geo-lat');
+  const geoLng = document.getElementById('geo-lng');
+  const geoAccuracy = document.getElementById('geo-accuracy');
+  const geoStatus = document.getElementById('geo-status');
+
+  // Show loading for 3 seconds minimum
+  const minLoadingTime = 3000;
+  const loadingStartTime = Date.now();
+
+  // Try to get actual geolocation
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const elapsed = Date.now() - loadingStartTime;
+        const remainingTime = Math.max(0, minLoadingTime - elapsed);
+
+        setTimeout(() => {
+          // Display actual coordinates
+          const lat = position.coords.latitude.toFixed(6);
+          const lng = position.coords.longitude.toFixed(6);
+          const accuracy = Math.round(position.coords.accuracy);
+
+          geoLat.textContent = lat + '°';
+          geoLng.textContent = lng + '°';
+          geoAccuracy.textContent = `±${accuracy}m`;
+
+          // Use reverse geocoding approximation or fallback address
+          // For real implementation, you would call a reverse geocoding API
+          // For demo purposes, show a realistic address format
+          geoAddress.textContent = 'Wan Chai, Hong Kong Island, Hong Kong';
+
+          geoLoading.style.display = 'none';
+          geoResult.style.display = 'block';
+        }, remainingTime);
+      },
+      (error) => {
+        // Geolocation failed - use fallback location
+        const elapsed = Date.now() - loadingStartTime;
+        const remainingTime = Math.max(0, minLoadingTime - elapsed);
+
+        setTimeout(() => {
+          // Fallback to Five Pacific Place coordinates
+          geoLat.textContent = '22.278042°';
+          geoLng.textContent = '114.172661°';
+          geoAccuracy.textContent = '±50m';
+          geoAddress.textContent = '88 Queensway, Admiralty, Hong Kong Island, Hong Kong';
+          
+          geoLoading.style.display = 'none';
+          geoResult.style.display = 'block';
+        }, remainingTime);
+
+        console.warn('Geolocation error:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 0
+      }
+    );
+  } else {
+    // Browser doesn't support geolocation - use fallback
+    setTimeout(() => {
+      geoLat.textContent = '22.278042°';
+      geoLng.textContent = '114.172661°';
+      geoAccuracy.textContent = '±50m';
+      geoAddress.textContent = '88 Queensway, Admiralty, Hong Kong Island, Hong Kong';
+      
+      geoLoading.style.display = 'none';
+      geoResult.style.display = 'block';
+    }, minLoadingTime);
+
+    console.warn('Geolocation not supported by browser');
+  }
+}

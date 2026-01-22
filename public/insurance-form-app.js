@@ -166,6 +166,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         qrContainer.appendChild(a);
                         qrContainer.style.display = 'block';
 
+                        // Start countdown timer (5 minutes = 300 seconds)
+                        startCountdownTimer(300);
+
                         // Update success message with scanning instruction
                         successMessage.textContent = 'Thank you! Your application has been submitted successfully. Please scan the QR code above with another device to continue the payment.';
                         successMessage.setAttribute('role', 'status');
@@ -372,4 +375,43 @@ function redirectToPayment() {
             }
         })();
     }
+}
+
+// Countdown timer function for QR code
+let countdownInterval = null;
+function startCountdownTimer(durationInSeconds) {
+    const timerElement = document.getElementById('qr-timer');
+    if (!timerElement) return;
+    
+    // Clear any existing interval
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    let remainingSeconds = durationInSeconds;
+    
+    // Function to format and display time
+    const updateDisplay = () => {
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.textContent = `Time remaining: ${timeString}`;
+        timerElement.style.display = 'block';
+    };
+    
+    // Initial display
+    updateDisplay();
+    
+    // Update every second
+    countdownInterval = setInterval(() => {
+        remainingSeconds--;
+        
+        if (remainingSeconds >= 0) {
+            updateDisplay();
+        } else {
+            // Timer reached zero - just stop the interval, no additional effect
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+    }, 1000);
 }
