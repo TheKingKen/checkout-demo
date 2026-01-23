@@ -317,6 +317,15 @@ async function initializeExpressPayment() {
         console.error('Checkout.com public key not available');
         return;
     }
+
+    const containerRoot = document.getElementById('express-payment-container');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+        if (containerRoot) {
+            containerRoot.innerHTML = '<p style="color:#666; text-align:center; padding: 12px 0;">Log in to use Express Checkout</p>';
+        }
+        return;
+    }
     
     try {
         // Calculate total amount
@@ -342,13 +351,13 @@ async function initializeExpressPayment() {
                 currency: 'HKD',
                 country: 'HK',
                 customer: {
-                    name: 'Guest Customer',
-                    email: 'guest@example.com',
+                    name: 'Logged-in Customer',
+                    email: 'customer@example.com',
                     phone_number: '12345678',
                     phone_country_code: '+852'
                 },
                 products: products,
-                enable_payment_methods: ['card', 'applepay'], // Only enable card and Apple Pay
+                enable_payment_methods: ['card', 'applepay'],
                 disable_payment_methods: []
             })
         });
@@ -374,7 +383,6 @@ async function initializeExpressPayment() {
                 },
                 onPaymentCompleted: (component, paymentResponse) => {
                     console.log('Express payment completed', paymentResponse);
-                    // Redirect to success page
                     setTimeout(() => {
                         window.location.href = '/success.html';
                     }, 1000);
@@ -388,11 +396,53 @@ async function initializeExpressPayment() {
                 }
             });
             
-            // Create and mount Flow component
-            const flowComponent = checkout.create('flow');
-            const container = document.getElementById('express-payment-container');
-            if (container) {
-                flowComponent.mount(container);
+            // Prepare child mount points under the existing container
+            if (containerRoot) {
+                const addressMount = document.createElement('div');
+                addressMount.id = 'express-address-component';
+                const flowMount = document.createElement('div');
+                flowMount.id = 'express-flow-component';
+                containerRoot.innerHTML = '';
+                containerRoot.appendChild(addressMount);
+                containerRoot.appendChild(flowMount);
+
+                // Prefill address from session/local storage
+                let prefill = null;
+                const savedStr = sessionStorage.getItem('userShippingAddress') || localStorage.getItem('userShippingAddress');
+                if (savedStr) {
+                    try { prefill = JSON.parse(savedStr); } catch (e) { console.warn('Failed to parse saved address', e); }
+                }
+
+                const addressData = {
+                    shippingFirstName: prefill?.firstName || shippingAddress?.firstName || '',
+                    shippingLastName: prefill?.lastName || shippingAddress?.lastName || '',
+                    shippingLine1: prefill?.addressLine1 || shippingAddress?.addressLine1 || '',
+                    shippingLine2: prefill?.addressLine2 || shippingAddress?.addressLine2 || '',
+                    shippingCity: prefill?.region || shippingAddress?.region || '',
+                    shippingCountry: prefill?.country || shippingAddress?.country || 'HK'
+                };
+
+                // Create and mount Address component
+                try {
+                    const addressComponent = checkout.create('address', {
+                        useAsShipping: true,
+                        data: addressData,
+                        onChange: (component, state) => {
+                            console.log('Address component changed', state);
+                        },
+                        onError: (component, error) => {
+                            console.error('Address component error:', error);
+                        }
+                    });
+                    addressComponent.mount(addressMount);
+                    console.log('Address component mounted');
+                } catch (e) {
+                    console.warn('Address component not available or failed to mount', e);
+                }
+
+                // Create and mount Flow component
+                const flowComponent = checkout.create('flow');
+                flowComponent.mount(flowMount);
                 console.log('Express payment Flow component mounted');
             }
         } else {
