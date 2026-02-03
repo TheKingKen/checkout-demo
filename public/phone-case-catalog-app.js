@@ -111,16 +111,22 @@ document.addEventListener('DOMContentLoaded', function () {
             // Store login state
             localStorage.setItem('isLoggedIn', 'true');
             
-            // Store user shipping address for checkout
-            const shippingAddress = {
+            // Store complete user data for checkout (including customer contact info)
+            const userData = {
+                // Customer contact information (required for payment sessions)
+                name: 'Ken So',
+                email: 'ken.so@checkout.com',
+                phone_number: '12345678',
+                phone_country_code: '+852',
+                // Shipping address information
                 firstName: 'Ken',
                 lastName: 'So',
                 addressLine1: 'Level 14, Five Pacific Place',
                 addressLine2: '28 Hennessy Road',
                 region: 'Wan Chai',
-                country: 'Hong Kong'
+                country: 'HK'
             };
-            localStorage.setItem('userShippingAddress', JSON.stringify(shippingAddress));
+            localStorage.setItem('userShippingAddress', JSON.stringify(userData));
             
             // Update login button text
             loginBtn.textContent = 'LOGOUT';

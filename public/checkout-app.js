@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize Express Payment (Checkout.com Payment Flow)
     await initializeExpressPayment();
+    
+    // Prefill shipping form if data exists
+    prefillShippingForm();
 });
 
 // Load cart from localStorage
@@ -181,6 +184,40 @@ function setupEventListeners() {
         option.addEventListener('click', handleCarrierSelection);
     });
     
+    // Pay button
+    const payBtn = document.getElementById('pay-btn');
+    if (payBtn) {
+        payBtn.addEventListener('click', handlePayment);
+    }
+    
+    // Card number formatting - add spacing every 4 digits
+    const cardNumberInput = document.getElementById('card-number');
+    if (cardNumberInput) {
+        cardNumberInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\s/g, ''); // Remove all spaces
+            let formattedValue = '';
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formattedValue += ' ';
+                }
+                formattedValue += value[i];
+            }
+            e.target.value = formattedValue;
+        });
+    }
+    
+    // Expiry date formatting - auto add "/" after MM
+    const expiryDateInput = document.getElementById('expiry-date');
+    if (expiryDateInput) {
+        expiryDateInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+            if (value.length >= 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2, 4);
+            }
+            e.target.value = value;
+        });
+    }
+    
     // Window resize handler
     window.addEventListener('resize', () => {
         if (window.innerWidth <= 768) {
@@ -312,143 +349,232 @@ async function loadCheckoutConfig() {
 }
 
 // Initialize Express Payment (Checkout.com Payment Flow)
+// Currently disabled - showing shipping method for all users
 async function initializeExpressPayment() {
-    if (!checkoutPublicKey) {
-        console.error('Checkout.com public key not available');
-        return;
+    const expressSection = document.getElementById('express-payment-section');
+    const shippingSection = document.getElementById('shipping-section');
+    const cardPaymentForm = document.getElementById('card-payment-form');
+    
+    // Hide express checkout section for all users
+    if (expressSection) {
+        expressSection.style.display = 'none';
     }
+    
+    // Show shipping section for all users
+    if (shippingSection) {
+        shippingSection.classList.remove('hidden');
+    }
+    
+    // Show card payment form for all users
+    if (cardPaymentForm) {
+        cardPaymentForm.classList.remove('hidden');
+    }
+    
+    console.log('Express checkout hidden - using shipping method for all users');
+}
 
-    const containerRoot = document.getElementById('express-payment-container');
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
-        if (containerRoot) {
-            containerRoot.innerHTML = '<p style="color:#666; text-align:center; padding: 12px 0;">Log in to use Express Checkout</p>';
-        }
+// Prefill shipping form from saved data
+function prefillShippingForm() {
+    try {
+        const savedStr = sessionStorage.getItem('userShippingAddress') || localStorage.getItem('userShippingAddress');
+        if (!savedStr) return;
+        
+        const data = JSON.parse(savedStr);
+        
+        // Fill form fields if they exist
+        const firstNameInput = document.getElementById('first-name');
+        const lastNameInput = document.getElementById('last-name');
+        const addressLine1Input = document.getElementById('address-line1');
+        const addressLine2Input = document.getElementById('address-line2');
+        const regionInput = document.getElementById('region');
+        const countrySelect = document.getElementById('country');
+        
+        if (firstNameInput && data.firstName) firstNameInput.value = data.firstName;
+        if (lastNameInput && data.lastName) lastNameInput.value = data.lastName;
+        if (addressLine1Input && data.addressLine1) addressLine1Input.value = data.addressLine1;
+        if (addressLine2Input && data.addressLine2) addressLine2Input.value = data.addressLine2;
+        if (regionInput && data.region) regionInput.value = data.region;
+        if (countrySelect && data.country) countrySelect.value = data.country;
+        
+        console.log('✅ Shipping form prefilled from saved data');
+    } catch (e) {
+        console.warn('Failed to prefill shipping form:', e);
+    }
+}
+
+// Handle payment submission
+async function handlePayment() {
+    // Validate shipping address
+    if (!shippingAddress) {
+        alert('Please select shipping address and carrier first');
         return;
     }
     
+    // Validate card form
+    const cardForm = document.getElementById('card-payment-form');
+    if (!cardForm.checkValidity()) {
+        cardForm.reportValidity();
+        return;
+    }
+    
+    // Collect card data
+    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+    const cardholderName = document.getElementById('cardholder-name').value;
+    const expiryDate = document.getElementById('expiry-date').value;
+    const cvv = document.getElementById('cvv').value;
+    
+    // Validate card number (basic Luhn check)
+    if (!isValidCardNumber(cardNumber)) {
+        alert('Invalid card number');
+        return;
+    }
+    
+    // Validate expiry date
+    if (!isValidExpiryDate(expiryDate)) {
+        alert('Invalid expiry date (use MM/YY format)');
+        return;
+    }
+    
+    // Validate CVV
+    if (!/^\d{3,4}$/.test(cvv)) {
+        alert('Invalid CVV (3-4 digits required)');
+        return;
+    }
+    
+    // Disable pay button during submission
+    const payBtn = document.getElementById('pay-btn');
+    payBtn.disabled = true;
+    payBtn.textContent = 'Processing...';
+    
     try {
+        // Parse expiry date
+        const [expMonth, expYear] = expiryDate.split('/');
+        
         // Calculate total amount
         const { total } = calculateTotals();
-        const amountInMinorUnits = Math.round(total * 100); // Convert to cents
+        const amountInMinorUnits = Math.round(total * 100);
         
-        // Map all cart items to products array
-        const products = cart.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            unit_price: Math.round(item.price * 100),
-            reference: item.id
-        }));
-        
-        // Create payment session with only card and applepay enabled
-        const paymentSessionResponse = await fetch('/create-payment-sessions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+        // Prepare payment data
+        const paymentData = {
+            source: {
+                type: 'card',
+                number: cardNumber,
+                expiry_month: parseInt(expMonth),
+                expiry_year: parseInt('20' + expYear),
+                cvv: cvv
             },
-            body: JSON.stringify({
-                amount: amountInMinorUnits,
-                currency: 'HKD',
-                country: 'HK',
-                customer: {
-                    name: 'Logged-in Customer',
-                    email: 'customer@example.com',
-                    phone_number: '12345678',
-                    phone_country_code: '+852'
-                },
-                products: products,
-                enable_payment_methods: ['card', 'applepay'],
-                disable_payment_methods: []
-            })
+            amount: amountInMinorUnits,
+            currency: 'HKD',
+            customer: {
+                email: localStorage.getItem('userEmail') || 'customer@example.com',
+                name: cardholderName
+            },
+            billing: {
+                address: {
+                    address_line1: shippingAddress.addressLine1,
+                    address_line2: shippingAddress.addressLine2,
+                    city: shippingAddress.region,
+                    country: shippingAddress.country
+                }
+            },
+            shipping: {
+                address: {
+                    address_line1: shippingAddress.addressLine1,
+                    address_line2: shippingAddress.addressLine2,
+                    city: shippingAddress.region,
+                    country: shippingAddress.country
+                }
+            },
+            reference: `ORDER-${Date.now()}`,
+            success_url: `${window.location.origin}/success.html`,
+            failure_url: `${window.location.origin}/failure.html`
+        };
+        
+        console.log('💳 Submitting payment...');
+        
+        // Call process-payment endpoint
+        const response = await fetch('/process-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentData)
         });
         
-        if (!paymentSessionResponse.ok) {
-            const errorData = await paymentSessionResponse.json();
-            console.error('Payment session error:', errorData);
-            throw new Error(errorData.details || errorData.error || 'Failed to create payment session');
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || `Payment failed with status ${response.status}`);
         }
         
-        const paymentSession = await paymentSessionResponse.json();
-        console.log('Payment session created:', paymentSession);
+        console.log('✅ Payment successful:', result);
         
-        // Initialize Checkout.com Web Components for Flow
-        if (window.CheckoutWebComponents) {
-            const checkout = await window.CheckoutWebComponents({
-                publicKey: checkoutPublicKey,
-                environment: checkoutEnvironment,
-                locale: 'en-GB',
-                paymentSession: paymentSession,
-                onReady: () => {
-                    console.log('Express checkout ready');
-                },
-                onPaymentCompleted: (component, paymentResponse) => {
-                    console.log('Express payment completed', paymentResponse);
-                    setTimeout(() => {
-                        window.location.href = '/success.html';
-                    }, 1000);
-                },
-                onChange: (component) => {
-                    console.log('Payment method changed:', component.type);
-                },
-                onError: (component, error) => {
-                    console.error('Payment error:', error);
-                    alert('Payment error: ' + (error.message || 'Unknown error'));
-                }
-            });
-            
-            // Prepare child mount points under the existing container
-            if (containerRoot) {
-                const addressMount = document.createElement('div');
-                addressMount.id = 'express-address-component';
-                const flowMount = document.createElement('div');
-                flowMount.id = 'express-flow-component';
-                containerRoot.innerHTML = '';
-                containerRoot.appendChild(addressMount);
-                containerRoot.appendChild(flowMount);
-
-                // Prefill address from session/local storage
-                let prefill = null;
-                const savedStr = sessionStorage.getItem('userShippingAddress') || localStorage.getItem('userShippingAddress');
-                if (savedStr) {
-                    try { prefill = JSON.parse(savedStr); } catch (e) { console.warn('Failed to parse saved address', e); }
-                }
-
-                const addressData = {
-                    shippingFirstName: prefill?.firstName || shippingAddress?.firstName || '',
-                    shippingLastName: prefill?.lastName || shippingAddress?.lastName || '',
-                    shippingLine1: prefill?.addressLine1 || shippingAddress?.addressLine1 || '',
-                    shippingLine2: prefill?.addressLine2 || shippingAddress?.addressLine2 || '',
-                    shippingCity: prefill?.region || shippingAddress?.region || '',
-                    shippingCountry: prefill?.country || shippingAddress?.country || 'HK'
-                };
-
-                // Create and mount Address component
-                try {
-                    const addressComponent = checkout.create('address', {
-                        useAsShipping: true,
-                        data: addressData,
-                        onChange: (component, state) => {
-                            console.log('Address component changed', state);
-                        },
-                        onError: (component, error) => {
-                            console.error('Address component error:', error);
-                        }
-                    });
-                    addressComponent.mount(addressMount);
-                    console.log('Address component mounted');
-                } catch (e) {
-                    console.warn('Address component not available or failed to mount', e);
-                }
-
-                // Create and mount Flow component
-                const flowComponent = checkout.create('flow');
-                flowComponent.mount(flowMount);
-                console.log('Express payment Flow component mounted');
-            }
-        } else {
-            console.error('Checkout.com Web Components not loaded');
-        }
+        // Redirect to success page
+        setTimeout(() => {
+            window.location.href = '/success.html';
+        }, 1000);
+        
     } catch (error) {
-        console.error('Failed to initialize express payment:', error);
+        console.error('❌ Payment failed:', error);
+        alert('Payment failed: ' + error.message);
+        
+        // Re-enable pay button
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay';
     }
+}
+
+// Validate card number using Luhn algorithm
+function isValidCardNumber(cardNumber) {
+    if (!/^\d{13,19}$/.test(cardNumber)) {
+        return false;
+    }
+    
+    // Basic Luhn algorithm
+    let sum = 0;
+    let isEven = false;
+    
+    for (let i = cardNumber.length - 1; i >= 0; i--) {
+        let digit = parseInt(cardNumber[i]);
+        
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) {
+                digit -= 9;
+            }
+        }
+        
+        sum += digit;
+        isEven = !isEven;
+    }
+    
+    return sum % 10 === 0;
+}
+
+// Validate expiry date
+function isValidExpiryDate(expiryDate) {
+    if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+        return false;
+    }
+    
+    const [month, year] = expiryDate.split('/');
+    const monthNum = parseInt(month);
+    
+    if (monthNum < 1 || monthNum > 12) {
+        return false;
+    }
+    
+    // Check if expiry date is in the future
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const expiryYear = 2000 + parseInt(year);
+    
+    if (expiryYear < currentYear) {
+        return false;
+    }
+    
+    if (expiryYear === currentYear && monthNum < currentMonth) {
+        return false;
+    }
+    
+    return true;
 }

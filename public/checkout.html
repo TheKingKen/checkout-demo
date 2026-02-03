@@ -40,17 +40,16 @@
     <div class="main-content">
         <!-- Left Column: Express Payment + Shipping Form + Carrier + Payment -->
         <div class="checkout-left">
-            <!-- Express Payment Section -->
-            <div class="checkout-section express-payment">
+            <!-- Express Payment Section (Logged-in users only) -->
+            <div class="checkout-section express-payment" id="express-payment-section" style="display: none;">
                 <div class="section-header">Express Checkout</div>
                 <div class="section-content">
                     <div id="express-payment-container"></div>
-                    <div class="express-payment-divider">OR</div>
                 </div>
             </div>
 
             <!-- Shipping Address Section -->
-            <div class="checkout-section" id="shipping-section">
+            <div class="checkout-section hidden" id="shipping-section">
                 <div class="section-header">Shipping Address</div>
                 <div class="section-content" id="shipping-form-content">
                     <form id="shipping-form">
@@ -126,8 +125,27 @@
             <div class="checkout-section hidden" id="payment-section">
                 <div class="section-header">Payment</div>
                 <div class="section-content" id="payment-content">
-                    <!-- Card payment form will be added here later -->
-                    <p style="color: #666; text-align: center; padding: 40px 0;">Card payment form will be added here</p>
+                    <!-- Card payment form for non-logged-in users -->
+                    <form id="card-payment-form" class="hidden">
+                        <div class="form-group">
+                            <label for="card-number">Card Number</label>
+                            <input type="text" id="card-number" name="card-number" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardholder-name">Cardholder Name</label>
+                            <input type="text" id="cardholder-name" name="cardholder-name" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expiry-date">Expiry Date (MM/YY)</label>
+                                <input type="text" id="expiry-date" name="expiry-date" placeholder="MM/YY" maxlength="5" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV</label>
+                                <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" required>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             
 

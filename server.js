@@ -569,16 +569,27 @@ app.get('/validate-customer-by-email/:email', async (req, res) => {
     // Check if customer was found (API returns customer object directly, not an array)
     if (response.data && response.data.id) {
       console.log('✅ Customer found:', response.data.id);
+      
+      // Check if customer has saved instruments (Remember Me cards)
+      const hasSavedInstruments = response.data.instruments && Array.isArray(response.data.instruments) && response.data.instruments.length > 0;
+      console.log('Saved instruments count:', hasSavedInstruments ? response.data.instruments.length : 0);
+      
       return res.json({ 
         exists: true, 
         customer_id: response.data.id,
-        email: response.data.email
+        email: response.data.email,
+        hasSavedCards: hasSavedInstruments,
+        savedInstrumentsCount: hasSavedInstruments ? response.data.instruments.length : 0,
+        instruments: hasSavedInstruments ? response.data.instruments : []
       });
     } else {
       console.log('❌ No customer found for email:', email);
       return res.json({ 
         exists: false, 
-        email: email 
+        email: email,
+        hasSavedCards: false,
+        savedInstrumentsCount: 0,
+        instruments: []
       });
     }
   } catch (error) {
@@ -595,7 +606,10 @@ app.get('/validate-customer-by-email/:email', async (req, res) => {
         console.log('Customer not found (404/422) for email:', req.params.email);
         return res.json({ 
           exists: false, 
-          email: req.params.email 
+          email: req.params.email,
+          hasSavedCards: false,
+          savedInstrumentsCount: 0,
+          instruments: []
         });
       }
     } else if (error.request) {
@@ -610,6 +624,138 @@ app.get('/validate-customer-by-email/:email', async (req, res) => {
       error: 'Failed to validate customer',
       details: error.response?.data || error.message,
       status: error.response?.status
+    });
+  }
+});
+
+// Submit payment session with collected data (for logged-in express checkout)
+app.post("/submit-payment-session", async (req, res) => {
+  try {
+    const { session_data, amount, currency, shipping, carrier } = req.body;
+
+    if (!session_data || !amount || !currency) {
+      return res.status(400).json({
+        error: 'Invalid payload',
+        details: 'Missing required fields: session_data, amount, or currency'
+      });
+    }
+
+    console.log('=== Submit Payment Session Request ===');
+    console.log(JSON.stringify(req.body, null, 2));
+
+    // Construct the submit request
+    const submitBody = {
+      session_data: session_data,
+      amount: amount,
+      currency: currency,
+      reference: `ORDER-${Date.now()}`,
+      shipping: {
+        address: {
+          address_line1: shipping.line1 || 'Shipping Address',
+          address_line2: shipping.line2 || '',
+          city: shipping.city || 'City',
+          country: shipping.country || 'HK'
+        }
+      }
+    };
+
+    // Send request to Checkout.com API
+    const response = await axios.post(
+      'https://api.sandbox.checkout.com/payment-sessions/complete',
+      submitBody,
+      {
+        headers: {
+          Authorization: `Bearer ${CHECKOUT_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log('Payment session submitted successfully:', JSON.stringify(response.data, null, 2));
+
+    return res.status(200).json(response.data);
+
+  } catch (error) {
+    console.error('Error submitting payment session:', error.message);
+    if (error.response) {
+      console.error('Checkout API status:', error.response.status);
+      console.error('Checkout API body:', JSON.stringify(error.response.data, null, 2));
+      return res.status(error.response.status).json({
+        error: 'Failed to submit payment session',
+        details: error.response.data,
+      });
+    }
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+    });
+  }
+});
+
+// Process direct payment (for non-logged-in users)
+app.post("/process-payment", async (req, res) => {
+  try {
+    const { amount, currency, source, customer, shipping, products } = req.body;
+
+    if (!amount || !currency || !source) {
+      return res.status(400).json({
+        error: 'Invalid payload',
+        details: 'Missing required fields: amount, currency, or source'
+      });
+    }
+
+    // Determine base URL for redirect targets
+    const baseUrl = resolvePublicBase(req);
+
+    console.log('=== Process Direct Payment Request ===');
+    console.log(JSON.stringify(req.body, null, 2));
+
+    // Construct payment request
+    const paymentBody = {
+      source: source,
+      amount: amount,
+      currency: currency,
+      reference: `ORDER-${Date.now()}`,
+      customer: customer,
+      shipping: shipping,
+      processing_channel_id: PROCESSING_CHANNEL_ID,
+      success_url: `${baseUrl}/success.html`,
+      failure_url: `${baseUrl}/failure.html`,
+      metadata: {
+        products_count: products?.length || 0,
+        product_references: products?.map(p => p.reference).join(',') || ''
+      }
+    };
+
+    // Send request to Checkout.com Payments API
+    const response = await axios.post(
+      'https://api.sandbox.checkout.com/payments',
+      paymentBody,
+      {
+        headers: {
+          Authorization: `Bearer ${CHECKOUT_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log('Payment processed successfully:', JSON.stringify(response.data, null, 2));
+
+    return res.status(200).json(response.data);
+
+  } catch (error) {
+    console.error('Error processing payment:', error.message);
+    if (error.response) {
+      console.error('Checkout API status:', error.response.status);
+      console.error('Checkout API body:', JSON.stringify(error.response.data, null, 2));
+      return res.status(error.response.status).json({
+        error: 'Failed to process payment',
+        details: error.response.data,
+      });
+    }
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
     });
   }
 });

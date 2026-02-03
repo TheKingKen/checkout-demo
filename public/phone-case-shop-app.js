@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('checkout-form');
     const errorMessage = document.getElementById('error-message');
     const hkdElem = document.querySelector('.hkd-price');
+    const usdElem = document.querySelector('.usd-price');
     const eurElem = document.querySelector('.eur-price');
     const sarElem = document.querySelector('.sar-price');
     const countryRadios = document.getElementsByName('country');
@@ -12,14 +13,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function updatePrice() {
         if (document.querySelector('input[name="country"]:checked').value === 'HK') {
             hkdElem.classList.add('active');
+            usdElem.classList.remove('active');
+            eurElem.classList.remove('active');
+            sarElem.classList.remove('active');
+        } else if (document.querySelector('input[name="country"]:checked').value === 'US') {
+            hkdElem.classList.remove('active');
+            usdElem.classList.add('active');
             eurElem.classList.remove('active');
             sarElem.classList.remove('active');
         } else if (document.querySelector('input[name="country"]:checked').value === 'CN') {
             hkdElem.classList.remove('active');
+            usdElem.classList.remove('active');
             eurElem.classList.add('active');
             sarElem.classList.remove('active');
         } else {
             hkdElem.classList.remove('active');
+            usdElem.classList.remove('active');
             eurElem.classList.remove('active');
             sarElem.classList.add('active');
         }
@@ -42,6 +51,11 @@ document.addEventListener('DOMContentLoaded', function () {
             currency = 'HKD';
             price = 12900;
             phone_country_code = '+852';
+        } else if (country === 'US') {
+            amount = 1600; // 16.00 USD in cents
+            currency = 'USD';
+            price = 1600;
+            phone_country_code = '+1';
         } else if (country === 'CN') {
             amount = 12000; // 120.00 CNY in cents
             currency = 'CNY';
