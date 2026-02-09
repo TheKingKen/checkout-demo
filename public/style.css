@@ -96,6 +96,36 @@ input:focus {
     background: #afc0d4;
     cursor: not-allowed;
 }
+.express-checkout-btn {
+    background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+}
+.express-checkout-btn:hover {
+    background: linear-gradient(90deg, #229954 0%, #27ae60 100%);
+}
+.express-checkout-btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
+.order-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.back-arrow-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    color: #667eea;
+}
+.back-arrow-btn:hover {
+    color: #5568d3;
+}
+#flow-container {
+    min-height: 400px;
+}
 .note {
     font-size: 0.97em;
     color: #808ea8;
@@ -615,11 +645,35 @@ input::placeholder { color: #aaa; }
 .catalog-actions-top {
     display: flex;
     gap: 12px;
+    align-items: center;
 }
 
 .catalog-actions-top .action-btn {
     padding: 10px 20px;
     font-size: 13px;
+}
+
+.currency-selector {
+    padding: 10px 15px;
+    font-size: 13px;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.currency-selector:hover {
+    background: #f8f9ff;
+    border-color: #5568d3;
+}
+
+.currency-selector:focus {
+    outline: none;
+    border-color: #5568d3;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* Breadcrumb navigation */

@@ -12,6 +12,15 @@
     <div class="catalog-header">
         <img src="https://s3-us-west-2.amazonaws.com/cbi-image-service-prd/original/d62079fa-f245-4611-83c1-2439fe7fa258.png?w=3840" alt="Shop Logo" class="catalog-logo">
         <div class="catalog-actions-top">
+            <select id="currency-selector" class="currency-selector">
+                <option value="HKD">Hong Kong - HKD</option>
+                <option value="USD">United States - USD</option>
+                <option value="GBP">United Kingdom - GBP</option>
+                <option value="AED">United Arab Emirates - AED</option>
+                <option value="CNY">China - CNY</option>
+                <option value="JPY">Japan - JPY</option>
+                <option value="SGD">Singapore - SGD</option>
+            </select>
             <button id="login-btn" class="action-btn login-btn">LOGIN</button>
             <button id="cart-btn" class="action-btn cart-btn">CART</button>
         </div>
@@ -19,7 +28,7 @@
 
     <!-- Breadcrumb Navigation -->
     <div class="breadcrumb">
-        <a href="#" class="breadcrumb-link">All Products</a>
+        <a href="/all-products.html" class="breadcrumb-link">All Products</a>
         <span class="breadcrumb-separator">></span>
         <span class="breadcrumb-current">Clean Phone Case</span>
     </div>
@@ -249,6 +258,8 @@
         </div>
         <div class="cart-footer">
             <button id="checkout-btn" class="checkout-btn">Proceed to Checkout</button>
+            <button id="express-checkout-btn" class="checkout-btn express-checkout-btn" style="display: none;">Express Checkout</button>
+            <div id="flow-container" style="display: none; margin-top: 20px;"></div>
         </div>
     </div>
 </div>
@@ -261,6 +272,7 @@
             <button id="close-login-btn" class="close-btn">&times;</button>
         </div>
         <div class="login-form-container">
+            <!-- Original Login Form -->
             <form id="login-form">
                 <div class="login-form-group">
                     <label for="username">Username</label>
@@ -276,6 +288,7 @@
     </div>
 </div>
 
+<script src="currency-utils.js"></script>
 <script src="phone-case-catalog-app.js"></script>
 </body>
 </html>

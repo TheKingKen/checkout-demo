@@ -87,43 +87,6 @@ function removeInstrumentIds(email) {
     console.log('Removed instrument IDs from localStorage for email:', email);
 }
 
-// Helper: Retrieve customer ID from Checkout.com by email
-async function validateCustomerByEmail(email) {
-    if (!email) return null;
-    
-    try {
-        console.log('Retrieving customer ID from Checkout.com for email:', email);
-        
-        const response = await fetch(`/validate-customer-by-email/${encodeURIComponent(email)}`);
-        
-        if (!response.ok) {
-            console.warn('Failed to retrieve customer:', response.status);
-            return null;
-        }
-        
-        const result = await response.json();
-        
-        if (result.exists && result.customer_id) {
-            console.log('✅ Customer ID found:', result.customer_id);
-            
-            // Sync with localStorage for reference
-            storeCustomerId(email, result.customer_id);
-            
-            return result.customer_id;
-        } else {
-            console.log('ℹ️ No customer ID found for this email');
-            
-            // Clear localStorage if it has stale data
-            removeCustomerId(email);
-            
-            return null;
-        }
-    } catch (error) {
-        console.error('Error retrieving customer ID:', error);
-        return null;
-    }
-}
-
 // Helper: Check if customer is returning (has made a payment before)
 function isReturningCustomer(email) {
     if (!email) return false;
@@ -348,16 +311,14 @@ function toggleActionButtons() {
                     }
                     const payload = JSON.parse(payloadStr);
 
-                    // Retrieve customer ID from Checkout.com (if exists)
-                    const customerId = await validateCustomerByEmail(payload.customer.email);
-                    
+                    // Note: Customer ID retrieval for Remember Me deferred - will implement with stored card feature
                     console.log('Flow mode: Remember Me (RM)');
                     
                     // Include customer.id in payload if available - Flow will handle saved card display
-                    if (customerId) {
-                        payload.customer.id = customerId;
-                        console.log('Customer ID will be sent to Flow:', customerId);
-                        console.log('Flow will display saved cards if available for this customer');
+                    if (false) {  // Deferred: will use stored card feature later
+                        // payload.customer.id = customerId;
+                        // console.log('Customer ID will be sent to Flow:', customerId);
+                        // console.log('Flow will display saved cards if available for this customer');
                     } else {
                         console.log('No customer ID - Flow will show new card form with Remember Me consent');
                     }
@@ -498,17 +459,8 @@ function toggleActionButtons() {
                         }
                         const payload = JSON.parse(payloadStr);
 
-                        // Retrieve customer ID from Checkout.com (if exists)
-                        const customerId = await validateCustomerByEmail(payload.customer.email);
-                        
-                        // Include customer.id in payload if available - HPP will handle saved card display
-                        if (customerId) {
-                            payload.customer.id = customerId;
-                            console.log('HPP mode - Customer ID will be sent:', customerId);
-                            console.log('HPP will display saved payment methods if available for this customer');
-                        } else {
-                            console.log('HPP mode - No customer ID - HPP will show new payment form with save consent checkbox');
-                        }
+                        // Note: Customer ID retrieval for stored card feature deferred
+                        console.log('HPP mode - Stored card feature to be implemented later');
 
                         const response = await fetch('/create-payment-link2', {
                             method: 'POST',

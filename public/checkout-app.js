@@ -8,6 +8,17 @@ let selectedCarrier = { name: 'Regular Carrier', fee: 0 };
 let checkoutPublicKey = '';
 let checkoutEnvironment = 'sandbox';
 
+// Helper function to check if cart contains only digital products
+function isCartDigitalOnly() {
+    if (cart.length === 0) return false;
+    return cart.every(item => item.type === 'gift-card');
+}
+
+// Helper function to check if cart contains any physical products
+function hasPhysicalProducts() {
+    return cart.some(item => item.type !== 'gift-card');
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     // Load cart from localStorage
@@ -15,6 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize order summary
     renderOrderSummary();
+    
+    // Handle digital-only checkout
+    handleDigitalOnlyCheckout();
     
     // Check if mobile and collapse order summary by default
     if (window.innerWidth <= 768) {
@@ -27,11 +41,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load Checkout.com configuration
     await loadCheckoutConfig();
     
-    // Initialize Express Payment (Checkout.com Payment Flow)
-    await initializeExpressPayment();
-    
-    // Prefill shipping form if data exists
-    prefillShippingForm();
+    // Prefill shipping form if data exists (skip for digital-only)
+    if (!isCartDigitalOnly()) {
+        prefillShippingForm();
+    }
 });
 
 // Load cart from localStorage
@@ -53,10 +66,60 @@ function loadCart() {
     }
 }
 
-// Calculate totals
+// Handle digital-only checkout
+function handleDigitalOnlyCheckout() {
+    if (isCartDigitalOnly()) {
+        console.log('🎁 Digital-only cart detected. Hiding shipping sections.');
+        
+        // Hide shipping and carrier sections
+        const shippingSection = document.getElementById('shipping-section');
+        const carrierSection = document.getElementById('carrier-section');
+        
+        if (shippingSection) shippingSection.style.display = 'none';
+        if (carrierSection) carrierSection.style.display = 'none';
+        
+        // Show payment section and pay button immediately for digital-only
+        const paymentSection = document.getElementById('payment-section');
+        const payBtn = document.getElementById('pay-btn');
+        const cardForm = document.getElementById('card-payment-form');
+        
+        if (paymentSection) {
+            // Add digital goods message
+            const digitalMessage = document.createElement('div');
+            digitalMessage.className = 'digital-goods-message';
+            digitalMessage.innerHTML = `
+                <div style="background-color: #f0f8ff; border: 1px solid #87ceeb; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+                    <p style="margin: 0; color: #333;">
+                        <strong>💻 Digital Gift Card</strong><br/>
+                        This is a digital gift card. No shipping address is required. 
+                        You will receive a delivery confirmation via email.
+                    </p>
+                </div>
+            `;
+            paymentSection.insertBefore(digitalMessage, paymentSection.firstChild);
+            
+            // Show payment section
+            paymentSection.classList.remove('hidden');
+        }
+        
+        // Show card form and pay button
+        if (cardForm) cardForm.classList.remove('hidden');
+        if (payBtn) payBtn.classList.remove('hidden');
+        
+        // Update breadcrumb highlighting for digital-only flow
+        const shippingBreadcrumb = document.getElementById('breadcrumb-shipping');
+        const checkoutBreadcrumb = document.getElementById('breadcrumb-checkout');
+        if (shippingBreadcrumb) shippingBreadcrumb.classList.remove('active');
+        if (checkoutBreadcrumb) checkoutBreadcrumb.classList.add('active');
+    }
+}
+
+// (rest of existing code continues...)
+
 function calculateTotals() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingFee = selectedCarrier.fee;
+    // Only add shipping fee if cart contains physical products
+    const shippingFee = hasPhysicalProducts() ? selectedCarrier.fee : 0;
     const total = subtotal + shippingFee;
     
     return { subtotal, shippingFee, total };
@@ -72,17 +135,33 @@ function renderOrderSummary() {
     // Render cart items
     cart.forEach(item => {
         const itemSubtotal = item.price * item.quantity;
-        html += `
-            <div class="order-item">
-                <img src="${item.image}" alt="${item.name}" class="order-item-image">
-                <div class="order-item-details">
-                    <div class="order-item-name">${item.name}</div>
-                    <div class="order-item-price">$${item.price.toFixed(2)}</div>
-                    <div class="order-item-quantity">Quantity: ${item.quantity}</div>
+        
+        // Handle gift cards
+        if (item.type === 'gift-card') {
+            html += `
+                <div class="order-item">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border-radius: 6px; flex-shrink: 0;">$${item.price.toFixed(0)}</div>
+                    <div class="order-item-details">
+                        <div class="order-item-name">${item.name}</div>
+                        <div class="order-item-price">$${item.price.toFixed(2)}</div>
+                        <div class="order-item-quantity">Quantity: ${item.quantity}</div>
+                    </div>
+                    <div style="font-weight: 500;">$${itemSubtotal.toFixed(2)}</div>
                 </div>
-                <div style="font-weight: 500;">$${itemSubtotal.toFixed(2)}</div>
-            </div>
-        `;
+            `;
+        } else {
+            html += `
+                <div class="order-item">
+                    <img src="${item.image}" alt="${item.name}" class="order-item-image">
+                    <div class="order-item-details">
+                        <div class="order-item-name">${item.name}</div>
+                        <div class="order-item-price">$${item.price.toFixed(2)}</div>
+                        <div class="order-item-quantity">Quantity: ${item.quantity}</div>
+                    </div>
+                    <div style="font-weight: 500;">$${itemSubtotal.toFixed(2)}</div>
+                </div>
+            `;
+        }
     });
     
     // Add summary rows
@@ -132,12 +211,14 @@ function setupEventListeners() {
         window.history.back();
     });
     
-    // Cart breadcrumb - redirect to catalog with cart overlay
+    // Cart breadcrumb - redirect to source page with cart overlay
     document.getElementById('breadcrumb-cart').addEventListener('click', (e) => {
         e.preventDefault();
         // Save a flag to show cart overlay on catalog page
         localStorage.setItem('showCartOnLoad', 'true');
-        window.location.href = '/phone-case-catalog.html';
+        // Get the source page or default to phone-case-catalog
+        const sourcePage = localStorage.getItem('checkoutSourcePage') || '/phone-case-catalog.html';
+        window.location.href = sourcePage;
     });
     
     // Toggle order summary
@@ -206,8 +287,9 @@ function setupEventListeners() {
         });
     }
     
-    // Expiry date formatting - auto add "/" after MM
+    // Expiry date formatting - auto add "/" after MM and auto-focus to CVV
     const expiryDateInput = document.getElementById('expiry-date');
+    const cvvInput = document.getElementById('cvv');
     if (expiryDateInput) {
         expiryDateInput.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
@@ -215,6 +297,11 @@ function setupEventListeners() {
                 value = value.slice(0, 2) + '/' + value.slice(2, 4);
             }
             e.target.value = value;
+            
+            // Auto-focus to CVV when 4 digits entered (MM/YY = 4 digits)
+            if (value.replace(/\D/g, '').length === 4 && cvvInput) {
+                cvvInput.focus();
+            }
         });
     }
     
@@ -303,6 +390,10 @@ function handleContinueCheckout() {
     
     // Show pay button
     document.getElementById('pay-btn').classList.remove('hidden');
+    
+    // Update breadcrumb highlighting
+    document.getElementById('breadcrumb-shipping').classList.remove('active');
+    document.getElementById('breadcrumb-checkout').classList.add('active');
 }
 
 // Handle change shipping address
@@ -322,6 +413,10 @@ function handleChangeShipping() {
     // Hide payment section and pay button
     document.getElementById('payment-section').classList.add('hidden');
     document.getElementById('pay-btn').classList.add('hidden');
+    
+    // Update breadcrumb highlighting - back to shipping
+    document.getElementById('breadcrumb-checkout').classList.remove('active');
+    document.getElementById('breadcrumb-shipping').classList.add('active');
 }
 
 // Handle change carrier
@@ -333,6 +428,10 @@ function handleChangeCarrier() {
     // Hide payment section and pay button
     document.getElementById('payment-section').classList.add('hidden');
     document.getElementById('pay-btn').classList.add('hidden');
+    
+    // Update breadcrumb highlighting - back to shipping
+    document.getElementById('breadcrumb-checkout').classList.remove('active');
+    document.getElementById('breadcrumb-shipping').classList.add('active');
 }
 
 // Load Checkout.com configuration
@@ -346,31 +445,6 @@ async function loadCheckoutConfig() {
     } catch (error) {
         console.error('Failed to load Checkout.com config:', error);
     }
-}
-
-// Initialize Express Payment (Checkout.com Payment Flow)
-// Currently disabled - showing shipping method for all users
-async function initializeExpressPayment() {
-    const expressSection = document.getElementById('express-payment-section');
-    const shippingSection = document.getElementById('shipping-section');
-    const cardPaymentForm = document.getElementById('card-payment-form');
-    
-    // Hide express checkout section for all users
-    if (expressSection) {
-        expressSection.style.display = 'none';
-    }
-    
-    // Show shipping section for all users
-    if (shippingSection) {
-        shippingSection.classList.remove('hidden');
-    }
-    
-    // Show card payment form for all users
-    if (cardPaymentForm) {
-        cardPaymentForm.classList.remove('hidden');
-    }
-    
-    console.log('Express checkout hidden - using shipping method for all users');
 }
 
 // Prefill shipping form from saved data

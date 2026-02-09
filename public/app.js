@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Navigate to new phone case shop (product catalog)
     if (newPhoneCaseBtn) {
         newPhoneCaseBtn.addEventListener('click', function () {
-            window.location.href = '/phone-case-catalog.html';
+            window.location.href = '/all-products.html';
         });
     }
 

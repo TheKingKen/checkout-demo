@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Products - Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-with-gradient">
+<div class="catalog-container">
+    <!-- Header Section with Logo and Action Buttons -->
+    <div class="catalog-header">
+        <img src="https://s3-us-west-2.amazonaws.com/cbi-image-service-prd/original/d62079fa-f245-4611-83c1-2439fe7fa258.png?w=3840" alt="Shop Logo" class="catalog-logo">
+        <div class="catalog-actions-top">
+            <select id="currency-selector" class="currency-selector">
+                <option value="HKD">Hong Kong - HKD</option>
+                <option value="USD">United States - USD</option>
+                <option value="GBP">United Kingdom - GBP</option>
+                <option value="AED">United Arab Emirates - AED</option>
+                <option value="CNY">China - CNY</option>
+                <option value="JPY">Japan - JPY</option>
+                <option value="SGD">Singapore - SGD</option>
+            </select>
+            <button id="login-btn" class="action-btn login-btn">LOGIN</button>
+            <button id="cart-btn" class="action-btn cart-btn">CART</button>
+        </div>
+    </div>
+
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb">
+        <span class="breadcrumb-current" style="color: #333; font-weight: bold;">All Products</span>
+    </div>
+
+    <!-- Category Header -->
+    <div class="category-header">
+        <h2>Shop by Category</h2>
+    </div>
+
+    <!-- Category Cards Grid -->
+    <div class="category-cards-grid">
+        <!-- Clean Phone Case Card -->
+        <div class="category-card" id="phone-case-card">
+            <div class="category-card-image">
+                <svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="30" width="160" height="340" rx="20" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
+                    <rect x="30" y="50" width="140" height="280" rx="15" fill="#0a0a0a"/>
+                    <circle cx="100" cy="360" r="8" fill="#555"/>
+                </svg>
+            </div>
+            <div class="category-card-info">
+                <h3>Clean Phone Case</h3>
+                <p>Premium protective phone cases in various colors and styles</p>
+            </div>
+        </div>
+
+        <!-- Gift Cards Card -->
+        <div class="category-card" id="gift-cards-card">
+            <div class="category-card-image">
+                <svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Gift card representation -->
+                    <rect x="20" y="40" width="160" height="220" rx="10" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+                    <rect x="30" y="55" width="140" height="190" rx="5" fill="#ef5350"/>
+                    
+                    <!-- Gold ribbon decoration -->
+                    <rect x="60" y="30" width="80" height="15" fill="#f1c40f"/>
+                    <circle cx="100" cy="180" r="20" fill="#fff9e6" opacity="0.7"/>
+                    
+                    <!-- Gift card text -->
+                    <text x="100" y="190" font-size="14" font-weight="bold" text-anchor="middle" fill="#fff">GIFT CARD</text>
+                </svg>
+            </div>
+            <div class="category-card-info">
+                <h3>Gift Cards</h3>
+                <p>Perfect gifts for any occasion. Choose amount and send digitally</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Overlay (hidden by default) -->
+    <div id="cart-overlay" class="cart-overlay hidden">
+        <div class="cart-modal">
+            <div class="cart-header">
+                <h3>Shopping Cart</h3>
+                <button id="close-cart-btn" class="close-btn">&times;</button>
+            </div>
+            <div id="cart-items" class="cart-items">
+                <p class="empty-cart-message">Your cart is empty</p>
+            </div>
+            <div class="cart-footer">
+                <button id="checkout-btn" class="checkout-btn">Proceed to Checkout</button>
+                <button id="express-checkout-btn" class="checkout-btn express-checkout-btn" style="display: none;">Express Checkout</button>
+                <div id="flow-container" style="display: none; margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Overlay (hidden by default) -->
+    <div id="login-overlay" class="cart-overlay hidden">
+        <div class="cart-modal">
+            <div class="cart-header">
+                <h3>Login</h3>
+                <button id="close-login-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="login-form-container">
+                <form id="login-form">
+                    <div class="login-form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" value="kenso" required>
+                    </div>
+                    <div class="login-form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" value="12345678" required>
+                    </div>
+                    <button type="submit" id="login-submit-btn" class="checkout-btn">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .category-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        padding: 40px 0;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .category-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-card:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-4px);
+    }
+
+    .category-card-image {
+        width: 100%;
+        height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px;
+    }
+
+    .category-card-image svg {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .category-card-info {
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-card-info h3 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .category-card-info p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+        line-height: 1.5;
+        flex: 1;
+    }
+
+    @media (max-width: 768px) {
+        .category-cards-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+    }
+</style>
+
+<script src="currency-utils.js"></script>
+<script src="all-products-app.js"></script>
+</body>
+</html>
