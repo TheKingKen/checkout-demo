@@ -373,7 +373,7 @@ app.post("/create-payment-sessions", async (req, res) => {
     const { customer, amount, currency, products, country, enable_payment_methods, disable_payment_methods } = req.body;
 
     // Use provided payment methods or default values
-    let enabledMethods = enable_payment_methods || ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
+    let enabledMethods = enable_payment_methods || ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn','tamara', 'octopus'];
     let disabledMethods = disable_payment_methods || [];
 
     console.log('enable payment methods:', enabledMethods);
@@ -610,10 +610,10 @@ app.post("/submit-payment-session", async (req, res) => {
   }
 });
 
-// Process direct payment (for non-logged-in users)
+// Process direct payment
 app.post("/process-payment", async (req, res) => {
   try {
-    const { amount, currency, source, customer, shipping, products } = req.body;
+    const { amount, currency, source, customer, shipping, products, billing } = req.body;
 
     if (!amount || !currency || !source) {
       return res.status(400).json({
@@ -628,20 +628,50 @@ app.post("/process-payment", async (req, res) => {
     console.log('=== Process Direct Payment Request ===');
     console.log(JSON.stringify(req.body, null, 2));
 
+    const productList = Array.isArray(products) ? products : [];
+    const firstProduct = productList[0];
+    const billingAddress = billing?.address || shipping?.address || undefined;
+    const billingPhone = billing?.phone || customer?.phone || shipping?.phone || undefined;
+
     // Construct payment request
     const paymentBody = {
       source: source,
       amount: amount,
       currency: currency,
       reference: `ORDER-${Date.now()}`,
+      description: firstProduct
+        ? `${firstProduct.name}${productList.length > 1 ? ` +${productList.length - 1} more` : ''} (${currency})`
+        : `ORDER-${Date.now()}`,
+      billing_descriptor: {
+        name: customer?.name || 'Customer',
+        city: billingAddress?.city || shipping?.address?.city || 'Unknown'
+      },
       customer: customer,
+      ...(billingAddress && {
+        billing: {
+          address: billingAddress,
+          ...(billingPhone && { phone: billingPhone })
+        }
+      }),
       shipping: shipping,
+      risk: {
+        enabled: true
+      },
+      ...(productList.length > 0 && {
+        items: productList.map(product => ({
+          name: product.name,
+          quantity: product.quantity,
+          unit_price: product.unit_price,
+          reference: product.reference
+        }))
+      }),
+      payment_type: 'Regular',
       processing_channel_id: PROCESSING_CHANNEL_ID,
       success_url: `${baseUrl}/success.html`,
       failure_url: `${baseUrl}/failure.html`,
       metadata: {
-        products_count: products?.length || 0,
-        product_references: products?.map(p => p.reference).join(',') || ''
+        products_count: productList.length,
+        product_references: productList.map(p => p.reference).join(',')
       }
     };
 

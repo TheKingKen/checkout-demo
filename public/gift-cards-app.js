@@ -3,8 +3,16 @@
 // Cart state
 let cart = [];
 
+// Original HKD prices for gift cards
+const GIFT_CARD_PRICES_HKD = {
+    amount100: 100,
+    amount200: 200,
+    amount500: 500,
+    amount1000: 1000
+};
+
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const loginBtn = document.getElementById('login-btn');
     const cartBtn = document.getElementById('cart-btn');
     const closeCartBtn = document.getElementById('close-cart-btn');
@@ -47,15 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
             previewCards.forEach(card => {
                 card.style.backgroundColor = colors[e.target.value];
             });
-        });
-    });
-
-    // Update preview when amount changes
-    amountOptions.forEach(option => {
-        option.addEventListener('change', (e) => {
-            const amount = `$${e.target.value}`;
-            if (previewAmount) previewAmount.textContent = amount;
-            if (previewAmountMobile) previewAmountMobile.textContent = amount;
         });
     });
 
@@ -126,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const userData = {
                 name: 'Ken So',
                 email: 'ken.so@checkout.com',
-                phone_number: '12345678',
+                phone_number: '64416246',
                 phone_country_code: '+852',
                 firstName: 'Ken',
                 lastName: 'So',
@@ -162,10 +161,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const message = document.getElementById('gift-message').value;
 
         // Create gift card item
+        const currency = window.CurrencyUtils.getCurrentCurrency();
+        const convertedPrice = window.CurrencyUtils.convertPrice(amount, currency);
+        const formattedAmount = window.CurrencyUtils.formatPrice(amount, currency);
+        
         const giftCard = {
             id: `gift-card-${Date.now()}`,
-            name: `Gift Card - $${amount}`,
-            price: amount,
+            name: `Gift Card - ${formattedAmount}`,
+            price: convertedPrice,
+            priceHKD: amount,
+            currency: currency,
             quantity: 1,
             image: null,
             type: 'gift-card',  // Mark as digital product
@@ -182,13 +187,14 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('cart', JSON.stringify(cart));
 
         // Show success message
-        alert(`Gift Card ($${amount}) added to cart!`);
+        alert(`Gift Card (${formattedAmount}) added to cart!`);
 
         // Reset form
         giftCardForm.reset();
         charCount.textContent = '0';
-        previewAmount.textContent = '$100';
-        if (previewAmountMobile) previewAmountMobile.textContent = '$100';
+        const defaultFormatted = window.CurrencyUtils.formatPrice(100, currency);
+        previewAmount.textContent = defaultFormatted;
+        if (previewAmountMobile) previewAmountMobile.textContent = defaultFormatted;
         // Reset both desktop and mobile preview cards to red (default)
         previewCards.forEach(card => {
             card.style.backgroundColor = '#e74c3c';
@@ -217,10 +223,81 @@ document.addEventListener('DOMContentLoaded', function () {
     if (expressCheckoutBtn) {
         expressCheckoutBtn.addEventListener('click', handleExpressCheckout);
     }
+
+    // Initialize currency conversion
+    await window.CurrencyUtils.fetchFXRates();
+    updateGiftCardPrices();
 });
+
+// Update gift card prices based on current currency
+function updateGiftCardPrices() {
+    const currency = window.CurrencyUtils.getCurrentCurrency();
+    
+    // Update amount labels
+    const amountLabels = document.querySelectorAll('.amount-label');
+    amountLabels.forEach((label, index) => {
+        const priceKey = ['amount100', 'amount200', 'amount500', 'amount1000'][index];
+        const hkdPrice = GIFT_CARD_PRICES_HKD[priceKey];
+        const formattedPrice = window.CurrencyUtils.formatPrice(hkdPrice, currency);
+        label.textContent = formattedPrice;
+    });
+    
+    // Update preview amounts
+    const selectedAmount = document.querySelector('input[name="amount"]:checked');
+    if (selectedAmount) {
+        const hkdValue = parseFloat(selectedAmount.value);
+        const formattedPrice = window.CurrencyUtils.formatPrice(hkdValue, currency);
+        const previewAmount = document.getElementById('preview-amount');
+        const previewAmountMobile = document.querySelector('.preview-amount-mobile');
+        if (previewAmount) previewAmount.textContent = formattedPrice;
+        if (previewAmountMobile) previewAmountMobile.textContent = formattedPrice;
+    }
+}
+
+// Override amount change handler
+document.addEventListener('DOMContentLoaded', () => {
+    const amountOptions = document.querySelectorAll('input[name="amount"]');
+    amountOptions.forEach(option => {
+        option.addEventListener('change', (e) => {
+            const hkdValue = parseFloat(e.target.value);
+            const currency = window.CurrencyUtils.getCurrentCurrency();
+            const formattedPrice = window.CurrencyUtils.formatPrice(hkdValue, currency);
+            const previewAmount = document.getElementById('preview-amount');
+            const previewAmountMobile = document.querySelector('.preview-amount-mobile');
+            if (previewAmount) previewAmount.textContent = formattedPrice;
+            if (previewAmountMobile) previewAmountMobile.textContent = formattedPrice;
+        });
+    });
+});
+
+// Sync cart items with current currency from sessionStorage
+function syncCartWithCurrentCurrency() {
+    const currentCurrency = window.CurrencyUtils.getCurrentCurrency();
+    
+    cart.forEach(item => {
+        // If item's currency differs from current currency, recalculate
+        if (item.currency !== currentCurrency && item.priceHKD) {
+            const newPrice = window.CurrencyUtils.convertPrice(item.priceHKD, currentCurrency);
+            item.price = newPrice;
+            item.currency = currentCurrency;
+            
+            // Update the item name to reflect new currency
+            const baseName = item.type === 'gift-card' 
+                ? item.name.split(' - ')[0] 
+                : item.name.split(' - ')[0]; // Remove old price from name
+            item.name = `${baseName} - ${currentCurrency} ${newPrice.toFixed(currentCurrency === 'JPY' ? 0 : 2)}`;
+        }
+    });
+    
+    // Save updated cart to localStorage
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
 
 // Update cart display in the overlay
 function updateCartDisplay() {
+    // Sync cart with current currency before displaying
+    syncCartWithCurrentCurrency();
+    
     const cartItemsContainer = document.getElementById('cart-items');
 
     if (cart.length === 0) {
@@ -231,7 +308,11 @@ function updateCartDisplay() {
     let html = '<div class="cart-list">';
 
     cart.forEach((item, index) => {
-        const itemTotal = (item.price * item.quantity).toFixed(2);
+        const itemCurrency = item.currency || 'HKD';
+        const itemTotal = item.price * item.quantity;
+        const formattedPrice = `${itemCurrency} ${item.price.toFixed(itemCurrency === 'JPY' ? 0 : 2)}`;
+        const formattedTotal = `${itemCurrency} ${itemTotal.toFixed(itemCurrency === 'JPY' ? 0 : 2)}`;
+        
         const giftCardDetails = item.type === 'gift-card'
             ? `
                 <p class="cart-item-extra">Design: ${item.design || 'N/A'}</p>
@@ -244,7 +325,7 @@ function updateCartDisplay() {
             <div class="cart-item">
                 <div class="cart-item-details">
                     <p class="cart-item-name">${item.name}</p>
-                    <p class="cart-item-price">$${item.price.toFixed(2)} each</p>
+                    <p class="cart-item-price">${formattedPrice} each</p>
                     ${giftCardDetails}
                 </div>
                 <div class="cart-item-quantity">
@@ -253,33 +334,32 @@ function updateCartDisplay() {
                     <button class="qty-btn plus-btn" onclick="updateQuantity(${index}, 1)">+</button>
                 </div>
                 <div class="cart-item-total">
-                    <p class="item-total">$${itemTotal}</p>
+                    <p class="item-total">${formattedTotal}</p>
                     <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
                 </div>
             </div>
         `;
     });
 
-    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2);
+    let cartTotal = 0;
+    let cartCurrency = cart[0]?.currency || 'HKD';
+    
+    cart.forEach(item => {
+        if (item.currency === cartCurrency) {
+            cartTotal += item.price * item.quantity;
+        }
+    });
+    
+    const formattedCartTotal = `${cartCurrency} ${cartTotal.toFixed(cartCurrency === 'JPY' ? 0 : 2)}`;
 
     html += `
         <div class="cart-summary">
             <p class="summary-label">Total:</p>
-            <p class="summary-total">$${cartTotal}</p>
+            <p class="summary-total">${formattedCartTotal}</p>
         </div>
     </div>`;
 
     cartItemsContainer.innerHTML = html;
-    
-    // Show/hide Express Checkout button based on cart contents
-    const expressCheckoutBtn = document.getElementById('express-checkout-btn');
-    if (expressCheckoutBtn) {
-        if (isCartDigitalOnly()) {
-            expressCheckoutBtn.style.display = 'block';
-        } else {
-            expressCheckoutBtn.style.display = 'none';
-        }
-    }
 }
 
 // Update quantity of cart item
@@ -303,133 +383,359 @@ function removeFromCart(index) {
     updateCartDisplay();
 }
 
+// Resume gift card form after Express Checkout
+function resumeGiftCardForm() {
+    const giftCardForm = document.getElementById('gift-card-form');
+    const addToCartBtn = giftCardForm.querySelector('button[type="submit"]');
+    const expressBtn = document.getElementById('express-checkout-btn');
+    const expressLayout = document.getElementById('gift-express-layout');
+    const mobilePreview = document.querySelector('.mobile-preview');
+    const desktopPreview = document.querySelector('.desktop-preview');
+    
+    // Show form again
+    giftCardForm.style.display = '';
+    if (mobilePreview) mobilePreview.style.display = '';
+    if (desktopPreview) desktopPreview.style.display = '';
+    
+    // Re-enable buttons
+    addToCartBtn.disabled = false;
+    expressBtn.disabled = false;
+    expressBtn.textContent = 'Express Checkout';
+    
+    // Remove express checkout layout
+    if (expressLayout) {
+        expressLayout.remove();
+    }
+}
+
+function collapseGiftOrderSummary() {
+    const orderSummary = document.getElementById('gift-order-summary');
+    const toggleArrow = document.getElementById('gift-toggle-summary');
+    if (!orderSummary || !toggleArrow) return;
+    orderSummary.classList.add('collapsed');
+    toggleArrow.classList.remove('expanded');
+}
+
+function expandGiftOrderSummary() {
+    const orderSummary = document.getElementById('gift-order-summary');
+    const toggleArrow = document.getElementById('gift-toggle-summary');
+    if (!orderSummary || !toggleArrow) return;
+    orderSummary.classList.remove('collapsed');
+    toggleArrow.classList.add('expanded');
+}
+
+function setupGiftOrderSummaryToggle() {
+    const orderSummary = document.getElementById('gift-order-summary');
+    const toggleArrow = document.getElementById('gift-toggle-summary');
+    const summaryHeader = orderSummary ? orderSummary.querySelector('.order-summary-header') : null;
+
+    if (!orderSummary || !toggleArrow) return;
+
+    toggleArrow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (orderSummary.classList.contains('collapsed')) {
+            expandGiftOrderSummary();
+        } else {
+            collapseGiftOrderSummary();
+        }
+    });
+
+    if (summaryHeader) {
+        summaryHeader.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                if (orderSummary.classList.contains('collapsed')) {
+                    expandGiftOrderSummary();
+                } else {
+                    collapseGiftOrderSummary();
+                }
+            }
+        });
+    }
+
+    // Set initial state based on screen width
+    if (window.innerWidth <= 768) {
+        collapseGiftOrderSummary();
+    } else {
+        expandGiftOrderSummary();
+    }
+
+    // Add resize listener to auto-expand on wide screens
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (window.innerWidth > 768) {
+                expandGiftOrderSummary();
+            } else {
+                if (!orderSummary.classList.contains('collapsed')) {
+                    collapseGiftOrderSummary();
+                }
+            }
+        }, 100);
+    });
+}
+
 // Check if cart contains only digital items (gift cards)
 function isCartDigitalOnly() {
     if (cart.length === 0) return false;
     return cart.every(item => item.type === 'gift-card');
 }
 
+// Map currency to country code
+function getCountryFromCurrency(currency) {
+    const currencyToCountry = {
+        'HKD': 'HK',  // Hong Kong
+        'USD': 'US',  // United States
+        'GBP': 'GB',  // United Kingdom
+        'AED': 'AE',  // United Arab Emirates
+        'CNY': 'CN',  // China
+        'JPY': 'JP',  // Japan
+        'SGD': 'SG'   // Singapore
+    };
+    return currencyToCountry[currency] || 'HK'; // Default to HK if not found
+}
+
 // Handle Express Checkout click
 async function handleExpressCheckout() {
     const expressBtn = document.getElementById('express-checkout-btn');
-    const flowContainer = document.getElementById('flow-container');
+    const giftCardForm = document.getElementById('gift-card-form');
+    const formContainer = giftCardForm.parentElement;
+    const addToCartBtn = giftCardForm.querySelector('button[type="submit"]');
     
-    // Transform cart items to Order Summary
-    transformToOrderSummary();
+    // Validate gift card form first
+    if (!giftCardForm.checkValidity()) {
+        giftCardForm.reportValidity();
+        return;
+    }
     
-    // Disable Express Checkout button
+    // Get form data
+    const design = document.querySelector('input[name="design"]:checked').value;
+    const amount = parseFloat(document.querySelector('input[name="amount"]:checked').value);
+    const recipientName = document.getElementById('recipient-name').value;
+    const recipientEmail = document.getElementById('recipient-email').value;
+    const senderName = document.getElementById('sender-name').value;
+    const senderEmail = document.getElementById('sender-email').value;
+    const message = document.getElementById('gift-message').value;
+    
+    // Get current currency and convert amount
+    const currency = window.CurrencyUtils.getCurrentCurrency();
+    const convertedAmount = window.CurrencyUtils.convertPrice(amount, currency);
+    const formattedAmountForItem = window.CurrencyUtils.formatPrice(amount, currency);
+    
+    // Create gift card item
+    const giftCard = {
+        id: `gift-card-${Date.now()}`,
+        name: `Gift Card - ${formattedAmountForItem}`,
+        price: convertedAmount,
+        priceHKD: amount,
+        currency: currency,
+        quantity: 1,
+        image: null,
+        type: 'gift-card',
+        design: design,
+        recipientName: recipientName,
+        recipientEmail: recipientEmail,
+        senderName: senderName,
+        senderEmail: senderEmail,
+        message: message
+    };
+    
+    // Create order summary HTML
+    const colors = {
+        red: '#e74c3c',
+        blue: '#3498db',
+        green: '#27ae60',
+        purple: '#9b59b6'
+    };
+    const designColor = colors[design] || '#667eea';
+    
+    // Format amount with current currency (reuse currency from above)
+    const formattedAmount = window.CurrencyUtils.formatPrice(amount, currency);
+    
+    const orderSummaryHTML = `
+        <div class="order-summary-wrapper-header">
+            <button class="back-arrow-btn gift-summary-back" type="button">← Back to Gift Card Form</button>
+        </div>
+        <div class="gift-express-left">
+            <div id="flow-display" class="gift-flow-container">
+                <p style="text-align: center; padding: 20px;">Loading payment form...</p>
+            </div>
+        </div>
+        <div class="gift-express-right">
+            <div class="order-summary gift-order-summary" id="gift-order-summary">
+                <div class="order-summary-header">
+                    <h2 class="order-summary-title">
+                        Order Summary
+                        <div class="toggle-arrow" id="gift-toggle-summary">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                            </svg>
+                        </div>
+                    </h2>
+                    <div class="order-total-mobile" id="gift-order-total-mobile">${formattedAmount}</div>
+                </div>
+                <div class="order-summary-content" id="gift-order-summary-content">
+                    <div class="order-item">
+                        <div style="background-color: ${designColor}; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border-radius: 8px; flex-shrink: 0; font-size: 28px;">$</div>
+                        <div class="order-item-details">
+                            <div class="order-item-name">Gift Card - ${formattedAmount}</div>
+                            <div class="order-item-price">${formattedAmount}</div>
+                            <div class="order-item-quantity">Quantity: 1</div>
+                            <div class="gift-card-meta">
+                                <div>Design: <strong style="text-transform: capitalize;">${design}</strong></div>
+                                <div>Recipient: <strong>${recipientName}</strong></div>
+                                <div>From: <strong>${senderName}</strong></div>
+                                <div>Recipient Email: <strong>${recipientEmail}</strong></div>
+                                <div>Your Email: <strong>${senderEmail}</strong></div>
+                                ${message ? `<div>Message: <strong>${message}</strong></div>` : ''}
+                            </div>
+                        </div>
+                        <div style="font-weight: 500;">${formattedAmount}</div>
+                    </div>
+                    <div class="order-summary-row total">
+                        <span>Total</span>
+                        <span>${formattedAmount}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Hide form and preview sections
+    giftCardForm.style.display = 'none';
+    const mobilePreview = document.querySelector('.mobile-preview');
+    const desktopPreview = document.querySelector('.desktop-preview');
+    if (mobilePreview) mobilePreview.style.display = 'none';
+    if (desktopPreview) desktopPreview.style.display = 'none';
+    
+    addToCartBtn.disabled = true;
     expressBtn.disabled = true;
     expressBtn.textContent = 'Processing...';
     
-    // Show flow container
-    flowContainer.style.display = 'block';
-    flowContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Loading payment form...</p>';
+    // Remove any existing express checkout layout
+    const existingLayout = document.getElementById('gift-express-layout');
+    if (existingLayout) {
+        existingLayout.remove();
+    }
+    
+    // Insert express checkout layout before form in the container
+    const layout = document.createElement('div');
+    layout.id = 'gift-express-layout';
+    layout.className = 'gift-express-layout';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'order-summary-wrapper';
+    wrapper.innerHTML = orderSummaryHTML;
+    layout.appendChild(wrapper);
+    formContainer.insertBefore(layout, giftCardForm);
+    
+    const backBtn = layout.querySelector('.gift-summary-back');
+    if (backBtn) {
+        backBtn.addEventListener('click', resumeGiftCardForm);
+    }
+    setupGiftOrderSummaryToggle();
     
     try {
+        // Get user data from localStorage if available
+        let customerData = {
+            email: senderEmail,
+            name: senderName,
+            phone_number: '64416246',
+            phone_country_code: '+852'
+        };
+        
+        try {
+            const savedUserData = localStorage.getItem('userShippingAddress');
+            if (savedUserData) {
+                const userData = JSON.parse(savedUserData);
+                if (userData.email) customerData.email = userData.email;
+                if (userData.name) customerData.name = userData.name;
+                if (userData.phone_number) customerData.phone_number = userData.phone_number;
+                if (userData.phone_country_code) customerData.phone_country_code = userData.phone_country_code;
+            }
+        } catch (e) {
+            console.warn('Could not load user data from localStorage:', e);
+        }
+        
+        // Get country code from selected currency
+        const countryCode = getCountryFromCurrency(currency);
+        
+        // Prepare payment session payload
+        const payload = {
+            customer: customerData,
+            amount: Math.round(convertedAmount * 100),
+            currency: currency,
+            products: [{
+                name: giftCard.name,
+                quantity: giftCard.quantity,
+                unit_price: Math.round(convertedAmount * 100),
+                reference: giftCard.id || giftCard.name
+            }],
+            country: countryCode
+        };
+        
+        console.log('Creating payment session with payload:', payload);
+        
         // Call server to create payment session
         const response = await fetch('/create-payment-sessions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                customer: {
-                    email: 'customer@example.com',
-                    name: 'Guest Customer',
-                    phone_number: '12345678',
-                    phone_country_code: '+852'
-                },
-                amount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 100,
-                currency: 'HKD',
-                products: cart.map(item => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: Math.round(item.price * 100)
-                })),
-                country: 'HK',
-                enable_payment_methods: ['card', 'applepay', 'googlepay']
-            })
+            body: JSON.stringify(payload)
         });
         
-        const data = await response.json();
+        const paymentSession = await response.json();
         
-        if (data.error) {
-            throw new Error(data.error);
+        if (!response.ok || paymentSession.error) {
+            throw new Error(paymentSession.error || 'Failed to create payment session');
         }
         
-        // Render Flow component placeholder
-        flowContainer.innerHTML = `
-            <div style="border: 2px dashed #ccc; padding: 40px; text-align: center; border-radius: 8px;">
-                <p style="font-size: 18px; margin-bottom: 20px;">🔒 Checkout.com Payment Flow</p>
-                <p style="color: #666;">Session ID: ${data.sessionId}</p>
-                <p style="color: #999; font-size: 14px; margin-top: 20px;">Flow component would render here</p>
-            </div>
-        `;
+        console.log('Payment session created:', paymentSession);
+        
+        // Get Checkout.com public key
+        const configResponse = await fetch('/api/checkout-config');
+        const config = await configResponse.json();
+        const CHECKOUT_PUBLIC_KEY = config.publicKey;
+        
+        if (!CHECKOUT_PUBLIC_KEY) {
+            throw new Error('Checkout public key not configured');
+        }
+        
+        // Initialize Checkout Flow component
+        const checkout = await CheckoutWebComponents({
+            publicKey: CHECKOUT_PUBLIC_KEY,
+            environment: 'sandbox',
+            locale: 'en-GB',
+            paymentSession,
+            onReady: () => {
+                console.log('Checkout Flow ready');
+            },
+            onPaymentCompleted: (_component, paymentResponse) => {
+                console.log('Payment completed', paymentResponse);
+                
+                // Clear cart after successful payment
+                cart = [];
+                localStorage.setItem('cart', JSON.stringify(cart));
+                
+                setTimeout(() => {
+                    window.location.href = '/success.html';
+                }, 1000);
+            },
+            onError: (component, error) => {
+                console.error('Payment error:', error);
+                alert('Payment error: ' + (error.message || error.reason || 'Unknown error'));
+            }
+        });
+        
+        // Clear container and mount Flow
+        const flowDisplay = document.getElementById('flow-display');
+        flowDisplay.innerHTML = '';
+        const flowComponent = checkout.create('flow');
+        flowComponent.mount(flowDisplay);
     } catch (error) {
         console.error('Express Checkout error:', error);
-        flowContainer.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error: ${error.message}</p>`;
-        expressBtn.disabled = false;
-        expressBtn.textContent = 'Express Checkout';
+        const flowDisplay = document.getElementById('flow-display');
+        if (flowDisplay) {
+            flowDisplay.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error: ${error.message}</p>`;
+        }
+        resumeGiftCardForm();
     }
-}
-
-// Transform cart items to Order Summary (non-editable)
-function transformToOrderSummary() {
-    const cartItemsContainer = document.getElementById('cart-items');
-    
-    let html = '<div class="order-summary-header">';
-    html += '<button class="back-arrow-btn" onclick="resumeCartEditing()" title="Back to Cart">←</button>';
-    html += '<h3 style="margin: 0;">Order Summary</h3>';
-    html += '</div>';
-    html += '<div class="cart-list">';
-    
-    cart.forEach((item) => {
-        const itemTotal = (item.price * item.quantity).toFixed(2);
-        const giftCardDetails = item.type === 'gift-card'
-            ? `
-                <p class="cart-item-extra">Design: ${item.design || 'N/A'}</p>
-                <p class="cart-item-extra">Recipient: ${item.recipientName || 'N/A'}</p>
-                <p class="cart-item-extra">Sender: ${item.senderName || 'N/A'}</p>
-            `
-            : '';
-
-        html += `
-            <div class="cart-item">
-                <div class="cart-item-details">
-                    <p class="cart-item-name">${item.name}</p>
-                    <p class="cart-item-price">$${item.price.toFixed(2)} × ${item.quantity}</p>
-                    ${giftCardDetails}
-                </div>
-                <div class="cart-item-total">
-                    <p class="item-total">$${itemTotal}</p>
-                </div>
-            </div>
-        `;
-    });
-
-    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2);
-    
-    html += `
-        <div class="cart-summary">
-            <p class="summary-label">Total:</p>
-            <p class="summary-total">$${cartTotal}</p>
-        </div>
-    </div>`;
-    
-    cartItemsContainer.innerHTML = html;
-}
-
-// Resume cart editing (remove Order Summary, enable Express Checkout)
-function resumeCartEditing() {
-    const expressBtn = document.getElementById('express-checkout-btn');
-    const flowContainer = document.getElementById('flow-container');
-    
-    // Re-enable Express Checkout button
-    expressBtn.disabled = false;
-    expressBtn.textContent = 'Express Checkout';
-    
-    // Hide flow container
-    flowContainer.style.display = 'none';
-    flowContainer.innerHTML = '';
-    
-    // Restore editable cart display
-    updateCartDisplay();
 }

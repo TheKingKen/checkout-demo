@@ -44,11 +44,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Cart button - show overlay
-    cartBtn.addEventListener('click', () => {
-        cartOverlay.classList.remove('hidden');
-        updateCartDisplay();
-    });
+    // Cart button - show overlay (only if cart button exists)
+    if (cartBtn) {
+        cartBtn.addEventListener('click', () => {
+            cartOverlay.classList.remove('hidden');
+            updateCartDisplay();
+        });
+    }
 
     // Close cart button
     closeCartBtn.addEventListener('click', () => {
@@ -90,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const userData = {
                 name: 'Ken So',
                 email: 'ken.so@checkout.com',
-                phone_number: '12345678',
+                phone_number: '64416246',
                 phone_country_code: '+852',
                 firstName: 'Ken',
                 lastName: 'So',
@@ -138,10 +140,17 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.href = '/checkout.html';
     });
 
-    // Express Checkout button (digital-only)
-    const expressCheckoutBtn = document.getElementById('express-checkout-btn');
-    if (expressCheckoutBtn) {
-        expressCheckoutBtn.addEventListener('click', handleExpressCheckout);
+    // Initialize currency utilities
+    window.CurrencyUtils.fetchFXRates();
+    
+    // Setup currency selector - restore from sessionStorage on page load
+    const currencySelector = document.getElementById('currency-selector');
+    if (currencySelector) {
+        currencySelector.value = window.CurrencyUtils.getCurrentCurrency();
+        currencySelector.addEventListener('change', (e) => {
+            window.CurrencyUtils.setCurrentCurrency(e.target.value);
+            console.log('Currency changed to:', e.target.value);
+        });
     }
 });
 
@@ -196,16 +205,6 @@ function updateCartDisplay() {
     </div>`;
     
     cartItemsContainer.innerHTML = html;
-    
-    // Show/hide Express Checkout button based on cart contents
-    const expressCheckoutBtn = document.getElementById('express-checkout-btn');
-    if (expressCheckoutBtn) {
-        if (isCartDigitalOnly()) {
-            expressCheckoutBtn.style.display = 'block';
-        } else {
-            expressCheckoutBtn.style.display = 'none';
-        }
-    }
 }
 
 // Update quantity of cart item
@@ -233,129 +232,4 @@ function removeFromCart(index) {
 function isCartDigitalOnly() {
     if (cart.length === 0) return false;
     return cart.every(item => item.type === 'gift-card');
-}
-
-// Handle Express Checkout click
-async function handleExpressCheckout() {
-    const expressBtn = document.getElementById('express-checkout-btn');
-    const flowContainer = document.getElementById('flow-container');
-    
-    // Transform cart items to Order Summary
-    transformToOrderSummary();
-    
-    // Disable Express Checkout button
-    expressBtn.disabled = true;
-    expressBtn.textContent = 'Processing...';
-    
-    // Show flow container
-    flowContainer.style.display = 'block';
-    flowContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Loading payment form...</p>';
-    
-    try {
-        // Call server to create payment session
-        const response = await fetch('/create-payment-sessions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                customer: {
-                    email: 'customer@example.com',
-                    name: 'Guest Customer',
-                    phone_number: '12345678',
-                    phone_country_code: '+852'
-                },
-                amount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 100,
-                currency: 'HKD',
-                products: cart.map(item => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: Math.round(item.price * 100)
-                })),
-                country: 'HK',
-                enable_payment_methods: ['card', 'applepay', 'googlepay']
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        // Render Flow component placeholder
-        flowContainer.innerHTML = `
-            <div style="border: 2px dashed #ccc; padding: 40px; text-align: center; border-radius: 8px;">
-                <p style="font-size: 18px; margin-bottom: 20px;">🔒 Checkout.com Payment Flow</p>
-                <p style="color: #666;">Session ID: ${data.sessionId}</p>
-                <p style="color: #999; font-size: 14px; margin-top: 20px;">Flow component would render here</p>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Express Checkout error:', error);
-        flowContainer.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error: ${error.message}</p>`;
-        expressBtn.disabled = false;
-        expressBtn.textContent = 'Express Checkout';
-    }
-}
-
-// Transform cart items to Order Summary (non-editable)
-function transformToOrderSummary() {
-    const cartItemsContainer = document.getElementById('cart-items');
-    
-    let html = '<div class="order-summary-header">';
-    html += '<button class="back-arrow-btn" onclick="resumeCartEditing()" title="Back to Cart">←</button>';
-    html += '<h3 style="margin: 0;">Order Summary</h3>';
-    html += '</div>';
-    html += '<div class="cart-list">';
-    
-    cart.forEach((item) => {
-        const itemTotal = (item.price * item.quantity).toFixed(2);
-        const giftCardDetails = item.type === 'gift-card'
-            ? `
-                <p class="cart-item-extra">Design: ${item.design || 'N/A'}</p>
-                <p class="cart-item-extra">Recipient: ${item.recipientName || 'N/A'}</p>
-                <p class="cart-item-extra">Sender: ${item.senderName || 'N/A'}</p>
-            `
-            : '';
-
-        html += `
-            <div class="cart-item">
-                <div class="cart-item-details">
-                    <p class="cart-item-name">${item.name}</p>
-                    <p class="cart-item-price">$${item.price.toFixed(2)} × ${item.quantity}</p>
-                    ${giftCardDetails}
-                </div>
-                <div class="cart-item-total">
-                    <p class="item-total">$${itemTotal}</p>
-                </div>
-            </div>
-        `;
-    });
-
-    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2);
-    
-    html += `
-        <div class="cart-summary">
-            <p class="summary-label">Total:</p>
-            <p class="summary-total">$${cartTotal}</p>
-        </div>
-    </div>`;
-    
-    cartItemsContainer.innerHTML = html;
-}
-
-// Resume cart editing (remove Order Summary, enable Express Checkout)
-function resumeCartEditing() {
-    const expressBtn = document.getElementById('express-checkout-btn');
-    const flowContainer = document.getElementById('flow-container');
-    
-    // Re-enable Express Checkout button
-    expressBtn.disabled = false;
-    expressBtn.textContent = 'Express Checkout';
-    
-    // Hide flow container
-    flowContainer.style.display = 'none';
-    flowContainer.innerHTML = '';
-    
-    // Restore editable cart display
-    updateCartDisplay();
 }

@@ -29,6 +29,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Handle digital-only checkout
     handleDigitalOnlyCheckout();
+
+    // Show the shipping section for physical-product carts
+    if (!isCartDigitalOnly()) {
+        const shippingSection = document.getElementById('shipping-section');
+        if (shippingSection) {
+            shippingSection.classList.remove('hidden');
+        }
+    }
     
     // Check if mobile and collapse order summary by default
     if (window.innerWidth <= 768) {
@@ -45,6 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isCartDigitalOnly()) {
         prefillShippingForm();
     }
+    
+    // Initialize currency conversion
+    await window.CurrencyUtils.fetchFXRates();
 });
 
 // Load cart from localStorage
@@ -130,23 +141,39 @@ function renderOrderSummary() {
     const container = document.getElementById('order-summary-content');
     const { subtotal, shippingFee, total } = calculateTotals();
     
+    // Use currency stored with cart items (or default to HKD)
+    const currency = cart[0]?.currency || 'HKD';
     let html = '';
     
     // Render cart items
     cart.forEach(item => {
         const itemSubtotal = item.price * item.quantity;
+        const formattedPrice = `${currency} ${item.price.toFixed(currency === 'JPY' ? 0 : 2)}`;
+        const formattedSubtotal = `${currency} ${itemSubtotal.toFixed(currency === 'JPY' ? 0 : 2)}`;
         
         // Handle gift cards
         if (item.type === 'gift-card') {
+            const colors = {
+                red: '#e74c3c',
+                blue: '#3498db',
+                green: '#27ae60',
+                purple: '#9b59b6'
+            };
+            const designColor = colors[item.design] || '#667eea';
             html += `
                 <div class="order-item">
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border-radius: 6px; flex-shrink: 0;">$${item.price.toFixed(0)}</div>
+                    <div style="background-color: ${designColor}; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border-radius: 6px; flex-shrink: 0; font-size: 28px;">$</div>
                     <div class="order-item-details">
                         <div class="order-item-name">${item.name}</div>
-                        <div class="order-item-price">$${item.price.toFixed(2)}</div>
+                        <div class="order-item-price">${formattedPrice}</div>
                         <div class="order-item-quantity">Quantity: ${item.quantity}</div>
+                        <div style="margin-top: 8px; font-size: 0.85rem; color: #666; line-height: 1.5;">
+                            <div>Design: <strong style="text-transform: capitalize; color: #333;">${item.design || 'N/A'}</strong></div>
+                            <div>Recipient: <strong style="color: #333;">${item.recipientName || 'N/A'}</strong></div>
+                            <div>From: <strong style="color: #333;">${item.senderName || 'N/A'}</strong></div>
+                        </div>
                     </div>
-                    <div style="font-weight: 500;">$${itemSubtotal.toFixed(2)}</div>
+                    <div style="font-weight: 500;">${formattedSubtotal}</div>
                 </div>
             `;
         } else {
@@ -155,28 +182,33 @@ function renderOrderSummary() {
                     <img src="${item.image}" alt="${item.name}" class="order-item-image">
                     <div class="order-item-details">
                         <div class="order-item-name">${item.name}</div>
-                        <div class="order-item-price">$${item.price.toFixed(2)}</div>
+                        <div class="order-item-price">${formattedPrice}</div>
                         <div class="order-item-quantity">Quantity: ${item.quantity}</div>
                     </div>
-                    <div style="font-weight: 500;">$${itemSubtotal.toFixed(2)}</div>
+                    <div style="font-weight: 500;">${formattedSubtotal}</div>
                 </div>
             `;
         }
     });
     
+    // Format totals
+    const formattedSubtotal = `${currency} ${subtotal.toFixed(currency === 'JPY' ? 0 : 2)}`;
+    const formattedShippingFee = shippingFee === 0 ? 'Free' : `${currency} ${shippingFee.toFixed(currency === 'JPY' ? 0 : 2)}`;
+    const formattedTotal = `${currency} ${total.toFixed(currency === 'JPY' ? 0 : 2)}`;
+    
     // Add summary rows
     html += `
         <div class="order-summary-row">
             <span>Subtotal</span>
-            <span>$${subtotal.toFixed(2)}</span>
+            <span>${formattedSubtotal}</span>
         </div>
         <div class="order-summary-row">
             <span>Shipping</span>
-            <span id="shipping-fee-display">${shippingFee === 0 ? 'Free' : '$' + shippingFee.toFixed(2)}</span>
+            <span id="shipping-fee-display">${formattedShippingFee}</span>
         </div>
         <div class="order-summary-row total">
             <span>Total</span>
-            <span id="total-amount-display">$${total.toFixed(2)}</span>
+            <span id="total-amount-display">${formattedTotal}</span>
         </div>
     `;
     
@@ -185,7 +217,7 @@ function renderOrderSummary() {
     // Update mobile total display
     const mobileTotalEl = document.getElementById('order-total-mobile');
     if (mobileTotalEl) {
-        mobileTotalEl.textContent = `$${total.toFixed(2)}`;
+        mobileTotalEl.textContent = `${currency} ${total.toFixed(currency === 'JPY' ? 0 : 2)}`;
     }
 }
 
@@ -387,6 +419,12 @@ function handleContinueCheckout() {
     
     // Show payment section
     document.getElementById('payment-section').classList.remove('hidden');
+
+    // Show card form for standard checkout flow
+    const cardForm = document.getElementById('card-payment-form');
+    if (cardForm) {
+        cardForm.classList.remove('hidden');
+    }
     
     // Show pay button
     document.getElementById('pay-btn').classList.remove('hidden');
@@ -478,8 +516,8 @@ function prefillShippingForm() {
 
 // Handle payment submission
 async function handlePayment() {
-    // Validate shipping address
-    if (!shippingAddress) {
+    // Validate shipping address for physical goods
+    if (hasPhysicalProducts() && !shippingAddress) {
         alert('Please select shipping address and carrier first');
         return;
     }
@@ -524,10 +562,26 @@ async function handlePayment() {
         // Parse expiry date
         const [expMonth, expYear] = expiryDate.split('/');
         
-        // Calculate total amount
+        // Use currency and amounts stored with cart items (already converted)
+        const cartCurrency = cart[0]?.currency || 'HKD';
         const { total } = calculateTotals();
         const amountInMinorUnits = Math.round(total * 100);
         
+        const billingAddress = shippingAddress ? {
+            address_line1: shippingAddress.addressLine1,
+            address_line2: shippingAddress.addressLine2,
+            city: shippingAddress.region,
+            country: shippingAddress.country
+        } : undefined;
+
+        // Use stored unit prices (already converted)
+        const products = cart.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            unit_price: Math.round(item.price * 100),
+            reference: item.id || item.name
+        }));
+
         // Prepare payment data
         const paymentData = {
             source: {
@@ -535,30 +589,21 @@ async function handlePayment() {
                 number: cardNumber,
                 expiry_month: parseInt(expMonth),
                 expiry_year: parseInt('20' + expYear),
-                cvv: cvv
+                cvv: cvv,
+                ...(billingAddress && { billing_address: billingAddress })
             },
             amount: amountInMinorUnits,
-            currency: 'HKD',
+            currency: cartCurrency,
             customer: {
                 email: localStorage.getItem('userEmail') || 'customer@example.com',
                 name: cardholderName
             },
-            billing: {
-                address: {
-                    address_line1: shippingAddress.addressLine1,
-                    address_line2: shippingAddress.addressLine2,
-                    city: shippingAddress.region,
-                    country: shippingAddress.country
+            ...(billingAddress && {
+                shipping: {
+                    address: billingAddress
                 }
-            },
-            shipping: {
-                address: {
-                    address_line1: shippingAddress.addressLine1,
-                    address_line2: shippingAddress.addressLine2,
-                    city: shippingAddress.region,
-                    country: shippingAddress.country
-                }
-            },
+            }),
+            products: products,
             reference: `ORDER-${Date.now()}`,
             success_url: `${window.location.origin}/success.html`,
             failure_url: `${window.location.origin}/failure.html`
@@ -580,6 +625,10 @@ async function handlePayment() {
         }
         
         console.log('✅ Payment successful:', result);
+        
+        // Clear cart after successful payment
+        cart = [];
+        localStorage.setItem('cart', JSON.stringify(cart));
         
         // Redirect to success page
         setTimeout(() => {

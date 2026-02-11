@@ -2,7 +2,7 @@
 // Base currency is HKD (Hong Kong Dollar)
 
 // Global currency state
-let currentCurrency = localStorage.getItem('selectedCurrency') || 'HKD';
+let currentCurrency = sessionStorage.getItem('selectedCurrency') || 'HKD';
 let fxRates = {};
 
 // Exchange rates (live rates from exchangerate-api.com or similar)
@@ -68,7 +68,7 @@ function getCurrentCurrency() {
 // Set current currency
 function setCurrentCurrency(currency) {
     currentCurrency = currency;
-    localStorage.setItem('selectedCurrency', currency);
+    sessionStorage.setItem('selectedCurrency', currency);
 }
 
 // Initialize currency selector

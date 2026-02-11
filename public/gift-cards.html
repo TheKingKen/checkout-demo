@@ -12,15 +12,6 @@
     <div class="catalog-header">
         <img src="https://s3-us-west-2.amazonaws.com/cbi-image-service-prd/original/d62079fa-f245-4611-83c1-2439fe7fa258.png?w=3840" alt="Shop Logo" class="catalog-logo">
         <div class="catalog-actions-top">
-            <select id="currency-selector" class="currency-selector">
-                <option value="HKD">Hong Kong - HKD</option>
-                <option value="USD">United States - USD</option>
-                <option value="GBP">United Kingdom - GBP</option>
-                <option value="AED">United Arab Emirates - AED</option>
-                <option value="CNY">China - CNY</option>
-                <option value="JPY">Japan - JPY</option>
-                <option value="SGD">Singapore - SGD</option>
-            </select>
             <button id="login-btn" class="action-btn login-btn">LOGIN</button>
             <button id="cart-btn" class="action-btn cart-btn">CART</button>
         </div>
@@ -36,7 +27,7 @@
     <!-- Category Header -->
     <div class="category-header">
         <h2>Gift Cards</h2>
-        <p>Perfect digital gift for any occasion</p>
+        <p>Perfect digital gift for any occasion. Instantly delivered via email with no shipping fees. Choose your design and amount, then let them pick what they love. Never expires and can be used online anytime.</p>
     </div>
 
     <!-- Preview Section (mobile-first, shown on top) -->
@@ -153,7 +144,11 @@
             <!-- Add to Cart Button -->
             <div class="form-actions">
                 <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+                <button type="button" id="express-checkout-btn" class="express-checkout-btn">Express Checkout</button>
             </div>
+            
+            <!-- Flow Container for Express Checkout -->
+            <div id="flow-container" style="display: none; margin-top: 20px;"></div>
         </form>
 
         <!-- Preview Section (desktop only) -->
@@ -188,8 +183,6 @@
             </div>
             <div class="cart-footer">
                 <button id="checkout-btn" class="checkout-btn">Proceed to Checkout</button>
-                <button id="express-checkout-btn" class="checkout-btn express-checkout-btn" style="display: none;">Express Checkout</button>
-                <div id="flow-container" style="display: none; margin-top: 20px;"></div>
             </div>
         </div>
     </div>
@@ -355,6 +348,7 @@
 
     .form-actions {
         display: flex;
+        flex-direction: column;
         gap: 10px;
         margin-top: 15px;
     }
@@ -374,6 +368,73 @@
 
     .add-to-cart-btn:hover {
         background-color: #555;
+    }
+
+    .gift-express-layout {
+        max-width: 1400px;
+        width: 100%;
+        margin: 20px auto;
+        padding: 0 20px;
+        grid-column: 1 / -1; /* Span all grid columns */
+    }
+
+    .order-summary-wrapper {
+        background: #eef3ff;
+        border: 1px solid #d7e2ff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 6px 18px rgba(24, 106, 254, 0.12);
+        display: flex;
+        flex-direction: row;
+        gap: 32px;
+        flex-wrap: wrap;
+    }
+
+    .order-summary-wrapper-header {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .gift-express-left {
+        flex: 1;
+        min-width: 320px;
+    }
+
+    .gift-express-right {
+        flex: 1;
+        min-width: 320px;
+    }
+
+    .gift-flow-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        min-height: 400px;
+    }
+
+    .gift-order-summary {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .gift-order-summary.collapsed {
+        padding: 16px 24px;
+        cursor: pointer;
+    }
+
+    .gift-card-meta {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #5a6473;
+        line-height: 1.5;
+    }
+
+    .gift-card-meta strong {
+        color: #2b2f36;
+        font-weight: 600;
     }
 
     .gift-card-preview-section {
@@ -459,6 +520,19 @@
             margin: 20px auto;
         }
 
+        .order-summary-wrapper {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .gift-express-right {
+            order: 1;
+        }
+
+        .gift-express-left {
+            order: 2;
+        }
+
         .design-options,
         .amount-options {
             grid-template-columns: repeat(2, 1fr);
@@ -493,6 +567,7 @@
     }
 </style>
 
+<script src="https://checkout-web-components.checkout.com/index.js"></script>
 <script src="currency-utils.js"></script>
 <script src="gift-cards-app.js"></script>
 </body>

@@ -97,13 +97,24 @@ input:focus {
     cursor: not-allowed;
 }
 .express-checkout-btn {
-    background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+    width: 100%;
+    padding: 14px;
+    background-color: #186afe;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
+
 .express-checkout-btn:hover {
-    background: linear-gradient(90deg, #229954 0%, #27ae60 100%);
+    background-color: #0f5fe0;
 }
+
 .express-checkout-btn:disabled {
-    background: #95a5a6;
+    background-color: #9bbcfb;
     cursor: not-allowed;
 }
 .order-summary-header {
