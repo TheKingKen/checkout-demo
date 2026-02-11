@@ -408,12 +408,13 @@ app.post("/create-payment-sessions", async (req, res) => {
       customer: {
         email: customer.email,
         name: customer.name,
-        ...(customer.id && { id: customer.id })  // Include customer.id if provided
+        ...(customer.id && { id: customer.id }),  // Include customer.id if provided
       },
       shipping: {
         address: {
           address_line1: 'Shipping Address',
           country: country || 'HK',
+          city: country || 'Unknown'
         },
         phone: {
           number: customer.phone_number || '',
@@ -424,6 +425,7 @@ app.post("/create-payment-sessions", async (req, res) => {
         address: {
           address_line1: 'Billing Address',
           country: country || 'HK',
+          city: country || 'Unknown'
         },
         phone: {
           number: customer.phone_number || '',
