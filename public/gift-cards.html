@@ -220,6 +220,9 @@
         max-width: 1200px;
         margin: 40px auto;
         padding: 0 20px;
+        position: relative;
+        transition: all 0.5s ease;
+        align-items: start;
     }
 
     .gift-card-form {
@@ -230,6 +233,14 @@
         padding: 30px;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        margin: 0;
+    }
+
+    .gift-card-form.hiding {
+        opacity: 0;
+        transform: translateY(-30px);
+        pointer-events: none;
     }
 
     .form-section h3 {
@@ -371,11 +382,23 @@
     }
 
     .gift-express-layout {
-        max-width: 1400px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
         width: 100%;
-        margin: 20px auto;
         padding: 0 20px;
-        grid-column: 1 / -1; /* Span all grid columns */
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+        pointer-events: none;
+        min-height: 400px;
+    }
+
+    .gift-express-layout.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
     }
 
     .order-summary-wrapper {
@@ -388,6 +411,7 @@
         flex-direction: row;
         gap: 32px;
         flex-wrap: wrap;
+        align-items: flex-start;
     }
 
     .order-summary-wrapper-header {
@@ -398,11 +422,13 @@
     .gift-express-left {
         flex: 1;
         min-width: 320px;
+        align-self: flex-start;
     }
 
     .gift-express-right {
         flex: 1;
         min-width: 320px;
+        align-self: flex-start;
     }
 
     .gift-flow-container {
@@ -418,6 +444,15 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin: 0;
+    }
+
+    .gift-order-summary .order-summary-header {
+        margin-top: 0;
+    }
+
+    .gift-order-summary .order-summary-title {
+        margin-top: 0;
     }
 
     .gift-order-summary.collapsed {
@@ -446,10 +481,18 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        align-self: start;
+    }
+
+    .gift-card-preview-section.hiding {
+        opacity: 0;
+        transform: translateY(-30px);
+        pointer-events: none;
     }
 
     .gift-card-preview-section h3 {
-        margin: 0;
+        margin: 0 0 20px 0;
         font-size: 16px;
         font-weight: 600;
         color: #333;
@@ -502,6 +545,13 @@
     /* Mobile preview shown on top */
     .mobile-preview {
         display: none;
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .mobile-preview.hiding {
+        opacity: 0;
+        transform: translateY(-30px);
+        pointer-events: none;
     }
 
     .desktop-preview {

@@ -404,13 +404,33 @@ function removeFromCart(index) {
 }
 
 // Resume gift card form after Express Checkout
-function resumeGiftCardForm() {
+async function resumeGiftCardForm() {
     const giftCardForm = document.getElementById('gift-card-form');
     const addToCartBtn = giftCardForm.querySelector('button[type="submit"]');
     const expressBtn = document.getElementById('express-checkout-btn');
     const expressLayout = document.getElementById('gift-express-layout');
     const mobilePreview = document.querySelector('.mobile-preview');
     const desktopPreview = document.querySelector('.desktop-preview');
+    const formContainer = giftCardForm.parentElement;
+    
+    // Animate out the express layout first
+    if (expressLayout) {
+        // Remove resize listener if it exists
+        if (expressLayout._resizeHandler) {
+            window.removeEventListener('resize', expressLayout._resizeHandler);
+        }
+        expressLayout.classList.remove('visible');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        expressLayout.remove();
+    }
+    
+    // Reset container height
+    formContainer.style.minHeight = '';
+    
+    // Remove hiding classes from form/preview
+    if (giftCardForm) giftCardForm.classList.remove('hiding');
+    if (mobilePreview) mobilePreview.classList.remove('hiding');
+    if (desktopPreview) desktopPreview.classList.remove('hiding');
     
     // Show form again
     giftCardForm.style.display = '';
@@ -422,11 +442,24 @@ function resumeGiftCardForm() {
     expressBtn.disabled = false;
     const strings = window.CurrencyUtils.getTranslations('gift-cards');
     expressBtn.textContent = strings.expressCheckoutButton || 'Express Checkout';
-    
-    // Remove express checkout layout
-    if (expressLayout) {
-        expressLayout.remove();
-    }
+}
+
+// Animate the fade out of form and preview sections
+function animateCollapseForm(form, mobilePreview, desktopPreview) {
+    return new Promise(resolve => {
+        // Add hiding class to trigger fade-out animations
+        if (form) form.classList.add('hiding');
+        if (mobilePreview) mobilePreview.classList.add('hiding');
+        if (desktopPreview) desktopPreview.classList.add('hiding');
+        
+        // Wait for animation to complete, then hide completely
+        setTimeout(() => {
+            form.style.display = 'none';
+            if (mobilePreview) mobilePreview.style.display = 'none';
+            if (desktopPreview) desktopPreview.style.display = 'none';
+            resolve();
+        }, 400); // Match transition duration
+    });
 }
 
 function collapseGiftOrderSummary() {
@@ -435,6 +468,14 @@ function collapseGiftOrderSummary() {
     if (!orderSummary || !toggleArrow) return;
     orderSummary.classList.add('collapsed');
     toggleArrow.classList.remove('expanded');
+    
+    // Adjust container height after collapse on mobile
+    if (window.innerWidth <= 768) {
+        const layout = document.getElementById('gift-express-layout');
+        if (layout && layout._adjustHeight) {
+            setTimeout(() => layout._adjustHeight(), 300);
+        }
+    }
 }
 
 function expandGiftOrderSummary() {
@@ -443,6 +484,14 @@ function expandGiftOrderSummary() {
     if (!orderSummary || !toggleArrow) return;
     orderSummary.classList.remove('collapsed');
     toggleArrow.classList.add('expanded');
+    
+    // Adjust container height after expansion on mobile
+    if (window.innerWidth <= 768) {
+        const layout = document.getElementById('gift-express-layout');
+        if (layout && layout._adjustHeight) {
+            setTimeout(() => layout._adjustHeight(), 300);
+        }
+    }
 }
 
 function setupGiftOrderSummaryToggle() {
@@ -581,6 +630,23 @@ async function handleExpressCheckout() {
     // Format amount with current currency (reuse currency from above)
     const formattedAmount = window.CurrencyUtils.formatPrice(amount, currency);
     
+    // Disable buttons immediately
+    addToCartBtn.disabled = true;
+    expressBtn.disabled = true;
+    expressBtn.textContent = strings.expressProcessing || 'Processing...';
+    
+    // Get references to elements to animate
+    const mobilePreview = document.querySelector('.mobile-preview');
+    const desktopPreview = document.querySelector('.desktop-preview');
+    
+    // Lock the container's current height to prevent collapse flash
+    const currentHeight = formContainer.offsetHeight;
+    formContainer.style.minHeight = `${currentHeight}px`;
+    
+    // Animate collapse of form and preview sections (non-blocking, starts immediately)
+    animateCollapseForm(giftCardForm, mobilePreview, desktopPreview);
+    
+    // Create order summary HTML
     const orderSummaryHTML = `
         <div class="order-summary-wrapper-header">
             <button class="back-arrow-btn gift-summary-back" type="button">← ${strings.expressBack || 'Back to Gift Card Form'}</button>
@@ -630,24 +696,13 @@ async function handleExpressCheckout() {
         </div>
     `;
     
-    // Hide form and preview sections
-    giftCardForm.style.display = 'none';
-    const mobilePreview = document.querySelector('.mobile-preview');
-    const desktopPreview = document.querySelector('.desktop-preview');
-    if (mobilePreview) mobilePreview.style.display = 'none';
-    if (desktopPreview) desktopPreview.style.display = 'none';
-    
-    addToCartBtn.disabled = true;
-    expressBtn.disabled = true;
-    expressBtn.textContent = strings.expressProcessing || 'Processing...';
-    
     // Remove any existing express checkout layout
     const existingLayout = document.getElementById('gift-express-layout');
     if (existingLayout) {
         existingLayout.remove();
     }
     
-    // Insert express checkout layout before form in the container
+    // Insert express checkout layout inside the form container (as absolute positioned overlay)
     const layout = document.createElement('div');
     layout.id = 'gift-express-layout';
     layout.className = 'gift-express-layout';
@@ -655,7 +710,41 @@ async function handleExpressCheckout() {
     wrapper.className = 'order-summary-wrapper';
     wrapper.innerHTML = orderSummaryHTML;
     layout.appendChild(wrapper);
-    formContainer.insertBefore(layout, giftCardForm);
+    formContainer.appendChild(layout);
+    
+    // Adjust container height to fit the express layout
+    // Wait for layout to be added to DOM so we can measure it
+    const adjustContainerHeight = () => {
+        requestAnimationFrame(() => {
+            // Use a timeout to ensure the layout has fully rendered
+            setTimeout(() => {
+                const layoutHeight = layout.scrollHeight;
+                // Add some buffer for mobile screens
+                const buffer = window.innerWidth <= 768 ? 50 : 0;
+                formContainer.style.minHeight = `${layoutHeight + buffer}px`;
+            }, 10);
+        });
+    };
+    
+    // Initial height adjustment
+    adjustContainerHeight();
+    
+    // Trigger the fade-in animation
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            layout.classList.add('visible');
+        });
+    });
+    
+    // Store the adjustment function for later use
+    layout._adjustHeight = adjustContainerHeight;
+    
+    // Add resize listener to adjust height when screen size changes
+    const resizeHandler = () => {
+        adjustContainerHeight();
+    };
+    window.addEventListener('resize', resizeHandler);
+    layout._resizeHandler = resizeHandler;
     
     const backBtn = layout.querySelector('.gift-summary-back');
     if (backBtn) {
@@ -737,6 +826,11 @@ async function handleExpressCheckout() {
             paymentSession,
             onReady: () => {
                 console.log('Checkout Flow ready');
+                // Adjust container height after Flow is fully loaded
+                const layout = document.getElementById('gift-express-layout');
+                if (layout && layout._adjustHeight) {
+                    setTimeout(() => layout._adjustHeight(), 500);
+                }
             },
             onPaymentCompleted: (_component, paymentResponse) => {
                 console.log('Payment completed', paymentResponse);
@@ -765,6 +859,11 @@ async function handleExpressCheckout() {
         const flowDisplay = document.getElementById('flow-display');
         if (flowDisplay) {
             flowDisplay.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error: ${error.message}</p>`;
+        }
+        // Clean up resize listener before resuming
+        const layout = document.getElementById('gift-express-layout');
+        if (layout && layout._resizeHandler) {
+            window.removeEventListener('resize', layout._resizeHandler);
         }
         resumeGiftCardForm();
     }

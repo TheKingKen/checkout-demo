@@ -73,6 +73,30 @@
                 <p data-i18n="categoryGiftDesc">Perfect gifts for any occasion. Choose amount and send digitally</p>
             </div>
         </div>
+
+        <!-- Tickets Card -->
+        <div class="category-card" id="tickets-card">
+            <div class="category-card-image">
+                <svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ticket representation -->
+                    <rect x="30" y="80" width="140" height="140" rx="8" fill="#667eea" stroke="#5568d3" stroke-width="2"/>
+                    <rect x="40" y="95" width="120" height="110" rx="4" fill="#764ba2"/>
+                    
+                    <!-- Ticket perforation effect -->
+                    <circle cx="30" cy="150" r="8" fill="#f5f7fa"/>
+                    <circle cx="170" cy="150" r="8" fill="#f5f7fa"/>
+                    <line x1="30" y1="150" x2="170" y2="150" stroke="#f5f7fa" stroke-width="2" stroke-dasharray="5,5"/>
+                    
+                    <!-- Ticket text -->
+                    <text x="100" y="135" font-size="16" font-weight="bold" text-anchor="middle" fill="#fff">TICKET</text>
+                    <text x="100" y="160" font-size="10" text-anchor="middle" fill="#f1c40f">★ EVENT ★</text>
+                </svg>
+            </div>
+            <div class="category-card-info">
+                <h3 data-i18n="categoryTicketsTitle">Tickets</h3>
+                <p data-i18n="categoryTicketsDesc">Tickets for concerts, sports events, cultural activities and more</p>
+            </div>
+        </div>
     </div>
 
     <!-- Cart Overlay (hidden by default) -->
@@ -121,7 +145,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 30px;
-        padding: 40px 0;
+        padding: 40px 20px;
         max-width: 1200px;
         margin: 0 auto;
     }

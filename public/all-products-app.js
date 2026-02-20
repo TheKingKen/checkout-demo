@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('login-form');
     const phoneCaseCard = document.getElementById('phone-case-card');
     const giftCardsCard = document.getElementById('gift-cards-card');
+    const ticketsCard = document.getElementById('tickets-card');
 
     // Check if coming from index page and clear cart if so
     const urlParams = new URLSearchParams(window.location.search);
@@ -171,6 +172,25 @@ document.addEventListener('DOMContentLoaded', function () {
             window.CurrencyUtils.applyTranslations('all-products');
             updateLoginButtonLabel();
             console.log('Currency changed to:', e.target.value);
+        });
+    }
+    
+    // Navigation handlers for category cards
+    if (phoneCaseCard) {
+        phoneCaseCard.addEventListener('click', () => {
+            window.location.href = '/phone-case-catalog.html';
+        });
+    }
+    
+    if (giftCardsCard) {
+        giftCardsCard.addEventListener('click', () => {
+            window.location.href = '/gift-cards.html';
+        });
+    }
+    
+    if (ticketsCard) {
+        ticketsCard.addEventListener('click', () => {
+            window.location.href = '/tickets.html';
         });
     }
 });
