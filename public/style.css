@@ -60,7 +60,7 @@ form {
     color: #3c4858;
     font-size: 1em;
 }
-input[type="text"], input[type="email"] {
+input[type="text"], input[type="email"], input[type="password"] {
     width: 100%;
     padding: .55em;
     border: 1px solid #d5dbe2;
@@ -257,7 +257,7 @@ footer {
 /* Form-specific controls and utilities (from insurance-form) */
 label { display: block; color: #333; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
 .form-group { margin-bottom: 24px; }
-input[type="text"], input[type="email"], input[type="tel"] {
+input[type="text"], input[type="email"], input[type="tel"], input[type="password"] {
     width: 100%;
     padding: 12px 14px;
     border: 2px solid #e0e0e0;
@@ -266,7 +266,7 @@ input[type="text"], input[type="email"], input[type="tel"] {
     font-family: inherit;
     transition: border-color 0.3s ease;
 }
-input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus {
+input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="password"]:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -398,6 +398,107 @@ input::placeholder { color: #aaa; }
     border-color: #667eea;
     box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
     transform: translateY(-4px);
+}
+
+#phone-case-btn,
+#insurance-btn {
+    background: #f5f5f5;
+    border-color: #d0d0d0;
+}
+
+#phone-case-btn:hover,
+#insurance-btn:hover {
+    background: #eee;
+    border-color: #bbb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+#new-phone-case-btn {
+    background: white;
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+#new-phone-case-btn:hover {
+    border-color: #5568d3;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1400;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 420px;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modal-content h2 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    color: #23272f;
+}
+
+.modal-subtitle {
+    margin: 0 0 18px 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal-field label {
+    margin-bottom: 6px;
+}
+
+.modal-error {
+    min-height: 18px;
+    color: #b81736;
+    font-size: 13px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    border-radius: 8px;
+    padding: 10px 16px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.modal-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+}
+
+.modal-btn.secondary {
+    background: #f3f4f6;
+    color: #333;
 }
 
 .btn-title {

@@ -20,7 +20,7 @@
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M17 2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H7V4h10v16zm-1-9h-3V8h-2v3H8v2h3v3h2v-3h3v-2z"/>
                 </svg>
-                <span class="shop-name">iPhone Case Shop</span>
+                <span class="shop-name" data-i18n="shopName">iPhone Case Shop</span>
             </div>
         </div>
     </div>
@@ -28,11 +28,11 @@
     <!-- Breadcrumb Navigation -->
     <div class="breadcrumb-container">
         <nav class="breadcrumb">
-            <a href="#" class="breadcrumb-item" id="breadcrumb-cart">Cart</a>
+            <a href="#" class="breadcrumb-item" id="breadcrumb-cart" data-i18n="breadcrumbCart">Cart</a>
             <span class="breadcrumb-separator">›</span>
-            <a href="#" class="breadcrumb-item active" id="breadcrumb-shipping">Shipping</a>
+            <a href="#" class="breadcrumb-item active" id="breadcrumb-shipping" data-i18n="breadcrumbShipping">Shipping</a>
             <span class="breadcrumb-separator">›</span>
-            <a href="#" class="breadcrumb-item" id="breadcrumb-checkout">Checkout</a>
+            <a href="#" class="breadcrumb-item" id="breadcrumb-checkout" data-i18n="breadcrumbCheckout">Checkout</a>
         </nav>
     </div>
 
@@ -42,33 +42,33 @@
         <div class="checkout-left">
             <!-- Shipping Address Section -->
             <div class="checkout-section hidden" id="shipping-section">
-                <div class="section-header">Shipping Address</div>
+                <div class="section-header" data-i18n="shippingAddressTitle">Shipping Address</div>
                 <div class="section-content" id="shipping-form-content">
                     <form id="shipping-form">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="first-name">First Name</label>
+                                <label for="first-name" data-i18n="firstNameLabel">First Name</label>
                                 <input type="text" id="first-name" name="first-name" required>
                             </div>
                             <div class="form-group">
-                                <label for="last-name">Last Name</label>
+                                <label for="last-name" data-i18n="lastNameLabel">Last Name</label>
                                 <input type="text" id="last-name" name="last-name" required>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="address-line1">Address Line 1</label>
+                            <label for="address-line1" data-i18n="address1Label">Address Line 1</label>
                             <input type="text" id="address-line1" name="address-line1" required>
                         </div>
                         <div class="form-group">
-                            <label for="address-line2">Address Line 2</label>
+                            <label for="address-line2" data-i18n="address2Label">Address Line 2</label>
                             <input type="text" id="address-line2" name="address-line2">
                         </div>
                         <div class="form-group">
-                            <label for="region">Region</label>
+                            <label for="region" data-i18n="regionLabel">Region</label>
                             <input type="text" id="region" name="region" required>
                         </div>
                         <div class="form-group">
-                            <label for="country">Country</label>
+                            <label for="country" data-i18n="countryLabel">Country</label>
                             <select id="country" name="country" required>
                                 <option value="HK" selected>Hong Kong</option>
                                 <option value="US">United States</option>
@@ -79,62 +79,62 @@
                                 <option value="SG">Singapore</option>
                             </select>
                         </div>
-                        <button type="button" class="btn-primary" id="choose-carrier-btn">Choose a Shipping Carrier</button>
+                        <button type="button" class="btn-primary" id="choose-carrier-btn" data-i18n="chooseCarrierButton">Choose a Shipping Carrier</button>
                     </form>
                 </div>
                 <div class="section-collapsed-content" id="shipping-collapsed">
                     <div id="shipping-address-display"></div>
-                    <button class="change-btn" id="change-shipping-btn">Change</button>
+                    <button class="change-btn" id="change-shipping-btn" data-i18n="changeButton">Change</button>
                 </div>
             </div>
 
             <!-- Shipping Carrier Section (Hidden Initially) -->
             <div class="checkout-section hidden" id="carrier-section">
-                <div class="section-header">Shipping Carrier</div>
+                <div class="section-header" data-i18n="shippingCarrierTitle">Shipping Carrier</div>
                 <div class="section-content" id="carrier-content">
                     <div class="shipping-option selected" data-carrier="regular" data-fee="0">
                         <input type="radio" name="carrier" value="regular" checked>
                         <div class="shipping-option-details">
-                            <div class="shipping-option-name">Regular Carrier</div>
-                            <div class="shipping-option-price">Free</div>
+                            <div class="shipping-option-name" data-i18n="regularCarrier">Regular Carrier</div>
+                            <div class="shipping-option-price" data-i18n="freeLabel">Free</div>
                         </div>
                     </div>
                     <div class="shipping-option" data-carrier="express" data-fee="40">
                         <input type="radio" name="carrier" value="express">
                         <div class="shipping-option-details">
-                            <div class="shipping-option-name">Express Carrier</div>
+                            <div class="shipping-option-name" data-i18n="expressCarrier">Express Carrier</div>
                             <div class="shipping-option-price">$40</div>
                         </div>
                     </div>
-                    <button type="button" class="btn-primary" id="continue-checkout-btn">Continue Checkout</button>
+                    <button type="button" class="btn-primary" id="continue-checkout-btn" data-i18n="continueCheckout">Continue Checkout</button>
                 </div>
                 <div class="section-collapsed-content" id="carrier-collapsed">
                     <div id="carrier-display"></div>
-                    <button class="change-btn" id="change-carrier-btn">Change</button>
+                    <button class="change-btn" id="change-carrier-btn" data-i18n="changeButton">Change</button>
                 </div>
             </div>
 
             <!-- Payment Section (Hidden Initially) -->
             <div class="checkout-section hidden" id="payment-section">
-                <div class="section-header">Payment</div>
+                <div class="section-header" data-i18n="paymentTitle">Payment</div>
                 <div class="section-content" id="payment-content">
                     <!-- Card payment form for non-logged-in users -->
                     <form id="card-payment-form" class="hidden">
                         <div class="form-group">
-                            <label for="card-number">Card Number</label>
+                            <label for="card-number" data-i18n="cardNumberLabel">Card Number</label>
                             <input type="text" id="card-number" name="card-number" placeholder="1234 5678 9012 3456" maxlength="19" required>
                         </div>
                         <div class="form-group">
-                            <label for="cardholder-name">Cardholder Name</label>
+                            <label for="cardholder-name" data-i18n="cardholderLabel">Cardholder Name</label>
                             <input type="text" id="cardholder-name" name="cardholder-name" required>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="expiry-date">Expiry Date (MM/YY)</label>
+                                <label for="expiry-date" data-i18n="expiryLabel">Expiry Date (MM/YY)</label>
                                 <input type="text" id="expiry-date" name="expiry-date" placeholder="MM/YY" maxlength="5" required>
                             </div>
                             <div class="form-group">
-                                <label for="cvv">CVV</label>
+                                <label for="cvv" data-i18n="cvvLabel">CVV</label>
                                 <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" required>
                             </div>
                         </div>
@@ -143,7 +143,7 @@
             
 
                 <!-- Pay Button (Hidden Initially) -->
-                <button type="button" class="btn-primary hidden" id="pay-btn">Pay</button>
+                <button type="button" class="btn-primary hidden" id="pay-btn" data-i18n="payButton">Pay</button>
             </div>
         </div>
 
@@ -152,7 +152,7 @@
             <div class="order-summary" id="order-summary">
                 <div class="order-summary-header">
                     <h2 class="order-summary-title">
-                        Order Summary
+                        <span data-i18n="orderSummaryTitle">Order Summary</span>
                         <div class="toggle-arrow" id="toggle-summary">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>

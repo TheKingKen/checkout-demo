@@ -21,6 +21,9 @@ function hasPhysicalProducts() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
+    window.CurrencyUtils.ensureTranslations();
+    window.CurrencyUtils.applyTranslations('checkout');
+
     // Load cart from localStorage
     loadCart();
     
@@ -95,15 +98,17 @@ function handleDigitalOnlyCheckout() {
         const cardForm = document.getElementById('card-payment-form');
         
         if (paymentSection) {
+            const strings = window.CurrencyUtils.getTranslations('checkout');
+            const digitalTitle = strings.digitalTitle || 'Digital Gift Card';
+            const digitalBody = strings.digitalBody || 'This is a digital gift card. No shipping address is required. You will receive a delivery confirmation via email.';
             // Add digital goods message
             const digitalMessage = document.createElement('div');
             digitalMessage.className = 'digital-goods-message';
             digitalMessage.innerHTML = `
                 <div style="background-color: #f0f8ff; border: 1px solid #87ceeb; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
                     <p style="margin: 0; color: #333;">
-                        <strong>💻 Digital Gift Card</strong><br/>
-                        This is a digital gift card. No shipping address is required. 
-                        You will receive a delivery confirmation via email.
+                        <strong>💻 ${digitalTitle}</strong><br/>
+                        ${digitalBody}
                     </p>
                 </div>
             `;
@@ -140,6 +145,7 @@ function calculateTotals() {
 function renderOrderSummary() {
     const container = document.getElementById('order-summary-content');
     const { subtotal, shippingFee, total } = calculateTotals();
+    const strings = window.CurrencyUtils.getTranslations('checkout');
     
     // Use currency stored with cart items (or default to HKD)
     const currency = cart[0]?.currency || 'HKD';
@@ -166,11 +172,11 @@ function renderOrderSummary() {
                     <div class="order-item-details">
                         <div class="order-item-name">${item.name}</div>
                         <div class="order-item-price">${formattedPrice}</div>
-                        <div class="order-item-quantity">Quantity: ${item.quantity}</div>
+                        <div class="order-item-quantity">${strings.quantityLabel || 'Quantity'}: ${item.quantity}</div>
                         <div style="margin-top: 8px; font-size: 0.85rem; color: #666; line-height: 1.5;">
-                            <div>Design: <strong style="text-transform: capitalize; color: #333;">${item.design || 'N/A'}</strong></div>
-                            <div>Recipient: <strong style="color: #333;">${item.recipientName || 'N/A'}</strong></div>
-                            <div>From: <strong style="color: #333;">${item.senderName || 'N/A'}</strong></div>
+                            <div>${strings.designLabel || 'Design'}: <strong style="text-transform: capitalize; color: #333;">${item.design || 'N/A'}</strong></div>
+                            <div>${strings.recipientLabel || 'Recipient'}: <strong style="color: #333;">${item.recipientName || 'N/A'}</strong></div>
+                            <div>${strings.fromLabel || 'From'}: <strong style="color: #333;">${item.senderName || 'N/A'}</strong></div>
                         </div>
                     </div>
                     <div style="font-weight: 500;">${formattedSubtotal}</div>
@@ -183,7 +189,7 @@ function renderOrderSummary() {
                     <div class="order-item-details">
                         <div class="order-item-name">${item.name}</div>
                         <div class="order-item-price">${formattedPrice}</div>
-                        <div class="order-item-quantity">Quantity: ${item.quantity}</div>
+                        <div class="order-item-quantity">${strings.quantityLabel || 'Quantity'}: ${item.quantity}</div>
                     </div>
                     <div style="font-weight: 500;">${formattedSubtotal}</div>
                 </div>
@@ -193,21 +199,21 @@ function renderOrderSummary() {
     
     // Format totals
     const formattedSubtotal = `${currency} ${subtotal.toFixed(currency === 'JPY' ? 0 : 2)}`;
-    const formattedShippingFee = shippingFee === 0 ? 'Free' : `${currency} ${shippingFee.toFixed(currency === 'JPY' ? 0 : 2)}`;
+    const formattedShippingFee = shippingFee === 0 ? (strings.freeLabel || 'Free') : `${currency} ${shippingFee.toFixed(currency === 'JPY' ? 0 : 2)}`;
     const formattedTotal = `${currency} ${total.toFixed(currency === 'JPY' ? 0 : 2)}`;
     
     // Add summary rows
     html += `
         <div class="order-summary-row">
-            <span>Subtotal</span>
+            <span>${strings.subtotalLabel || 'Subtotal'}</span>
             <span>${formattedSubtotal}</span>
         </div>
         <div class="order-summary-row">
-            <span>Shipping</span>
+            <span>${strings.shippingLabel || 'Shipping'}</span>
             <span id="shipping-fee-display">${formattedShippingFee}</span>
         </div>
         <div class="order-summary-row total">
-            <span>Total</span>
+            <span>${strings.totalLabel || 'Total'}</span>
             <span id="total-amount-display">${formattedTotal}</span>
         </div>
     `;

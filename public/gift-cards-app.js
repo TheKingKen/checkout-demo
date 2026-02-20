@@ -36,11 +36,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         cart = JSON.parse(savedCart);
     }
 
-    // Check if user is already logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (isLoggedIn) {
-        loginBtn.textContent = 'LOGOUT';
+    window.CurrencyUtils.ensureTranslations();
+    window.CurrencyUtils.applyTranslations('gift-cards');
+
+    function getGiftCardStrings() {
+        return window.CurrencyUtils.getTranslations('gift-cards');
     }
+
+    function updateLoginButtonLabel() {
+        const strings = getGiftCardStrings();
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        loginBtn.textContent = isLoggedIn ? (strings.logoutButton || 'LOGOUT') : (strings.loginButton || 'LOGIN');
+    }
+
+    // Check if user is already logged in
+    updateLoginButtonLabel();
 
     // Update preview when design changes
     designOptions.forEach(option => {
@@ -71,8 +81,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Logout
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userShippingAddress');
-            loginBtn.textContent = 'LOGIN';
-            alert('Logged out successfully');
+            updateLoginButtonLabel();
+            alert(getGiftCardStrings().alertLoggedOut || 'Logged out successfully');
         } else {
             // Show login overlay
             loginOverlay.classList.remove('hidden');
@@ -137,13 +147,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             localStorage.setItem('userShippingAddress', JSON.stringify(userData));
             
             // Update login button text
-            loginBtn.textContent = 'LOGOUT';
+            updateLoginButtonLabel();
             
             // Close login overlay
             loginOverlay.classList.add('hidden');
             
             // Show success message
-            alert('Login successful!');
+            alert(getGiftCardStrings().alertLoginSuccess || 'Login successful!');
         }
     });
 
@@ -165,9 +175,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         const convertedPrice = window.CurrencyUtils.convertPrice(amount, currency);
         const formattedAmount = window.CurrencyUtils.formatPrice(amount, currency);
         
+        const strings = getGiftCardStrings();
+        const giftCardName = strings.giftCardName || 'Gift Card';
         const giftCard = {
             id: `gift-card-${Date.now()}`,
-            name: `Gift Card - ${formattedAmount}`,
+            name: `${giftCardName} - ${formattedAmount}`,
             price: convertedPrice,
             priceHKD: amount,
             currency: currency,
@@ -187,7 +199,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         localStorage.setItem('cart', JSON.stringify(cart));
 
         // Show success message
-        alert(`Gift Card (${formattedAmount}) added to cart!`);
+        const prefix = strings.giftCardAddedPrefix || 'Gift Card (';
+        const suffix = strings.giftCardAddedSuffix || ') added to cart!';
+        alert(`${prefix}${formattedAmount}${suffix}`);
 
         // Reset form
         giftCardForm.reset();
@@ -204,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Checkout button
     checkoutBtn.addEventListener('click', () => {
         if (cart.length === 0) {
-            alert('Your cart is empty');
+            alert(getGiftCardStrings().alertCartEmpty || 'Your cart is empty');
             return;
         }
         
@@ -273,19 +287,23 @@ document.addEventListener('DOMContentLoaded', () => {
 // Sync cart items with current currency from sessionStorage
 function syncCartWithCurrentCurrency() {
     const currentCurrency = window.CurrencyUtils.getCurrentCurrency();
+    const strings = window.CurrencyUtils.getTranslations('gift-cards');
+    const giftCardName = strings.giftCardName || 'Gift Card';
     
     cart.forEach(item => {
-        // If item's currency differs from current currency, recalculate
-        if (item.currency !== currentCurrency && item.priceHKD) {
+        if (item.priceHKD) {
             const newPrice = window.CurrencyUtils.convertPrice(item.priceHKD, currentCurrency);
             item.price = newPrice;
             item.currency = currentCurrency;
-            
-            // Update the item name to reflect new currency
-            const baseName = item.type === 'gift-card' 
-                ? item.name.split(' - ')[0] 
-                : item.name.split(' - ')[0]; // Remove old price from name
-            item.name = `${baseName} - ${currentCurrency} ${newPrice.toFixed(currentCurrency === 'JPY' ? 0 : 2)}`;
+            const formattedAmount = window.CurrencyUtils.formatPrice(item.priceHKD, currentCurrency);
+
+            // Update the item name to reflect current locale and currency
+            if (item.type === 'gift-card') {
+                item.name = `${giftCardName} - ${formattedAmount}`;
+            } else {
+                const baseName = item.name.split(' - ')[0];
+                item.name = `${baseName} - ${formattedAmount}`;
+            }
         }
     });
     
@@ -301,7 +319,8 @@ function updateCartDisplay() {
     const cartItemsContainer = document.getElementById('cart-items');
 
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p class="empty-cart-message">Your cart is empty</p>';
+        const strings = window.CurrencyUtils.getTranslations('gift-cards');
+        cartItemsContainer.innerHTML = `<p class="empty-cart-message">${strings.emptyCart || 'Your cart is empty'}</p>`;
         return;
     }
 
@@ -310,14 +329,15 @@ function updateCartDisplay() {
     cart.forEach((item, index) => {
         const itemCurrency = item.currency || 'HKD';
         const itemTotal = item.price * item.quantity;
+        const strings = window.CurrencyUtils.getTranslations('gift-cards');
         const formattedPrice = `${itemCurrency} ${item.price.toFixed(itemCurrency === 'JPY' ? 0 : 2)}`;
         const formattedTotal = `${itemCurrency} ${itemTotal.toFixed(itemCurrency === 'JPY' ? 0 : 2)}`;
         
         const giftCardDetails = item.type === 'gift-card'
             ? `
-                <p class="cart-item-extra">Design: ${item.design || 'N/A'}</p>
-                <p class="cart-item-extra">Recipient: ${item.recipientName || 'N/A'}</p>
-                <p class="cart-item-extra">Sender: ${item.senderName || 'N/A'}</p>
+                <p class="cart-item-extra">${strings.designLabel || 'Design'}: ${item.design || 'N/A'}</p>
+                <p class="cart-item-extra">${strings.recipientLabel || 'Recipient'}: ${item.recipientName || 'N/A'}</p>
+                <p class="cart-item-extra">${strings.senderLabel || 'Sender'}: ${item.senderName || 'N/A'}</p>
             `
             : '';
 
@@ -325,7 +345,7 @@ function updateCartDisplay() {
             <div class="cart-item">
                 <div class="cart-item-details">
                     <p class="cart-item-name">${item.name}</p>
-                    <p class="cart-item-price">${formattedPrice} each</p>
+                    <p class="cart-item-price">${formattedPrice} ${strings.eachLabel || 'each'}</p>
                     ${giftCardDetails}
                 </div>
                 <div class="cart-item-quantity">
@@ -335,7 +355,7 @@ function updateCartDisplay() {
                 </div>
                 <div class="cart-item-total">
                     <p class="item-total">${formattedTotal}</p>
-                    <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
+                    <button class="remove-btn" onclick="removeFromCart(${index})">${strings.removeButton || 'Remove'}</button>
                 </div>
             </div>
         `;
@@ -354,7 +374,7 @@ function updateCartDisplay() {
 
     html += `
         <div class="cart-summary">
-            <p class="summary-label">Total:</p>
+            <p class="summary-label">${(window.CurrencyUtils.getTranslations('gift-cards').totalLabel || 'Total')}:</p>
             <p class="summary-total">${formattedCartTotal}</p>
         </div>
     </div>`;
@@ -400,7 +420,8 @@ function resumeGiftCardForm() {
     // Re-enable buttons
     addToCartBtn.disabled = false;
     expressBtn.disabled = false;
-    expressBtn.textContent = 'Express Checkout';
+    const strings = window.CurrencyUtils.getTranslations('gift-cards');
+    expressBtn.textContent = strings.expressCheckoutButton || 'Express Checkout';
     
     // Remove express checkout layout
     if (expressLayout) {
@@ -501,6 +522,7 @@ async function handleExpressCheckout() {
     const giftCardForm = document.getElementById('gift-card-form');
     const formContainer = giftCardForm.parentElement;
     const addToCartBtn = giftCardForm.querySelector('button[type="submit"]');
+    const strings = window.CurrencyUtils.getTranslations('gift-cards');
     
     // Validate gift card form first
     if (!giftCardForm.checkValidity()) {
@@ -523,9 +545,16 @@ async function handleExpressCheckout() {
     const formattedAmountForItem = window.CurrencyUtils.formatPrice(amount, currency);
     
     // Create gift card item
+    const giftCardName = strings.giftCardName || 'Gift Card';
+    const designMap = {
+        red: strings.designRed || 'Red',
+        blue: strings.designBlue || 'Blue',
+        green: strings.designGreen || 'Green',
+        purple: strings.designPurple || 'Purple'
+    };
     const giftCard = {
         id: `gift-card-${Date.now()}`,
-        name: `Gift Card - ${formattedAmountForItem}`,
+        name: `${giftCardName} - ${formattedAmountForItem}`,
         price: convertedAmount,
         priceHKD: amount,
         currency: currency,
@@ -554,18 +583,18 @@ async function handleExpressCheckout() {
     
     const orderSummaryHTML = `
         <div class="order-summary-wrapper-header">
-            <button class="back-arrow-btn gift-summary-back" type="button">← Back to Gift Card Form</button>
+            <button class="back-arrow-btn gift-summary-back" type="button">← ${strings.expressBack || 'Back to Gift Card Form'}</button>
         </div>
         <div class="gift-express-left">
             <div id="flow-display" class="gift-flow-container">
-                <p style="text-align: center; padding: 20px;">Loading payment form...</p>
+                <p style="text-align: center; padding: 20px;">${strings.expressLoading || 'Loading payment form...'}</p>
             </div>
         </div>
         <div class="gift-express-right">
             <div class="order-summary gift-order-summary" id="gift-order-summary">
                 <div class="order-summary-header">
                     <h2 class="order-summary-title">
-                        Order Summary
+                        ${strings.expressOrderSummary || 'Order Summary'}
                         <div class="toggle-arrow" id="gift-toggle-summary">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
@@ -578,22 +607,22 @@ async function handleExpressCheckout() {
                     <div class="order-item">
                         <div style="background-color: ${designColor}; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border-radius: 8px; flex-shrink: 0; font-size: 28px;">$</div>
                         <div class="order-item-details">
-                            <div class="order-item-name">Gift Card - ${formattedAmount}</div>
+                            <div class="order-item-name">${giftCardName} - ${formattedAmount}</div>
                             <div class="order-item-price">${formattedAmount}</div>
-                            <div class="order-item-quantity">Quantity: 1</div>
+                            <div class="order-item-quantity">${strings.expressQuantity || 'Quantity'}: 1</div>
                             <div class="gift-card-meta">
-                                <div>Design: <strong style="text-transform: capitalize;">${design}</strong></div>
-                                <div>Recipient: <strong>${recipientName}</strong></div>
-                                <div>From: <strong>${senderName}</strong></div>
-                                <div>Recipient Email: <strong>${recipientEmail}</strong></div>
-                                <div>Your Email: <strong>${senderEmail}</strong></div>
-                                ${message ? `<div>Message: <strong>${message}</strong></div>` : ''}
+                                <div>${strings.designLabel || 'Design'}: <strong style="text-transform: capitalize;">${designMap[design] || design}</strong></div>
+                                <div>${strings.recipientLabel || 'Recipient'}: <strong>${recipientName}</strong></div>
+                                <div>${strings.senderLabel || 'Sender'}: <strong>${senderName}</strong></div>
+                                <div>${strings.expressRecipientEmail || 'Recipient Email'}: <strong>${recipientEmail}</strong></div>
+                                <div>${strings.expressSenderEmail || 'Your Email'}: <strong>${senderEmail}</strong></div>
+                                ${message ? `<div>${strings.expressMessage || 'Message'}: <strong>${message}</strong></div>` : ''}
                             </div>
                         </div>
                         <div style="font-weight: 500;">${formattedAmount}</div>
                     </div>
                     <div class="order-summary-row total">
-                        <span>Total</span>
+                        <span>${strings.expressTotal || 'Total'}</span>
                         <span>${formattedAmount}</span>
                     </div>
                 </div>
@@ -610,7 +639,7 @@ async function handleExpressCheckout() {
     
     addToCartBtn.disabled = true;
     expressBtn.disabled = true;
-    expressBtn.textContent = 'Processing...';
+    expressBtn.textContent = strings.expressProcessing || 'Processing...';
     
     // Remove any existing express checkout layout
     const existingLayout = document.getElementById('gift-express-layout');
@@ -700,10 +729,11 @@ async function handleExpressCheckout() {
         }
         
         // Initialize Checkout Flow component
+        const locale = window.CurrencyUtils.getCurrentLocale() === 'zh' ? 'zh-CN' : 'en-GB';
         const checkout = await CheckoutWebComponents({
             publicKey: CHECKOUT_PUBLIC_KEY,
             environment: 'sandbox',
-            locale: 'en-GB',
+            locale,
             paymentSession,
             onReady: () => {
                 console.log('Checkout Flow ready');

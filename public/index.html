@@ -16,18 +16,41 @@
     <p class="subtitle">Select a demo to explore different payment integration options</p>
 
     <div class="portal-buttons">
+        <button id="new-phone-case-btn" class="portal-btn phone-case-btn" type="button">
+            <div class="btn-title">Omni-Cart</div>
+            <div class="btn-description">Product catalog with shopping cart integration</div>
+        </button>
+        <hr class="divider" aria-hidden="true">
         <button id="phone-case-btn" class="portal-btn phone-case-btn" type="button">
             <div class="btn-title">Phone Case Shop</div>
             <div class="btn-description">Classic iPhone case checkout demo with country-based pricing</div>
-        </button>
-        <button id="new-phone-case-btn" class="portal-btn phone-case-btn" type="button">
-            <div class="btn-title">New Phone Case Shop</div>
-            <div class="btn-description">Product catalog with shopping cart integration</div>
         </button>
         <button id="insurance-btn" class="portal-btn insurance-btn" type="button">
             <div class="btn-title">Insurance Form</div>
             <div class="btn-description">Insurance policy application with Level-2 and Flow/HPP modes</div>
         </button>
+    </div>
+
+    <div id="insurance-login-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="insurance-login-title">
+            <h2 id="insurance-login-title">Insurance Login</h2>
+            <p class="modal-subtitle">Enter credentials to access the insurance form.</p>
+            <form id="insurance-login-form" class="modal-form" novalidate>
+                <div class="modal-field">
+                    <label for="insurance-username">Username</label>
+                    <input id="insurance-username" type="text" name="insurance-username" autocomplete="username">
+                </div>
+                <div class="modal-field">
+                    <label for="insurance-password">Password</label>
+                    <input id="insurance-password" type="password" name="insurance-password" autocomplete="current-password">
+                </div>
+                <div id="insurance-login-error" class="modal-error" role="alert"></div>
+                <div class="modal-actions">
+                    <button type="button" id="insurance-login-cancel" class="modal-btn secondary">Cancel</button>
+                    <button type="submit" class="modal-btn primary">Sign in</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 <script src="app.js"></script>

@@ -5,6 +5,20 @@ let cart = [];
 
 // Base price in HKD (234 HKD ≈ 30 USD)
 const PHONE_CASE_PRICE_HKD = 234;
+const PHONE_CASE_KEYS = [
+    'productBlack',
+    'productWhite',
+    'productRed',
+    'productBlue',
+    'productGreen',
+    'productYellow',
+    'productPurple',
+    'productPink',
+    'productOrange',
+    'productTeal',
+    'productBrown',
+    'productGray'
+];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async function () {
@@ -37,11 +51,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         updateCartDisplay();
     }
     
-    // Check if user is already logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (isLoggedIn) {
-        loginBtn.textContent = 'LOGOUT';
+    window.CurrencyUtils.ensureTranslations();
+    window.CurrencyUtils.applyTranslations('phone-case-catalog');
+
+    function getCatalogStrings() {
+        return window.CurrencyUtils.getTranslations('phone-case-catalog');
     }
+
+    function updateLoginButtonLabel() {
+        const strings = getCatalogStrings();
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        loginBtn.textContent = isLoggedIn ? (strings.logoutButton || 'LOGOUT') : (strings.loginButton || 'LOGIN');
+    }
+
+    // Check if user is already logged in
+    updateLoginButtonLabel();
 
     // Add to cart event listeners
     addButtons.forEach((btn, index) => {
@@ -56,13 +80,17 @@ document.addEventListener('DOMContentLoaded', async function () {
             const productImage = generateProductImage(productName);
             const productId = `product-${index + 1}`;
 
-            addToCart('Phone Case - ' + productName, productPrice, productImage, productId);
+            const strings = getCatalogStrings();
+            const prefix = strings.phoneCasePrefix || 'Phone Case';
+            const productKey = PHONE_CASE_KEYS[index];
+            addToCart(`${prefix} - ${productName}`, productPrice, productImage, productId, productKey);
             
             // Visual feedback
-            btn.textContent = 'Added!';
+            btn.textContent = strings.addedButton || 'Added!';
             btn.disabled = true;
             setTimeout(() => {
-                btn.textContent = 'Add';
+                const updatedStrings = getCatalogStrings();
+                btn.textContent = updatedStrings.addButton || 'Add';
                 btn.disabled = false;
             }, 1500);
         });
@@ -82,8 +110,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Logout
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userShippingAddress');
-            loginBtn.textContent = 'LOGIN';
-            alert('Logged out successfully');
+            updateLoginButtonLabel();
+            alert(getCatalogStrings().alertLoggedOut || 'Logged out successfully');
         } else {
             // Show login overlay
             loginOverlay.classList.remove('hidden');
@@ -144,20 +172,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             localStorage.setItem('userShippingAddress', JSON.stringify(userData));
             
             // Update login button text
-            loginBtn.textContent = 'LOGOUT';
+            updateLoginButtonLabel();
             
             // Close login overlay
             loginOverlay.classList.add('hidden');
             
             // Show success message
-            alert('Login successful!');
+            alert(getCatalogStrings().alertLoginSuccess || 'Login successful!');
         }
     });
     
     // Checkout button
     checkoutBtn.addEventListener('click', () => {
         if (cart.length === 0) {
-            alert('Your cart is empty');
+            alert(getCatalogStrings().alertCartEmpty || 'Your cart is empty');
             return;
         }
         
@@ -189,7 +217,7 @@ function updatePhoneCasePrices() {
 }
 
 // Add product to cart
-function addToCart(name, price, image, id) {
+function addToCart(name, price, image, id, productKey) {
     const currency = window.CurrencyUtils.getCurrentCurrency();
     const convertedPrice = window.CurrencyUtils.convertPrice(price, currency);
     const formattedName = `${name} - ${currency} ${convertedPrice.toFixed(currency === 'JPY' ? 0 : 2)}`;
@@ -202,6 +230,7 @@ function addToCart(name, price, image, id) {
         cart.push({
             id: id,
             name: formattedName,
+            productKey: productKey,
             price: convertedPrice,
             priceHKD: price,
             currency: currency,
@@ -226,17 +255,34 @@ function removeFromCart(index) {
 // Sync cart items with current currency from sessionStorage
 function syncCartWithCurrentCurrency() {
     const currentCurrency = window.CurrencyUtils.getCurrentCurrency();
-    
+    const strings = window.CurrencyUtils.getTranslations('phone-case-catalog');
+    const giftCardName = strings.giftCardName || 'Gift Card';
+    const designMap = {
+        red: strings.designRed || 'Red',
+        blue: strings.designBlue || 'Blue',
+        green: strings.designGreen || 'Green',
+        purple: strings.designPurple || 'Purple'
+    };
     cart.forEach(item => {
-        // If item's currency differs from current currency, recalculate
-        if (item.currency !== currentCurrency && item.priceHKD) {
+        if (item.priceHKD) {
             const newPrice = window.CurrencyUtils.convertPrice(item.priceHKD, currentCurrency);
             item.price = newPrice;
             item.currency = currentCurrency;
-            
-            // Update the item name to reflect new currency
-            const baseName = item.name.split(' - ')[0]; // Remove old price from name
-            item.name = `${baseName} - ${currentCurrency} ${newPrice.toFixed(currentCurrency === 'JPY' ? 0 : 2)}`;
+            const formattedAmount = `${currentCurrency} ${newPrice.toFixed(currentCurrency === 'JPY' ? 0 : 2)}`;
+
+            if (item.type === 'gift-card') {
+                item.name = `${giftCardName} - ${formattedAmount}`;
+            } else if (item.productKey && strings[item.productKey]) {
+                const prefix = strings.phoneCasePrefix || 'Phone Case';
+                item.name = `${prefix} - ${strings[item.productKey]} - ${formattedAmount}`;
+            } else {
+                const baseName = item.name.split(' - ')[0];
+                item.name = `${baseName} - ${formattedAmount}`;
+            }
+
+            if (item.type === 'gift-card' && item.design) {
+                item.designLabel = designMap[item.design] || item.design;
+            }
         }
     });
     
@@ -252,7 +298,8 @@ function updateCartDisplay() {
     const cartItemsContainer = document.getElementById('cart-items');
     
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p class="empty-cart-message">Your cart is empty</p>';
+        const strings = window.CurrencyUtils.getTranslations('phone-case-catalog');
+        cartItemsContainer.innerHTML = `<p class="empty-cart-message">${strings.emptyCart || 'Your cart is empty'}</p>`;
         return;
     }
 
@@ -261,14 +308,21 @@ function updateCartDisplay() {
     cart.forEach((item, index) => {
         const itemCurrency = item.currency || 'HKD';
         const itemTotal = item.price * item.quantity;
+        const strings = window.CurrencyUtils.getTranslations('phone-case-catalog');
         const formattedPrice = `${itemCurrency} ${item.price.toFixed(itemCurrency === 'JPY' ? 0 : 2)}`;
         const formattedTotal = `${itemCurrency} ${itemTotal.toFixed(itemCurrency === 'JPY' ? 0 : 2)}`;
         
+        const designMap = {
+            red: strings.designRed || 'Red',
+            blue: strings.designBlue || 'Blue',
+            green: strings.designGreen || 'Green',
+            purple: strings.designPurple || 'Purple'
+        };
         const giftCardDetails = item.type === 'gift-card'
             ? `
-                <p class="cart-item-extra">Design: ${item.design || 'N/A'}</p>
-                <p class="cart-item-extra">Recipient: ${item.recipientName || 'N/A'}</p>
-                <p class="cart-item-extra">Sender: ${item.senderName || 'N/A'}</p>
+                <p class="cart-item-extra">${strings.designLabel || 'Design'}: ${designMap[item.design] || item.design || 'N/A'}</p>
+                <p class="cart-item-extra">${strings.recipientLabel || 'Recipient'}: ${item.recipientName || 'N/A'}</p>
+                <p class="cart-item-extra">${strings.senderLabel || 'Sender'}: ${item.senderName || 'N/A'}</p>
             `
             : '';
 
@@ -276,7 +330,7 @@ function updateCartDisplay() {
             <div class="cart-item">
                 <div class="cart-item-details">
                     <p class="cart-item-name">${item.name}</p>
-                    <p class="cart-item-price">${formattedPrice} each</p>
+                    <p class="cart-item-price">${formattedPrice} ${strings.eachLabel || 'each'}</p>
                     ${giftCardDetails}
                 </div>
                 <div class="cart-item-quantity">
@@ -286,7 +340,7 @@ function updateCartDisplay() {
                 </div>
                 <div class="cart-item-total">
                     <p class="item-total">${formattedTotal}</p>
-                    <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
+                    <button class="remove-btn" onclick="removeFromCart(${index})">${strings.removeButton || 'Remove'}</button>
                 </div>
             </div>
         `;
@@ -305,7 +359,7 @@ function updateCartDisplay() {
     
     html += `
         <div class="cart-summary">
-            <p class="summary-label">Total:</p>
+            <p class="summary-label">${(window.CurrencyUtils.getTranslations('phone-case-catalog').totalLabel || 'Total')}:</p>
             <p class="summary-total">${formattedCartTotal}</p>
         </div>
     </div>`;

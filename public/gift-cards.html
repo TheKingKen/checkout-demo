@@ -12,27 +12,27 @@
     <div class="catalog-header">
         <img src="https://s3-us-west-2.amazonaws.com/cbi-image-service-prd/original/d62079fa-f245-4611-83c1-2439fe7fa258.png?w=3840" alt="Shop Logo" class="catalog-logo">
         <div class="catalog-actions-top">
-            <button id="login-btn" class="action-btn login-btn">LOGIN</button>
-            <button id="cart-btn" class="action-btn cart-btn">CART</button>
+            <button id="login-btn" class="action-btn login-btn" data-i18n="loginButton">LOGIN</button>
+            <button id="cart-btn" class="action-btn cart-btn" data-i18n="cartButton">CART</button>
         </div>
     </div>
 
     <!-- Breadcrumb Navigation -->
     <div class="breadcrumb">
-        <a href="/all-products.html" class="breadcrumb-link">All Products</a>
+        <a href="/all-products.html" class="breadcrumb-link" data-i18n="breadcrumbAllProducts">All Products</a>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-current">Gift Cards</span>
+        <span class="breadcrumb-current" data-i18n="breadcrumbCurrent">Gift Cards</span>
     </div>
 
     <!-- Category Header -->
     <div class="category-header">
-        <h2>Gift Cards</h2>
-        <p>Perfect digital gift for any occasion. Instantly delivered via email with no shipping fees. Choose your design and amount, then let them pick what they love. Never expires and can be used online anytime.</p>
+        <h2 data-i18n="categoryTitle">Gift Cards</h2>
+        <p data-i18n="categoryDesc">Perfect digital gift for any occasion. Instantly delivered via email with no shipping fees. Choose your design and amount, then let them pick what they love. Never expires and can be used online anytime.</p>
     </div>
 
     <!-- Preview Section (mobile-first, shown on top) -->
     <div class="gift-card-preview-section mobile-preview">
-        <h3>Preview</h3>
+        <h3 data-i18n="previewTitle">Preview</h3>
         <div id="gift-card-preview-mobile" class="gift-card-preview">
             <div class="preview-card" style="background-color: #e74c3c;">
                 <div class="preview-content">
@@ -43,7 +43,7 @@
                         </svg>
                     </div>
                     <div class="preview-amount-mobile">$100</div>
-                    <div class="preview-text">GIFT CARD</div>
+                    <div class="preview-text" data-i18n="previewText">GIFT CARD</div>
                 </div>
             </div>
         </div>
@@ -54,34 +54,34 @@
         <form id="gift-card-form" class="gift-card-form">
             <!-- Design Selection -->
             <div class="form-section">
-                <h3>Choose Design</h3>
+                <h3 data-i18n="chooseDesignTitle">Choose Design</h3>
                 <div class="design-options">
                     <div class="design-option">
                         <input type="radio" id="design-red" name="design" value="red" checked>
                         <label for="design-red" class="design-label">
                             <div class="design-preview" style="background-color: #e74c3c;"></div>
-                            <span>Red</span>
+                            <span data-i18n="designRed">Red</span>
                         </label>
                     </div>
                     <div class="design-option">
                         <input type="radio" id="design-blue" name="design" value="blue">
                         <label for="design-blue" class="design-label">
                             <div class="design-preview" style="background-color: #3498db;"></div>
-                            <span>Blue</span>
+                            <span data-i18n="designBlue">Blue</span>
                         </label>
                     </div>
                     <div class="design-option">
                         <input type="radio" id="design-green" name="design" value="green">
                         <label for="design-green" class="design-label">
                             <div class="design-preview" style="background-color: #27ae60;"></div>
-                            <span>Green</span>
+                            <span data-i18n="designGreen">Green</span>
                         </label>
                     </div>
                     <div class="design-option">
                         <input type="radio" id="design-purple" name="design" value="purple">
                         <label for="design-purple" class="design-label">
                             <div class="design-preview" style="background-color: #9b59b6;"></div>
-                            <span>Purple</span>
+                            <span data-i18n="designPurple">Purple</span>
                         </label>
                     </div>
                 </div>
@@ -89,7 +89,7 @@
 
             <!-- Amount Selection -->
             <div class="form-section">
-                <h3>Select Amount</h3>
+                <h3 data-i18n="selectAmountTitle">Select Amount</h3>
                 <div class="amount-options">
                     <input type="radio" id="amount-100" name="amount" value="100" checked>
                     <label for="amount-100" class="amount-label">$100</label>
@@ -107,35 +107,35 @@
 
             <!-- Recipient Information -->
             <div class="form-section">
-                <h3>Recipient Information</h3>
+                <h3 data-i18n="recipientInfoTitle">Recipient Information</h3>
                 <div class="form-group">
-                    <label for="recipient-name">Recipient Name</label>
+                    <label for="recipient-name" data-i18n="recipientNameLabel">Recipient Name</label>
                     <input type="text" id="recipient-name" name="recipient-name" placeholder="Full name of recipient" required>
                 </div>
                 <div class="form-group">
-                    <label for="recipient-email">Recipient Email</label>
+                    <label for="recipient-email" data-i18n="recipientEmailLabel">Recipient Email</label>
                     <input type="email" id="recipient-email" name="recipient-email" placeholder="recipient@example.com" required>
                 </div>
             </div>
 
             <!-- Sender Information -->
             <div class="form-section">
-                <h3>Your Information</h3>
+                <h3 data-i18n="senderInfoTitle">Your Information</h3>
                 <div class="form-group">
-                    <label for="sender-name">Your Name</label>
+                    <label for="sender-name" data-i18n="senderNameLabel">Your Name</label>
                     <input type="text" id="sender-name" name="sender-name" placeholder="Your full name" required>
                 </div>
                 <div class="form-group">
-                    <label for="sender-email">Your Email</label>
+                    <label for="sender-email" data-i18n="senderEmailLabel">Your Email</label>
                     <input type="email" id="sender-email" name="sender-email" placeholder="your@example.com" required>
                 </div>
             </div>
 
             <!-- Message -->
             <div class="form-section">
-                <h3>Message (Optional)</h3>
+                <h3 data-i18n="messageTitle">Message (Optional)</h3>
                 <div class="form-group">
-                    <label for="gift-message">Personal Message</label>
+                    <label for="gift-message" data-i18n="messageLabel">Personal Message</label>
                     <textarea id="gift-message" name="gift-message" placeholder="Add a personal message..." rows="4" maxlength="500"></textarea>
                     <p class="char-count"><span id="char-count">0</span>/500</p>
                 </div>
@@ -143,8 +143,8 @@
 
             <!-- Add to Cart Button -->
             <div class="form-actions">
-                <button type="submit" class="add-to-cart-btn">Add to Cart</button>
-                <button type="button" id="express-checkout-btn" class="express-checkout-btn">Express Checkout</button>
+                <button type="submit" class="add-to-cart-btn" data-i18n="addToCartButton">Add to Cart</button>
+                <button type="button" id="express-checkout-btn" class="express-checkout-btn" data-i18n="expressCheckoutButton">Express Checkout</button>
             </div>
             
             <!-- Flow Container for Express Checkout -->
@@ -153,7 +153,7 @@
 
         <!-- Preview Section (desktop only) -->
         <div class="gift-card-preview-section desktop-preview">
-            <h3>Preview</h3>
+            <h3 data-i18n="previewTitle">Preview</h3>
             <div id="gift-card-preview" class="gift-card-preview">
                 <div class="preview-card" style="background-color: #e74c3c;">
                     <div class="preview-content">
@@ -164,7 +164,7 @@
                             </svg>
                         </div>
                         <div class="preview-amount" id="preview-amount">$100</div>
-                        <div class="preview-text">GIFT CARD</div>
+                        <div class="preview-text" data-i18n="previewText">GIFT CARD</div>
                     </div>
                 </div>
             </div>
@@ -175,14 +175,14 @@
     <div id="cart-overlay" class="cart-overlay hidden">
         <div class="cart-modal">
             <div class="cart-header">
-                <h3>Shopping Cart</h3>
+                <h3 data-i18n="shoppingCartTitle">Shopping Cart</h3>
                 <button id="close-cart-btn" class="close-btn">&times;</button>
             </div>
             <div id="cart-items" class="cart-items">
-                <p class="empty-cart-message">Your cart is empty</p>
+                <p class="empty-cart-message" data-i18n="emptyCart">Your cart is empty</p>
             </div>
             <div class="cart-footer">
-                <button id="checkout-btn" class="checkout-btn">Proceed to Checkout</button>
+                <button id="checkout-btn" class="checkout-btn" data-i18n="proceedCheckout">Proceed to Checkout</button>
             </div>
         </div>
     </div>
@@ -191,20 +191,20 @@
     <div id="login-overlay" class="cart-overlay hidden">
         <div class="cart-modal">
             <div class="cart-header">
-                <h3>Login</h3>
+                <h3 data-i18n="loginTitle">Login</h3>
                 <button id="close-login-btn" class="close-btn">&times;</button>
             </div>
             <div class="login-form-container">
                 <form id="login-form">
                     <div class="login-form-group">
-                        <label for="username">Username</label>
+                        <label for="username" data-i18n="usernameLabel">Username</label>
                         <input type="text" id="username" name="username" value="kenso" required>
                     </div>
                     <div class="login-form-group">
-                        <label for="password">Password</label>
+                        <label for="password" data-i18n="passwordLabel">Password</label>
                         <input type="password" id="password" name="password" value="12345678" required>
                     </div>
-                    <button type="submit" id="login-submit-btn" class="checkout-btn">Login</button>
+                    <button type="submit" id="login-submit-btn" class="checkout-btn" data-i18n="loginSubmit">Login</button>
                 </form>
             </div>
         </div>

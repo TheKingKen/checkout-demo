@@ -16,17 +16,36 @@ document.addEventListener('DOMContentLoaded', function () {
     const phoneCaseCard = document.getElementById('phone-case-card');
     const giftCardsCard = document.getElementById('gift-cards-card');
 
-    // Load cart from localStorage
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-        cart = JSON.parse(savedCart);
+    // Check if coming from index page and clear cart if so
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('from') === 'index') {
+        cart = [];
+        localStorage.removeItem('cart');
+        // Clean up the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        // Load cart from localStorage
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+        }
+    }
+
+    window.CurrencyUtils.ensureTranslations();
+    window.CurrencyUtils.applyTranslations('all-products');
+
+    function getAllProductsStrings() {
+        return window.CurrencyUtils.getTranslations('all-products');
+    }
+
+    function updateLoginButtonLabel() {
+        const strings = getAllProductsStrings();
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        loginBtn.textContent = isLoggedIn ? (strings.logoutButton || 'LOGOUT') : (strings.loginButton || 'LOGIN');
     }
 
     // Check if user is already logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (isLoggedIn) {
-        loginBtn.textContent = 'LOGOUT';
-    }
+    updateLoginButtonLabel();
 
     // Login button - toggle login/logout
     loginBtn.addEventListener('click', () => {
@@ -36,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Logout
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userShippingAddress');
-            loginBtn.textContent = 'LOGIN';
+            updateLoginButtonLabel();
             alert('Logged out successfully');
         } else {
             // Show login overlay
@@ -104,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.setItem('userShippingAddress', JSON.stringify(userData));
             
             // Update login button text
-            loginBtn.textContent = 'LOGOUT';
+            updateLoginButtonLabel();
             
             // Close login overlay
             loginOverlay.classList.add('hidden');
@@ -149,6 +168,8 @@ document.addEventListener('DOMContentLoaded', function () {
         currencySelector.value = window.CurrencyUtils.getCurrentCurrency();
         currencySelector.addEventListener('change', (e) => {
             window.CurrencyUtils.setCurrentCurrency(e.target.value);
+            window.CurrencyUtils.applyTranslations('all-products');
+            updateLoginButtonLabel();
             console.log('Currency changed to:', e.target.value);
         });
     }
