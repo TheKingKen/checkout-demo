@@ -220,6 +220,232 @@ footer {
 }
 .btn-back:hover { background: #e8e8e8; }
 
+.btn-secondary {
+    width: 100%;
+    padding: 0.85em;
+    background: #f3f4f6;
+    color: #1f2937;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1.05em;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.ticket-auth-container,
+.ticket-eligibility-container,
+.ticket-seat-container {
+    max-width: 520px;
+}
+
+.ticket-auth-form .form-group,
+.ticket-eligibility-form .form-group {
+    margin-bottom: 18px;
+}
+
+.eligibility-status {
+    margin: 12px 0 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    min-height: 20px;
+}
+
+.eligibility-status.success {
+    color: #0f766e;
+}
+
+.eligibility-status.error {
+    color: #b91c1c;
+}
+
+.eligibility-status.pending {
+    color: #2563eb;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-row input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.disclaimer {
+    margin: 6px 0 16px;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.button-row {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.ticket-event-summary {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.eligibility-form-sections {
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.eligibility-form-sections.hidden {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+}
+
+.eligibility-form-sections.hiding {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+}
+
+.seat-header,
+.payment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.seat-event {
+    margin: 8px 0 0;
+    color: #64748b;
+}
+
+.seat-timer {
+    background: #0f172a;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+    text-align: center;
+}
+
+.seat-timer strong {
+    font-size: 1.2rem;
+}
+
+.seat-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(40px, 1fr));
+    gap: 10px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.seat {
+    background: #e2e8f0;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 0;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.seat:hover {
+    background: #cbd5f5;
+}
+
+.seat.selected {
+    background: #2563eb;
+    color: #fff;
+}
+
+.seat.unavailable {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.seat-summary {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.seat-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #334155;
+}
+
+.seat-summary-row.total {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.seat-category {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+}
+
+.ticket-payment-summary,
+.saved-card-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #fff;
+}
+
+.saved-card-detail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: #334155;
+}
+
+@media (max-width: 900px) {
+    .seat-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Ensure .checkout-btn remains primary CTA and is available project-wide */
 .checkout-btn { width: 100%; padding: 0.85em; background: linear-gradient(90deg, #377cfb 0%, #3386E2 100%); border: none; border-radius: 8px; color: #fff; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 12px; text-align:center; display:inline-block; }
 

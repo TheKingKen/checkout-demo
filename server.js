@@ -220,6 +220,92 @@ app.post('/create-payment-link', async (req, res) => {
     }
 });
 
+// Card metadata lookup (BIN check) for pre-sale eligibility
+app.post('/card-metadata', async (req, res) => {
+  const { number, type, format, reference } = req.body || {};
+  if (!number || typeof number !== 'string') {
+    return res.status(400).json({ error: 'Missing card number' });
+  }
+
+  const sanitized = number.replace(/\D/g, '');
+  if (sanitized.length < 6) {
+    return res.status(400).json({ error: 'Card number must contain at least 6 digits' });
+  }
+
+  const payload = {
+    source: {
+      number: sanitized,
+      type: type || 'card'
+    },
+    format: format || 'basic',
+    reference: reference || `PRECHECK-${Date.now()}`
+  };
+
+  try {
+    const response = await axios.post('https://api.sandbox.checkout.com/metadata/card',
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${CHECKOUT_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const { scheme, card_type, issuer, issuer_country } = response.data || {};
+    return res.json({ scheme, card_type, issuer, issuer_country });
+  } catch (err) {
+    console.error('Card metadata error:', err.message);
+    if (err.response) {
+      console.error('Checkout API status:', err.response.status);
+      console.error('Checkout API body:', JSON.stringify(err.response.data, null, 2));
+      return res.status(err.response.status).json({ error: 'Failed to fetch card metadata', details: err.response.data });
+    }
+    return res.status(500).json({ error: 'Failed to fetch card metadata', details: err.message });
+  }
+});
+
+// Tokenize card for saved-card flow (server-side wrapper)
+app.post('/tokenize-card', async (req, res) => {
+  const { number, expiry_month, expiry_year, cvv, name } = req.body || {};
+  if (!number || !expiry_month || !expiry_year || !cvv || !name) {
+    return res.status(400).json({ error: 'Missing required card fields' });
+  }
+
+  if (!CHECKOUT_PUBLIC_KEY) {
+    return res.status(500).json({ error: 'Checkout public key not configured' });
+  }
+
+  try {
+    const response = await axios.post('https://api.sandbox.checkout.com/tokens',
+      {
+        type: 'card',
+        number,
+        expiry_month,
+        expiry_year,
+        cvv,
+        name
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${CHECKOUT_PUBLIC_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return res.json(response.data || {});
+  } catch (err) {
+    console.error('Tokenization error:', err.message);
+    if (err.response) {
+      console.error('Checkout API status:', err.response.status);
+      console.error('Checkout API body:', JSON.stringify(err.response.data, null, 2));
+      return res.status(err.response.status).json(err.response.data || { error: 'Tokenization failed' });
+    }
+    return res.status(500).json({ error: 'Tokenization failed', details: err.message });
+  }
+});
+
 app.post('/create-payment-link2', async (req, res) => {
     const { country, customer, amount, currency, product, products } = req.body;
 

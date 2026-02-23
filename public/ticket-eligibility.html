@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Eligibility Check</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-with-gradient">
+    <div class="form-container ticket-eligibility-container">
+        <div class="breadcrumb">
+            <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">Eligibility Pre-check</span>
+        </div>
+
+        <h1>Eligibility Pre-check</h1>
+        <p id="eligibility-subtitle">Enter your card number to check pre-sale eligibility.</p>
+
+        <div class="ticket-event-summary" id="ticket-event-summary"></div>
+
+        <form id="eligibility-form" class="ticket-eligibility-form">
+            <div class="form-group">
+                <label for="card-number">Card Number</label>
+                <input type="text" id="card-number" name="card-number" placeholder="1234 5678 9012 3456" inputmode="numeric" autocomplete="cc-number" required>
+            </div>
+
+            <div class="eligibility-status" id="eligibility-status"></div>
+
+            <div id="eligibility-form-sections" class="eligibility-form-sections hidden">
+                <div class="form-group checkbox-row">
+                    <input type="checkbox" id="save-card" name="save-card">
+                    <label for="save-card">Save this card for faster checkout</label>
+                </div>
+                <p class="disclaimer">Saved cards are stored for this demo only and can be used to skip the pre-check next time.</p>
+
+                <div id="save-card-fields" class="hidden">
+                <div class="form-group">
+                    <label for="cardholder-name">Cardholder Name</label>
+                    <input type="text" id="cardholder-name" name="cardholder-name" autocomplete="cc-name">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expiry-date">Expiry Date (MM/YY)</label>
+                        <input type="text" id="expiry-date" name="expiry-date" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+                    </div>
+                    <div class="form-group">
+                        <label for="cvv">CVV</label>
+                        <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" autocomplete="cc-csc" inputmode="numeric">
+                    </div>
+                </div>
+            </div>
+
+                <div class="button-row">
+                    <button type="submit" class="checkout-btn" id="confirm-btn" disabled>Confirm</button>
+                    <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="ticket-eligibility-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Payment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-with-gradient">
+    <div class="form-container ticket-payment-container">
+        <div class="breadcrumb">
+            <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">Payment</span>
+        </div>
+
+        <div class="payment-header">
+            <div>
+                <h1>Final Payment</h1>
+                <p id="payment-event"></p>
+            </div>
+            <div class="seat-timer">
+                <span>Time remaining</span>
+                <strong id="payment-timer">05:00</strong>
+            </div>
+        </div>
+
+        <div class="ticket-payment-summary" id="ticket-payment-summary"></div>
+
+        <div class="saved-card-panel" id="saved-card-panel"></div>
+
+        <button class="checkout-btn" id="pay-now-btn">Pay with saved card</button>
+        <button class="btn-secondary" id="back-to-seat">Back to Seat Selection</button>
+    </div>
+
+    <script src="ticket-payment-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-with-gradient">
+    <div class="form-container ticket-auth-container">
+        <div class="breadcrumb">
+            <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">Login</span>
+        </div>
+
+        <h1 id="login-title">Login</h1>
+        <p id="login-subtitle">Sign in to continue your ticket purchase.</p>
+
+        <form id="ticket-login-form" class="ticket-auth-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="ken.so@checkout.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" value="12345678" required>
+            </div>
+            <button type="submit" class="checkout-btn" id="login-btn">Login</button>
+            <button type="button" class="btn-secondary" id="create-account-btn">Create an account</button>
+        </form>
+    </div>
+
+    <script src="ticket-login-app.js"></script>
+</body>
+</html>

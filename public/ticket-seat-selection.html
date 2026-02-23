@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Seat Selection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-with-gradient">
+    <div class="form-container ticket-seat-container">
+        <div class="breadcrumb">
+            <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">Seat Selection</span>
+        </div>
+
+        <div class="seat-header">
+            <div>
+                <h1>Seat Selection</h1>
+                <p id="seat-event" class="seat-event"></p>
+            </div>
+            <div class="seat-timer">
+                <span>Time remaining</span>
+                <strong id="seat-timer-value">05:00</strong>
+            </div>
+        </div>
+
+        <div class="seat-layout">
+            <div class="seat-grid" id="seat-grid"></div>
+            <div class="seat-summary">
+                <div class="seat-summary-row">
+                    <span>Selected seat</span>
+                    <strong id="selected-seat">None</strong>
+                </div>
+                <div class="seat-summary-row">
+                    <span>Category</span>
+                    <select id="seat-category" class="seat-category">
+                        <option value="380">Category A - HKD 380</option>
+                        <option value="680">Category B - HKD 680</option>
+                        <option value="1080">Category C - HKD 1080</option>
+                        <option value="1280">Category D - HKD 1280</option>
+                    </select>
+                </div>
+                <div class="seat-summary-row total">
+                    <span>Price</span>
+                    <strong id="seat-price">HKD 380</strong>
+                </div>
+                <button class="checkout-btn" id="continue-to-payment">Continue to Payment</button>
+                <button class="btn-secondary" id="cancel-seat">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="ticket-seat-selection-app.js"></script>
+</body>
+</html>

@@ -210,12 +210,18 @@ function createTicketCard(eventName, priceHKD, status, index, currency) {
     
     // Add click handler
     card.addEventListener('click', () => {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const nextParams = `event=${encodeURIComponent(eventName)}&price=${priceHKD}&index=${index}&status=${status}`;
+
+        if (!isLoggedIn) {
+            window.location.href = `/ticket-login.html?${nextParams}`;
+            return;
+        }
+
         if (status === 'presale') {
-            // Redirect to card eligibility check page
-            window.location.href = `/card-eligibility-check.html?event=${encodeURIComponent(eventName)}&price=${priceHKD}&index=${index}`;
+            window.location.href = `/ticket-eligibility.html?${nextParams}`;
         } else {
-            // Redirect to payment flow page
-            window.location.href = `/ticket-payment.html?event=${encodeURIComponent(eventName)}&price=${priceHKD}&index=${index}`;
+            window.location.href = `/ticket-seat-selection.html?${nextParams}`;
         }
     });
     
