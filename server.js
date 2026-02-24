@@ -306,6 +306,68 @@ app.post('/tokenize-card', async (req, res) => {
   }
 });
 
+// Pay with stored card token
+app.post('/pay-with-token', async (req, res) => {
+  const { source, amount, currency, payment_type, reference, description } = req.body || {};
+  
+  console.log('=== Process Pay with Token Request ===');
+  console.log(JSON.stringify(source, null, 2));
+
+  if (!source || !source.type || !source.token || !amount || !currency) {
+    return res.status(400).json({ error: 'Missing required payment fields' });
+  }
+
+  if (!CHECKOUT_SECRET_KEY) {
+    return res.status(500).json({ error: 'Checkout secret key not configured' });
+  }
+
+  try {
+    const paymentRequest = {
+      source: {
+        type: source.type,
+        token: source.token
+      },
+      amount,
+      currency,
+      payment_type: payment_type || 'Regular',
+      merchant_initiated: false
+    };
+
+    // Add optional fields
+    if (reference) paymentRequest.reference = reference;
+    if (description) paymentRequest.description = description;
+    
+    // Add 3DS settings if provided
+    if (req.body['3ds']) {
+      paymentRequest['3ds'] = req.body['3ds'];
+    }
+
+    console.log('Payment request:', JSON.stringify(paymentRequest, null, 2));
+
+    const response = await axios.post('https://api.sandbox.checkout.com/payments',
+      paymentRequest,
+      {
+        headers: {
+          Authorization: `Bearer ${CHECKOUT_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('Checkout.com response:', JSON.stringify(response.data, null, 2));
+    return res.json(response.data || {});
+  } catch (err) {
+    console.error('Payment with token error:', err.message);
+    if (err.response) {
+      console.error('Checkout API status:', err.response.status);
+      console.error('Checkout API body:', JSON.stringify(err.response.data, null, 2));
+      return res.status(err.response.status).json(err.response.data || { error: 'Payment failed' });
+    }
+    return res.status(500).json({ error: 'Payment failed', details: err.message });
+  }
+});
+
+
 app.post('/create-payment-link2', async (req, res) => {
     const { country, customer, amount, currency, product, products } = req.body;
 
@@ -726,7 +788,7 @@ app.post("/process-payment", async (req, res) => {
       source: source,
       amount: amount,
       currency: currency,
-      reference: `ORDER-${Date.now()}`,
+      reference: req.body.reference || `ORDER-${Date.now()}`,
       description: firstProduct
         ? `${firstProduct.name}${productList.length > 1 ? ` +${productList.length - 1} more` : ''} (${currency})`
         : `ORDER-${Date.now()}`,
@@ -762,6 +824,11 @@ app.post("/process-payment", async (req, res) => {
         product_references: productList.map(p => p.reference).join(',')
       }
     };
+
+    // Add 3DS settings if provided
+    if (req.body['3ds']) {
+      paymentBody['3ds'] = req.body['3ds'];
+    }
 
     // Send request to Checkout.com Payments API
     const response = await axios.post(

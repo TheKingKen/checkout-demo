@@ -7,12 +7,23 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="page-with-gradient">
-    <div class="form-container ticket-payment-container">
-        <div class="breadcrumb">
-            <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
-            <span class="breadcrumb-separator">></span>
-            <span class="breadcrumb-current">Payment</span>
+    <div class="catalog-container ticket-page-container">
+        <div class="catalog-header ticket-page-header">
+            <img src="https://s3-us-west-2.amazonaws.com/cbi-image-service-prd/original/d62079fa-f245-4611-83c1-2439fe7fa258.png?w=3840" alt="Shop Logo" class="catalog-logo">
+            <div class="catalog-actions-top">
+                <button type="button" id="criteria-settings-btn" class="action-btn" style="display: none;">⚙ Settings</button>
+            </div>
         </div>
+        <div class="form-container ticket-payment-container ticket-page-content">
+            <div class="breadcrumb">
+                <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
+                <span class="breadcrumb-separator">></span>
+                <a href="#" class="breadcrumb-link" onclick="goToEligibility(event)">Eligibility Check</a>
+                <span class="breadcrumb-separator">></span>
+                <a href="#" class="breadcrumb-link" onclick="goToSeatSelection(event)">Seat Selection</a>
+                <span class="breadcrumb-separator">></span>
+                <span class="breadcrumb-current">Payment</span>
+            </div>
 
         <div class="payment-header">
             <div>
@@ -29,8 +40,84 @@
 
         <div class="saved-card-panel" id="saved-card-panel"></div>
 
-        <button class="checkout-btn" id="pay-now-btn">Pay with saved card</button>
-        <button class="btn-secondary" id="back-to-seat">Back to Seat Selection</button>
+        <form id="payment-form" class="ticket-payment-form hidden">
+            <h3>Card Payment</h3>
+            <div class="form-group">
+                <label for="payment-card-number">Card Number</label>
+                <input type="text" id="payment-card-number" name="card-number" placeholder="1234 5678 9012 3456" inputmode="numeric" autocomplete="cc-number" required>
+            </div>
+
+            <div class="payment-eligibility-status" id="payment-eligibility-status"></div>
+
+            <div id="payment-form-sections" class="eligibility-form-sections hidden">
+                <div class="form-group">
+                    <label for="payment-cardholder-name">Cardholder Name</label>
+                    <input type="text" id="payment-cardholder-name" name="cardholder-name" autocomplete="cc-name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payment-expiry-date">Expiry Date (MM/YY)</label>
+                        <input type="text" id="payment-expiry-date" name="expiry-date" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payment-cvv">CVV</label>
+                        <input type="text" id="payment-cvv" name="cvv" placeholder="123" maxlength="4" autocomplete="cc-csc" inputmode="numeric" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-row">
+                <button type="submit" class="checkout-btn" id="pay-new-card-btn" disabled>Pay with New Card</button>
+                <button type="button" class="btn-secondary" id="back-to-seat-form">Back to Seat Selection</button>
+            </div>
+        </form>
+
+        <div id="saved-card-actions" class="saved-card-actions hidden">
+            <button class="checkout-btn" id="pay-now-btn">Pay with Saved Card</button>
+            <button class="btn-secondary" id="use-different-card">Use Different Card</button>
+            <button class="btn-secondary" id="back-to-seat">Back to Seat Selection</button>
+        </div>
+        </div>
+    </div>
+
+    <div class="criteria-modal-overlay" id="criteria-modal-overlay">
+        <div class="criteria-modal-content">
+        <h3>Criteria Settings</h3>
+        <div class="criteria-group">
+            <label for="criteria-scheme">Card Scheme</label>
+            <select id="criteria-scheme">
+                <option value="all">All</option>
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+            </select>
+        </div>
+        <div class="criteria-group">
+            <label for="criteria-issuer">Issuer</label>
+            <select id="criteria-issuer">
+                <option value="all">All</option>
+                <option value="river_valley">RIVER VALLEY CREDIT UNION</option>
+                <option value="lloyds">LLOYDS BANK PLC</option>
+                <option value="sbm">SBM BANK (MAURITIUS) LTD</option>
+                <option value="euro">EURO KARTENSYSTEME GMBH</option>
+            </select>
+        </div>
+        <div class="criteria-group">
+            <label for="criteria-product">Product Type</label>
+            <select id="criteria-product">
+                <option value="all">All</option>
+                <option value="visa_classic">Visa Classic</option>
+            </select>
+        </div>
+        <hr>
+        <div class="criteria-summary" id="criteria-summary">
+            <strong>Current Criteria:</strong>
+            <p id="criteria-display">Any scheme, Any issuer, Any product type</p>
+        </div>
+        <div class="criteria-modal-actions">
+            <button type="button" id="reset-criteria-btn" class="criteria-modal-btn secondary">Reset</button>
+            <button type="button" id="close-criteria-btn" class="criteria-modal-btn primary">Done</button>
+        </div>
+        </div>
     </div>
 
     <script src="ticket-payment-app.js"></script>

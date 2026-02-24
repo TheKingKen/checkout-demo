@@ -19,6 +19,13 @@ function buildNextUrl(context, nextPage) {
     return `${nextPage}?${query}`;
 }
 
+// Breadcrumb navigation function
+function goToEligibility(event) {
+    event.preventDefault();
+    const context = getQueryParams();
+    window.location.href = buildNextUrl(context, '/ticket-eligibility.html');
+}
+
 function formatCurrency(amount) {
     return `HKD ${amount}`;
 }
@@ -38,8 +45,25 @@ function clearHoldExpiry() {
     sessionStorage.removeItem('ticketHoldExpiresAt');
 }
 
-function renderTimer(expiresAt) {
+function clearSavedToken() {
+    localStorage.removeItem('ticketSavedCard');
+    localStorage.removeItem('ticketSavedCardEligible');
+}
+
+function handleHoldExpiry(context, timerId) {
+    clearHoldExpiry();
+    sessionStorage.removeItem('ticketSeatSelection');
+    clearSavedToken();
+    if (timerId) {
+        clearInterval(timerId);
+    }
+    window.location.href = buildNextUrl(context, '/ticket-eligibility.html');
+}
+
+function renderTimer(expiresAt, context) {
     const timerEl = document.getElementById('seat-timer-value');
+    let hasExpired = false;
+    let timerId = null;
 
     const update = () => {
         const remaining = Math.max(0, expiresAt - Date.now());
@@ -47,15 +71,16 @@ function renderTimer(expiresAt) {
         const seconds = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
         timerEl.textContent = `${minutes}:${seconds}`;
 
-        if (remaining <= 0) {
+        if (remaining <= 0 && !hasExpired) {
+            hasExpired = true;
             timerEl.textContent = '00:00';
-            clearHoldExpiry();
-            document.getElementById('continue-to-payment').disabled = true;
+            handleHoldExpiry(context, timerId);
         }
     };
 
     update();
-    return setInterval(update, 1000);
+    timerId = setInterval(update, 1000);
+    return timerId;
 }
 
 function buildSeatGrid() {
@@ -140,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         expiresAt = setHoldExpiry();
     }
 
-    const timerId = renderTimer(expiresAt);
+    const timerId = renderTimer(expiresAt, context);
 
     const continueBtn = document.getElementById('continue-to-payment');
     continueBtn.addEventListener('click', () => {

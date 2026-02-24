@@ -31,6 +31,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     const cartOverlay = document.getElementById('cart-overlay');
     const loginForm = document.getElementById('login-form');
 
+    localStorage.removeItem('ticketSavedCard');
+    localStorage.removeItem('ticketSavedCardEligible');
+    sessionStorage.removeItem('ticketHoldExpiresAt');
+
     // Load cart from localStorage
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -70,15 +74,19 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // Cart button - show overlay
-    cartBtn.addEventListener('click', () => {
-        cartOverlay.classList.remove('hidden');
-        updateCartDisplay();
-    });
+    if (cartBtn && cartOverlay) {
+        cartBtn.addEventListener('click', () => {
+            cartOverlay.classList.remove('hidden');
+            updateCartDisplay();
+        });
+    }
 
     // Close cart button
-    closeCartBtn.addEventListener('click', () => {
-        cartOverlay.classList.add('hidden');
-    });
+    if (closeCartBtn && cartOverlay) {
+        closeCartBtn.addEventListener('click', () => {
+            cartOverlay.classList.add('hidden');
+        });
+    }
 
     // Close login button
     closeLoginBtn.addEventListener('click', () => {
@@ -86,11 +94,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // Click overlay background to close
-    cartOverlay.addEventListener('click', (e) => {
-        if (e.target === cartOverlay) {
-            cartOverlay.classList.add('hidden');
-        }
-    });
+    if (cartOverlay) {
+        cartOverlay.addEventListener('click', (e) => {
+            if (e.target === cartOverlay) {
+                cartOverlay.classList.add('hidden');
+            }
+        });
+    }
     
     // Click login overlay background to close
     loginOverlay.addEventListener('click', (e) => {
@@ -125,6 +135,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 country: 'HK'
             };
             localStorage.setItem('userShippingAddress', JSON.stringify(userData));
+            localStorage.setItem('userEmail', userData.email);
             
             // Update login button text
             updateLoginButtonLabel();
@@ -138,21 +149,23 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // Checkout button
-    checkoutBtn.addEventListener('click', () => {
-        if (cart.length === 0) {
-            alert(getTicketsStrings().alertCartEmpty || 'Your cart is empty');
-            return;
-        }
-        
-        // Save cart to localStorage
-        localStorage.setItem('cart', JSON.stringify(cart));
-        
-        // Save the source page for cart breadcrumb navigation
-        localStorage.setItem('checkoutSourcePage', '/tickets.html');
-        
-        // Redirect to checkout page
-        window.location.href = '/checkout.html';
-    });
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert(getTicketsStrings().alertCartEmpty || 'Your cart is empty');
+                return;
+            }
+            
+            // Save cart to localStorage
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Save the source page for cart breadcrumb navigation
+            localStorage.setItem('checkoutSourcePage', '/tickets.html');
+            
+            // Redirect to checkout page
+            window.location.href = '/checkout.html';
+        });
+    }
 
     // Initialize currency conversion and render tickets
     await window.CurrencyUtils.fetchFXRates();
@@ -193,6 +206,21 @@ function createTicketCard(eventName, priceHKD, status, index, currency) {
     const card = document.createElement('div');
     card.className = 'ticket-card';
     
+    // Determine emoji and background based on event type
+    let emoji = '🎪';
+    let bgColor = '#FFE66D';
+    
+    if (eventName.includes('Concert')) {
+        emoji = index % 2 === 0 ? '🎸' : '🎤';
+        bgColor = '#FF6B6B';
+    } else if (eventName.includes('Sport')) {
+        emoji = index % 2 === 0 ? '⚽' : '🏀';
+        bgColor = '#4ECDC4';
+    } else if (eventName.includes('Cultural')) {
+        emoji = index % 2 === 0 ? '🎭' : '🎨';
+        bgColor = '#A8E6CF';
+    }
+    
     const convertedPrice = window.CurrencyUtils.convertPrice(priceHKD, currency);
     const formattedPrice = window.CurrencyUtils.formatPrice(priceHKD, currency);
     
@@ -200,7 +228,7 @@ function createTicketCard(eventName, priceHKD, status, index, currency) {
     const statusText = status === 'presale' ? (strings.presaleLabel || 'Pre-sale') : (strings.onsaleLabel || 'On-sale');
     
     card.innerHTML = `
-        <div class="ticket-card-image">${eventName}</div>
+        <div class="ticket-card-image" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 64px;">${emoji}</div>
         <div class="ticket-card-info">
             <h4 class="ticket-card-title">${eventName}</h4>
             <p class="ticket-card-price">${formattedPrice}</p>
@@ -218,11 +246,7 @@ function createTicketCard(eventName, priceHKD, status, index, currency) {
             return;
         }
 
-        if (status === 'presale') {
-            window.location.href = `/ticket-eligibility.html?${nextParams}`;
-        } else {
-            window.location.href = `/ticket-seat-selection.html?${nextParams}`;
-        }
+        window.location.href = `/ticket-eligibility.html?${nextParams}`;
     });
     
     return card;

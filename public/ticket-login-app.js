@@ -16,12 +16,24 @@ function buildNextUrl({ event, price, index, status }, nextPage) {
 }
 
 function redirectToNextStep(context) {
-    if (context.status === 'presale') {
-        window.location.href = buildNextUrl(context, '/ticket-eligibility.html');
-        return;
-    }
+    window.location.href = buildNextUrl(context, '/ticket-eligibility.html');
+}
 
-    window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
+function persistLoginProfile() {
+    const userData = {
+        name: 'Ken So',
+        email: 'ken.so@checkout.com',
+        phone_number: '64416246',
+        phone_country_code: '+852',
+        firstName: 'Ken',
+        lastName: 'So',
+        addressLine1: 'Level 14, Five Pacific Place',
+        addressLine2: '28 Hennessy Road',
+        region: 'Wan Chai',
+        country: 'HK'
+    };
+    localStorage.setItem('userShippingAddress', JSON.stringify(userData));
+    localStorage.setItem('userEmail', userData.email);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         localStorage.setItem('isLoggedIn', 'true');
+        persistLoginProfile();
         redirectToNextStep(context);
     });
 

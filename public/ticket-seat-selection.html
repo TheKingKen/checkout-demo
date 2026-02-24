@@ -7,12 +7,19 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="page-with-gradient">
-    <div class="form-container ticket-seat-container">
-        <div class="breadcrumb">
-            <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
-            <span class="breadcrumb-separator">></span>
-            <span class="breadcrumb-current">Seat Selection</span>
+    <div class="catalog-container ticket-page-container">
+        <div class="catalog-header ticket-page-header">
+            <img src="https://s3-us-west-2.amazonaws.com/cbi-image-service-prd/original/d62079fa-f245-4611-83c1-2439fe7fa258.png?w=3840" alt="Shop Logo" class="catalog-logo">
+            <div class="catalog-actions-top"></div>
         </div>
+        <div class="form-container ticket-seat-container ticket-page-content">
+            <div class="breadcrumb">
+                <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
+                <span class="breadcrumb-separator">></span>
+                <a href="#" class="breadcrumb-link" onclick="goToEligibility(event)">Eligibility Check</a>
+                <span class="breadcrumb-separator">></span>
+                <span class="breadcrumb-current">Seat Selection</span>
+            </div>
 
         <div class="seat-header">
             <div>
@@ -48,6 +55,7 @@
                 <button class="checkout-btn" id="continue-to-payment">Continue to Payment</button>
                 <button class="btn-secondary" id="cancel-seat">Cancel</button>
             </div>
+        </div>
         </div>
     </div>
 
