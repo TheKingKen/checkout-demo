@@ -222,20 +222,23 @@ app.post('/create-payment-link', async (req, res) => {
 
 // Card metadata lookup (BIN check) for pre-sale eligibility
 app.post('/card-metadata', async (req, res) => {
-  const { number, type, format, reference } = req.body || {};
-  if (!number || typeof number !== 'string') {
-    return res.status(400).json({ error: 'Missing card number' });
+  const { number, bin, type, format, reference } = req.body || {};
+  const sourceType = type || (bin ? 'bin' : 'card');
+  const rawValue = sourceType === 'bin' ? bin : number;
+
+  if (!rawValue || typeof rawValue !== 'string') {
+    return res.status(400).json({ error: sourceType === 'bin' ? 'Missing card bin' : 'Missing card number' });
   }
 
-  const sanitized = number.replace(/\D/g, '');
+  const sanitized = rawValue.replace(/\D/g, '');
   if (sanitized.length < 6) {
     return res.status(400).json({ error: 'Card number must contain at least 6 digits' });
   }
 
   const payload = {
     source: {
-      number: sanitized,
-      type: type || 'card'
+      type: sourceType,
+      ...(sourceType === 'bin' ? { bin: sanitized } : { number: sanitized })
     },
     format: format || 'basic',
     reference: reference || `PRECHECK-${Date.now()}`
@@ -308,10 +311,10 @@ app.post('/tokenize-card', async (req, res) => {
 
 // Pay with stored card token
 app.post('/pay-with-token', async (req, res) => {
-  const { source, amount, currency, payment_type, reference, description } = req.body || {};
+  const { source, amount, currency, payment_type, reference, description, customer, shipping, products, billing } = req.body || {};
   
   console.log('=== Process Pay with Token Request ===');
-  console.log(JSON.stringify(source, null, 2));
+  console.log(JSON.stringify(req.body, null, 2));
 
   if (!source || !source.type || !source.token || !amount || !currency) {
     return res.status(400).json({ error: 'Missing required payment fields' });
@@ -322,20 +325,54 @@ app.post('/pay-with-token', async (req, res) => {
   }
 
   try {
+    // Determine base URL for redirect targets
+    const baseUrl = resolvePublicBase(req);
+
+    const productList = Array.isArray(products) ? products : [];
+    const firstProduct = productList[0];
+    const billingAddress = billing?.address || shipping?.address || undefined;
+    const billingPhone = billing?.phone || customer?.phone || shipping?.phone || undefined;
+
     const paymentRequest = {
-      source: {
-        type: source.type,
-        token: source.token
-      },
+      source: source,
       amount,
       currency,
+      reference: reference || `ORDER-${Date.now()}`,
+      description: firstProduct
+        ? `${firstProduct.name}${productList.length > 1 ? ` +${productList.length - 1} more` : ''} (${currency})`
+        : description || `ORDER-${Date.now()}`,
+      billing_descriptor: {
+        name: customer?.name || 'Customer',
+        city: billingAddress?.city || shipping?.address?.city || 'Unknown'
+      },
+      customer: customer,
+      ...(billingAddress && {
+        billing: {
+          address: billingAddress,
+          ...(billingPhone && { phone: billingPhone })
+        }
+      }),
+      shipping: shipping,
+      risk: {
+        enabled: true
+      },
+      ...(productList.length > 0 && {
+        items: productList.map(product => ({
+          name: product.name,
+          quantity: product.quantity,
+          unit_price: product.unit_price,
+          reference: product.reference
+        }))
+      }),
       payment_type: payment_type || 'Regular',
-      merchant_initiated: false
+      processing_channel_id: PROCESSING_CHANNEL_ID,
+      success_url: `${baseUrl}/success.html`,
+      failure_url: `${baseUrl}/failure.html`,
+      metadata: {
+        products_count: productList.length,
+        product_references: productList.map(p => p.reference).join(',')
+      }
     };
-
-    // Add optional fields
-    if (reference) paymentRequest.reference = reference;
-    if (description) paymentRequest.description = description;
     
     // Add 3DS settings if provided
     if (req.body['3ds']) {

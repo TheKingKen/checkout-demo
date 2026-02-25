@@ -299,18 +299,28 @@ async function payWithStoredCardToken(context, selection, savedCard) {
         
         const paymentRequest = {
             source: {
-                type: 'id',
-                id: savedCard.token
+                type: 'token',
+                token: savedCard.token
             },
             amount: amount,
             currency: 'HKD',
+            customer: {
+                name: savedCard.cardholderName || 'Ticket Buyer'
+            },
+            products: [
+                {
+                    name: `Ticket - ${context.event}`,
+                    quantity: 1,
+                    unit_price: amount,
+                    reference: `TICKET-${context.index || 0}`
+                }
+            ],
             payment_type: 'Regular',
-            merchant_initiated: false,
             reference: `TICKET-${Date.now()}`,
             description: `Ticket for ${context.event}`,
             '3ds': {
                 enabled: true,
-                challenge_indicator: 'no_challenge_requested'
+                challenge_indicator: 'challenge_requested_mandate'
             }
         };
 
@@ -361,12 +371,20 @@ async function payWithNewCard(context, selection, cardData) {
             customer: {
                 name: cardData.cardholderName
             },
+            products: [
+                {
+                    name: `Ticket - ${context.event}`,
+                    quantity: 1,
+                    unit_price: amount,
+                    reference: `TICKET-${context.index || 0}`
+                }
+            ],
             payment_type: 'Regular',
             reference: `TICKET-${Date.now()}`,
             description: `Ticket for ${context.event}`,
             '3ds': {
                 enabled: true,
-                challenge_indicator: 'challenge_requested'
+                challenge_indicator: 'challenge_requested_mandate'
             }
         };
 
@@ -383,6 +401,17 @@ async function payWithNewCard(context, selection, cardData) {
         }
 
         const result = await response.json();
+        
+        // Check if 3DS authentication is required
+        if (result._links?.redirect?.href) {
+            console.log('3DS authentication required, redirecting to:', result._links.redirect.href);
+            // Redirect to 3DS authentication page
+            window.location.href = result._links.redirect.href;
+            // Don't return yet - the redirect will take over
+            return new Promise(() => {}); // Keep promise pending during redirect
+        }
+        
+        console.log('Payment successful without 3DS redirect:', result);
         return result;
     } catch (error) {
         throw new Error('Payment processing failed: ' + error.message);
@@ -525,7 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         updatePaymentFormVisibility();
                     } else {
                         paymentEligibilityState.isEligible = false;
-                        const criteria = getCriteria();
                         const criteriaDisplay = document.getElementById('criteria-display').textContent;
                         const badge = getCardTypeBadge(metadata);
                         setPaymentEligibilityStatus(`This${badge} does not meet criteria: ${criteriaDisplay}`, 'error');
