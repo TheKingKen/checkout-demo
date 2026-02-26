@@ -27,14 +27,16 @@ function buildNextUrl(context, nextPage) {
 }
 
 // Breadcrumb navigation functions
-function goToEligibility(event) {
+function goToTickets(event) {
     event.preventDefault();
-    const context = getQueryParams();
-    window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
+    clearSavedToken();
+    window.location.href = '/tickets.html';
 }
 
 function goToSeatSelection(event) {
     event.preventDefault();
+    clearSavedToken();
+    sessionStorage.removeItem('ticketHoldExpiresAt');
     const context = getQueryParams();
     window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
 }
@@ -132,6 +134,11 @@ function renderSavedCard() {
     const panel = document.getElementById('saved-card-panel');
     const raw = localStorage.getItem('ticketSavedCard');
     if (!raw) {
+        panel.innerHTML = `
+            <div class="saved-card-detail">
+                <span>No saved card for faster payment.</span>
+            </div>
+        `;
         return null;
     }
 
@@ -718,6 +725,8 @@ document.addEventListener('DOMContentLoaded', () => {
     backBtns.forEach(btn => {
         if (btn) {
             btn.addEventListener('click', () => {
+                clearSavedToken();
+                sessionStorage.removeItem('ticketHoldExpiresAt');
                 window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
             });
         }

@@ -513,8 +513,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 setBinEligibilityStatus('Eligible card detected. Redirecting...', 'success');
-                persistSelection(context);
-                window.location.href = buildNextUrl(context, '/ticket-payment.html');
+                
+                // Show loading overlay for 3 seconds
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('show');
+                }
+
+                // Redirect after 3 seconds
+                setTimeout(() => {
+                    persistSelection(context);
+                    window.location.href = buildNextUrl(context, '/ticket-payment.html');
+                }, 3000);
             } catch (error) {
                 setBinEligibilityStatus(error.message, 'error');
             }
@@ -670,8 +680,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            persistSelection(context);
-            window.location.href = buildNextUrl(context, '/ticket-payment.html');
+            // Show loading overlay for 3 seconds
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('show');
+            }
+
+            // Redirect after 3 seconds
+            setTimeout(() => {
+                persistSelection(context);
+                window.location.href = buildNextUrl(context, '/ticket-payment.html');
+            }, 3000);
         });
     }
 
