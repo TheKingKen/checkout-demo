@@ -2349,3 +2349,94 @@ body.checkout-page {
         font-size: 13px;
     }
 }
+
+.seat-map-title {
+    margin: 0 0 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.seat-map-stage {
+    margin: 12px 0 20px;
+    text-align: center;
+    font-weight: 700;
+    color: #9b1c1c;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.seat-session-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.session-unavailable-tag {
+    color: #b91c1c;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.ticket-qty-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ticket-qty-control .qty-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #f3f4f6;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ticket-qty-control .qty-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+#ticket-qty-value {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.seat-grid .seat[disabled] {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.bin-modal-content {
+    max-width: 420px;
+}
+
+.bin-modal-description {
+    margin: 8px 0 16px;
+    color: #4b5563;
+}
+
+.presale-eligibility-description {
+    margin-bottom: 20px;
+}
+
+.presale-eligibility-description h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.presale-eligibility-description p {
+    margin: 0;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.hidden {
+    display: none !important;
+}

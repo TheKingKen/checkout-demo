@@ -7,18 +7,22 @@ const paymentEligibilityState = {
     cardNumber: ''
 };
 
+const HOLD_DURATION_MS = 5 * 60 * 1000;
+
 function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     return {
         event: params.get('event') || '',
         price: params.get('price') || '',
         index: params.get('index') || '',
-        status: params.get('status') || 'presale'
+        status: params.get('status') || 'presale',
+        presaleFlow: params.get('presaleFlow') || ''
     };
 }
 
 function buildNextUrl(context, nextPage) {
-    const query = `event=${encodeURIComponent(context.event)}&price=${context.price}&index=${context.index}&status=${context.status}`;
+    const flowParam = context.presaleFlow ? `&presaleFlow=${encodeURIComponent(context.presaleFlow)}` : '';
+    const query = `event=${encodeURIComponent(context.event)}&price=${context.price}&index=${context.index}&status=${context.status}${flowParam}`;
     return `${nextPage}?${query}`;
 }
 
@@ -26,7 +30,7 @@ function buildNextUrl(context, nextPage) {
 function goToEligibility(event) {
     event.preventDefault();
     const context = getQueryParams();
-    window.location.href = buildNextUrl(context, '/ticket-eligibility.html');
+    window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
 }
 
 function goToSeatSelection(event) {
@@ -50,6 +54,12 @@ function getHoldExpiry() {
     return stored ? parseInt(stored, 10) : null;
 }
 
+function setHoldExpiry() {
+    const expiresAt = Date.now() + HOLD_DURATION_MS;
+    sessionStorage.setItem('ticketHoldExpiresAt', String(expiresAt));
+    return expiresAt;
+}
+
 function clearSavedToken() {
     localStorage.removeItem('ticketSavedCard');
     localStorage.removeItem('ticketSavedCardEligible');
@@ -62,7 +72,7 @@ function handleHoldExpiry(context, timerId) {
     if (timerId) {
         clearInterval(timerId);
     }
-    window.location.href = buildNextUrl(context, '/ticket-eligibility.html');
+    window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
 }
 
 function renderTimer(expiresAt, context) {
@@ -95,6 +105,9 @@ function renderSummary(selection) {
         return;
     }
 
+    const quantity = selection.quantity || 1;
+    const totalPrice = selection.totalPrice || selection.categoryPrice || 0;
+
     summary.innerHTML = `
         <div class="seat-summary-row">
             <span>Seat</span>
@@ -103,6 +116,14 @@ function renderSummary(selection) {
         <div class="seat-summary-row">
             <span>Category price</span>
             <strong>${formatCurrency(selection.categoryPrice)}</strong>
+        </div>
+        <div class="seat-summary-row">
+            <span>Quantity</span>
+            <strong>${quantity}</strong>
+        </div>
+        <div class="seat-summary-row total">
+            <span>Total</span>
+            <strong>${formatCurrency(totalPrice)}</strong>
         </div>
     `;
 }
@@ -436,10 +457,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSummary(selection);
     const savedCard = renderSavedCard();
 
-    const expiresAt = getHoldExpiry();
+    let expiresAt = getHoldExpiry();
     if (!expiresAt || expiresAt <= Date.now()) {
-        handleHoldExpiry(context);
-        return;
+        expiresAt = setHoldExpiry();
     }
 
     renderTimer(expiresAt, context);

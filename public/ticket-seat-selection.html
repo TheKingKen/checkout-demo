@@ -10,34 +10,35 @@
     <div class="catalog-container ticket-page-container">
         <div class="catalog-header ticket-page-header">
             <img src="https://s3-us-west-2.amazonaws.com/cbi-image-service-prd/original/d62079fa-f245-4611-83c1-2439fe7fa258.png?w=3840" alt="Shop Logo" class="catalog-logo">
-            <div class="catalog-actions-top"></div>
+            <div class="catalog-actions-top">
+                <button type="button" id="criteria-settings-btn" class="action-btn">⚙ Settings</button>
+            </div>
         </div>
         <div class="form-container ticket-seat-container ticket-page-content">
             <div class="breadcrumb">
                 <a href="/tickets.html" class="breadcrumb-link">Tickets</a>
-                <span class="breadcrumb-separator">></span>
-                <a href="#" class="breadcrumb-link" onclick="goToEligibility(event)">Eligibility Check</a>
                 <span class="breadcrumb-separator">></span>
                 <span class="breadcrumb-current">Seat Selection</span>
             </div>
 
         <div class="seat-header">
             <div>
-                <h1>Seat Selection</h1>
+                <h1 id="seat-title">Seat Selection</h1>
                 <p id="seat-event" class="seat-event"></p>
-            </div>
-            <div class="seat-timer">
-                <span>Time remaining</span>
-                <strong id="seat-timer-value">05:00</strong>
             </div>
         </div>
 
         <div class="seat-layout">
+            <h2 class="seat-map-title">Seat Map</h2>
             <div class="seat-grid" id="seat-grid"></div>
+            <div class="seat-map-stage">Stage</div>
             <div class="seat-summary">
                 <div class="seat-summary-row">
-                    <span>Selected seat</span>
-                    <strong id="selected-seat">None</strong>
+                    <span>Session</span>
+                    <div class="seat-session-control">
+                        <select id="seat-session" class="seat-session"></select>
+                        <span id="session-unavailable-tag" class="session-unavailable-tag hidden">(Unavailable)</span>
+                    </div>
                 </div>
                 <div class="seat-summary-row">
                     <span>Category</span>
@@ -48,13 +49,121 @@
                         <option value="1280">Category D - HKD 1280</option>
                     </select>
                 </div>
+                <div class="seat-summary-row">
+                    <span>Tickets</span>
+                    <div class="ticket-qty-control">
+                        <button type="button" class="qty-btn" id="ticket-qty-minus">−</button>
+                        <span id="ticket-qty-value">1</span>
+                        <button type="button" class="qty-btn" id="ticket-qty-plus">+</button>
+                    </div>
+                </div>
                 <div class="seat-summary-row total">
                     <span>Price</span>
                     <strong id="seat-price">HKD 380</strong>
                 </div>
-                <button class="checkout-btn" id="continue-to-payment">Continue to Payment</button>
+                <div id="presale-eligibility-section" class="eligibility-section hidden">
+                    <div id="presale-eligibility-description" class="presale-eligibility-description">
+                        <h3 id="presale-issuer-title">Cardmember Presale</h3>
+                        <p>Please enter your credit card number:</p>
+                    </div>
+                    <form id="presale-eligibility-form" class="ticket-eligibility-form">
+                        <div class="form-group">
+                            <label for="card-number">Card Number</label>
+                            <input type="text" id="card-number" name="card-number" placeholder="1234 5678 9012 3456" inputmode="numeric" autocomplete="cc-number" required>
+                        </div>
+
+                        <div class="eligibility-status" id="eligibility-status"></div>
+
+                        <div id="eligibility-form-sections" class="eligibility-form-sections hidden">
+                            <div class="form-group checkbox-row">
+                                <input type="checkbox" id="save-card" name="save-card">
+                                <label for="save-card">Save this card for faster checkout</label>
+                            </div>
+                            <p class="disclaimer">Saved cards are stored for this demo only and can be used to skip the pre-check next time.</p>
+
+                            <div id="save-card-fields" class="hidden">
+                                <div class="form-group">
+                                    <label for="cardholder-name">Cardholder Name</label>
+                                    <input type="text" id="cardholder-name" name="cardholder-name" autocomplete="cc-name">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="expiry-date">Expiry Date (MM/YY)</label>
+                                        <input type="text" id="expiry-date" name="expiry-date" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cvv">CVV</label>
+                                        <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" autocomplete="cc-csc" inputmode="numeric">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="button-row">
+                                <button type="submit" class="checkout-btn" id="confirm-btn" disabled>Confirm</button>
+                                <button type="button" class="btn-secondary" id="eligibility-cancel-btn">Cancel</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <button class="checkout-btn" id="next-step-btn">Next</button>
                 <button class="btn-secondary" id="cancel-seat">Cancel</button>
             </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="criteria-modal-overlay" id="bin-modal-overlay">
+        <div class="criteria-modal-content bin-modal-content">
+            <h3 id="bin-modal-title">Cardmember Presale</h3>
+            <p class="bin-modal-description">Please enter the first 6 digits of your credit card number:</p>
+            <div class="form-group">
+                <label for="bin-input">BIN</label>
+                <input type="text" id="bin-input" placeholder="Please enter privilege access code" inputmode="numeric" maxlength="6">
+            </div>
+            <div class="eligibility-status" id="bin-eligibility-status"></div>
+            <div class="criteria-modal-actions">
+                <button type="button" id="bin-cancel-btn" class="criteria-modal-btn secondary">Cancel</button>
+                <button type="button" id="bin-ok-btn" class="criteria-modal-btn primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="criteria-modal-overlay" id="criteria-modal-overlay">
+        <div class="criteria-modal-content">
+        <h3>Criteria Settings</h3>
+        <div class="criteria-group">
+            <label for="criteria-scheme">Card Scheme</label>
+            <select id="criteria-scheme">
+                <option value="all">All</option>
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+            </select>
+        </div>
+        <div class="criteria-group">
+            <label for="criteria-issuer">Issuer</label>
+            <select id="criteria-issuer">
+                <option value="all">All</option>
+                <option value="river_valley">RIVER VALLEY CREDIT UNION</option>
+                <option value="lloyds">LLOYDS BANK PLC</option>
+                <option value="sbm">SBM BANK (MAURITIUS) LTD</option>
+                <option value="euro">EURO KARTENSYSTEME GMBH</option>
+            </select>
+        </div>
+        <div class="criteria-group">
+            <label for="criteria-product">Product Type</label>
+            <select id="criteria-product">
+                <option value="all">All</option>
+                <option value="visa_classic">Visa Classic</option>
+            </select>
+        </div>
+        <hr>
+        <div class="criteria-summary" id="criteria-summary">
+            <strong>Current Criteria:</strong>
+            <p id="criteria-display">Any scheme, Any issuer, Any product type</p>
+        </div>
+        <div class="criteria-modal-actions">
+            <button type="button" id="reset-criteria-btn" class="criteria-modal-btn secondary">Reset</button>
+            <button type="button" id="close-criteria-btn" class="criteria-modal-btn primary">Done</button>
         </div>
         </div>
     </div>

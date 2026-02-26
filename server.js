@@ -222,9 +222,11 @@ app.post('/create-payment-link', async (req, res) => {
 
 // Card metadata lookup (BIN check) for pre-sale eligibility
 app.post('/card-metadata', async (req, res) => {
+  console.log('[Server] Received /card-metadata request body:', JSON.stringify(req.body, null, 2));
   const { number, bin, type, format, reference } = req.body || {};
   const sourceType = type || (bin ? 'bin' : 'card');
-  const rawValue = sourceType === 'bin' ? bin : number;
+  const rawValue = sourceType === 'bin' ? (bin || number) : number;
+  console.log(`[Server] Derived values - sourceType: ${sourceType}, rawValue: ${rawValue}, bin field: ${bin}, number field: ${number}`);
 
   if (!rawValue || typeof rawValue !== 'string') {
     return res.status(400).json({ error: sourceType === 'bin' ? 'Missing card bin' : 'Missing card number' });

@@ -173,10 +173,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     // Setup carousel controls
     setupCarousel('presale');
+    setupCarousel('presale-bin');
     setupCarousel('onsale');
     
-    // Auto-scroll carousels
-    startAutoScroll('presale', 4000);
+    // Auto-scroll carousels (only for on-sale; presale sections have single cards so no auto-scroll needed)
     startAutoScroll('onsale', 5000);
 });
 
@@ -184,25 +184,29 @@ document.addEventListener('DOMContentLoaded', async function () {
 function renderTickets() {
     const currency = window.CurrencyUtils.getCurrentCurrency();
     const presaleTrack = document.getElementById('presale-track');
+    const presaleBinTrack = document.getElementById('presale-bin-track');
     const onsaleTrack = document.getElementById('onsale-track');
 
-    // Render pre-sale tickets (first 5)
+    // Render single pre-sale card for token verification (Concert with mic emoji)
     presaleTrack.innerHTML = '';
-    for (let i = 0; i < 5; i++) {
-        const card = createTicketCard(ticketEvents[i], ticketPrices[i], 'presale', i, currency);
-        presaleTrack.appendChild(card);
-    }
+    const tokenCard = createTicketCard('2026 LIVE TOUR Concert In HONG KONG', 0, 'presale', 1, currency, false, 'token');
+    presaleTrack.appendChild(tokenCard);
+
+    // Render single pre-sale card for BIN verification (Sport with football emoji)
+    presaleBinTrack.innerHTML = '';
+    const binCard = createTicketCard('M+ Event Sports Game: MCI vs. ARS', 0, 'presale', 0, currency, false, 'bin');
+    presaleBinTrack.appendChild(binCard);
 
     // Render on-sale tickets (last 5)
     onsaleTrack.innerHTML = '';
     for (let i = 5; i < 10; i++) {
-        const card = createTicketCard(ticketEvents[i], ticketPrices[i], 'onsale', i, currency);
+        const card = createTicketCard(ticketEvents[i], ticketPrices[i], 'onsale', i, currency, true);
         onsaleTrack.appendChild(card);
     }
 }
 
 // Create a ticket card element
-function createTicketCard(eventName, priceHKD, status, index, currency) {
+function createTicketCard(eventName, priceHKD, status, index, currency, showPrice = true, presaleFlow = '') {
     const card = document.createElement('div');
     card.className = 'ticket-card';
     
@@ -227,11 +231,13 @@ function createTicketCard(eventName, priceHKD, status, index, currency) {
     const strings = window.CurrencyUtils.getTranslations('tickets');
     const statusText = status === 'presale' ? (strings.presaleLabel || 'Pre-sale') : (strings.onsaleLabel || 'On-sale');
     
+    const priceHtml = showPrice ? `<p class="ticket-card-price">${formattedPrice}</p>` : '';
+    
     card.innerHTML = `
         <div class="ticket-card-image" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 64px;">${emoji}</div>
         <div class="ticket-card-info">
             <h4 class="ticket-card-title">${eventName}</h4>
-            <p class="ticket-card-price">${formattedPrice}</p>
+            ${priceHtml}
             <span class="ticket-card-status status-${status}">${statusText}</span>
         </div>
     `;
@@ -239,14 +245,15 @@ function createTicketCard(eventName, priceHKD, status, index, currency) {
     // Add click handler
     card.addEventListener('click', () => {
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const nextParams = `event=${encodeURIComponent(eventName)}&price=${priceHKD}&index=${index}&status=${status}`;
+        const flowParam = presaleFlow ? `&presaleFlow=${encodeURIComponent(presaleFlow)}` : '';
+        const nextParams = `event=${encodeURIComponent(eventName)}&price=${priceHKD}&index=${index}&status=${status}${flowParam}`;
 
         if (!isLoggedIn) {
             window.location.href = `/ticket-login.html?${nextParams}`;
             return;
         }
 
-        window.location.href = `/ticket-eligibility.html?${nextParams}`;
+        window.location.href = `/ticket-seat-selection.html?${nextParams}`;
     });
     
     return card;

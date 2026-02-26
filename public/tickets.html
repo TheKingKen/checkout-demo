@@ -29,9 +29,9 @@
         <p data-i18n="ticketsDesc">Tickets for concerts, sports events, cultural activities and more</p>
     </div>
 
-    <!-- Pre-sale Section -->
+    <!-- Pre-sale Section (Token Verification) -->
     <div class="tickets-section">
-        <h3 class="section-title" data-i18n="presaleTitle">Pre-sale</h3>
+        <h3 class="section-title" data-i18n="presaleTitle">PRE-SALE (Note: Verifying by Token)</h3>
         <div class="carousel-container">
             <button class="carousel-btn prev-btn" id="presale-prev" aria-label="Previous">‹</button>
             <div class="carousel-wrapper">
@@ -40,6 +40,20 @@
                 </div>
             </div>
             <button class="carousel-btn next-btn" id="presale-next" aria-label="Next">›</button>
+        </div>
+    </div>
+
+    <!-- Pre-sale Section (BIN Verification) -->
+    <div class="tickets-section">
+        <h3 class="section-title" data-i18n="presaleTitle">PRE-SALE (Note: Verifying by BIN)</h3>
+        <div class="carousel-container">
+            <button class="carousel-btn prev-btn" id="presale-bin-prev" aria-label="Previous">‹</button>
+            <div class="carousel-wrapper">
+                <div class="carousel-track" id="presale-bin-track">
+                    <!-- Pre-sale cards will be dynamically generated -->
+                </div>
+            </div>
+            <button class="carousel-btn next-btn" id="presale-bin-next" aria-label="Next">›</button>
         </div>
     </div>
 
