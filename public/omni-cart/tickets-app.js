@@ -160,10 +160,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             localStorage.setItem('cart', JSON.stringify(cart));
             
             // Save the source page for cart breadcrumb navigation
-            localStorage.setItem('checkoutSourcePage', '/tickets.html');
+            localStorage.setItem('checkoutSourcePage', '/omni-cart/tickets.html');
             
             // Redirect to checkout page
-            window.location.href = '/checkout.html';
+            window.location.href = '/omni-cart/checkout.html';
         });
     }
 
@@ -249,11 +249,11 @@ function createTicketCard(eventName, priceHKD, status, index, currency, showPric
         const nextParams = `event=${encodeURIComponent(eventName)}&price=${priceHKD}&index=${index}&status=${status}${flowParam}`;
 
         if (!isLoggedIn) {
-            window.location.href = `/ticket-login.html?${nextParams}`;
+            window.location.href = `/omni-cart/ticket-login.html?${nextParams}`;
             return;
         }
 
-        window.location.href = `/ticket-seat-selection.html?${nextParams}`;
+        window.location.href = `/omni-cart/ticket-seat-selection.html?${nextParams}`;
     });
     
     return card;

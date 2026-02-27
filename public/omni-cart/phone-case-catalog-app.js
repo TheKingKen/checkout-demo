@@ -193,10 +193,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         localStorage.setItem('cart', JSON.stringify(cart));
         
         // Save the source page for cart breadcrumb navigation
-        localStorage.setItem('checkoutSourcePage', '/phone-case-catalog.html');
+        localStorage.setItem('checkoutSourcePage', '/omni-cart/phone-case-catalog.html');
         
         // Redirect to checkout page
-        window.location.href = '/checkout.html';
+        window.location.href = '/omni-cart/checkout.html';
     });
     
     // Initialize currency conversion

@@ -1,11 +1,9 @@
-// public/payment-flow-app.js
+// public/phone-case-shop-payment-app.js
 
 // Helper: Get stored customer ID based on email (returns null for new customers)
-// Customer IDs are provided by Checkout.com after first successful payment
 function getCustomerId(email) {
     if (!email) return null;
     
-    // Check if we have a customer ID for this email
     const storageKey = `customer_id_${btoa(email).replace(/=/g, '')}`;
     const customerId = localStorage.getItem(storageKey);
     
@@ -15,7 +13,7 @@ function getCustomerId(email) {
         console.log('New customer detected. No customer ID stored yet.');
     }
     
-    return customerId; // null for new customers
+    return customerId;
 }
 
 // Helper: Store customer ID after successful payment
@@ -27,22 +25,12 @@ function storeCustomerId(email, customerId) {
     console.log('Stored customer ID:', customerId, 'for email:', email);
 }
 
-// Helper: Remove customer ID from localStorage
-function removeCustomerId(email) {
-    if (!email) return;
-    
-    const storageKey = `customer_id_${btoa(email).replace(/=/g, '')}`;
-    localStorage.removeItem(storageKey);
-    console.log('Removed customer ID from localStorage for email:', email);
-}
-
 // Helper: Store instrument IDs (source.id from payments) for customer
 function storeInstrumentId(email, instrumentId) {
     if (!email || !instrumentId) return;
     
     const storageKey = `instrument_ids_${btoa(email).replace(/=/g, '')}`;
     
-    // Get existing instruments or initialize empty array
     let instruments = [];
     try {
         const existing = localStorage.getItem(storageKey);
@@ -54,7 +42,6 @@ function storeInstrumentId(email, instrumentId) {
         instruments = [];
     }
     
-    // Add new instrument if not already present
     if (!instruments.includes(instrumentId)) {
         instruments.push(instrumentId);
         localStorage.setItem(storageKey, JSON.stringify(instruments));
@@ -78,20 +65,13 @@ function getInstrumentIds(email) {
     return [];
 }
 
-// Helper: Remove all instrument IDs for customer
+// Helper: Remove instrument IDs for customer
 function removeInstrumentIds(email) {
     if (!email) return;
     
     const storageKey = `instrument_ids_${btoa(email).replace(/=/g, '')}`;
     localStorage.removeItem(storageKey);
     console.log('Removed instrument IDs from localStorage for email:', email);
-}
-
-// Helper: Check if customer is returning (has made a payment before)
-function isReturningCustomer(email) {
-    if (!email) return false;
-    const storageKey = `customer_id_${btoa(email).replace(/=/g, '')}`;
-    return !!localStorage.getItem(storageKey);
 }
 
 // Helper: Fetch payment details from Checkout.com and store customer ID and instrument ID
@@ -109,7 +89,6 @@ async function fetchAndStoreCustomerId(paymentId, customerEmail) {
         const paymentDetails = await response.json();
         console.log('Payment details received:', paymentDetails);
         
-        // Extract customer.id from payment details
         if (paymentDetails.customer && paymentDetails.customer.id) {
             storeCustomerId(customerEmail, paymentDetails.customer.id);
             console.log('Customer ID stored successfully for future use:', paymentDetails.customer.id);
@@ -117,8 +96,6 @@ async function fetchAndStoreCustomerId(paymentId, customerEmail) {
             console.warn('No customer.id found in payment details');
         }
         
-        // Extract source.id (payment instrument ID) from payment details
-        // This is the token for the card stored in merchant's vault
         if (paymentDetails.source && paymentDetails.source.id) {
             storeInstrumentId(customerEmail, paymentDetails.source.id);
             console.log('Instrument ID (source.id) stored successfully:', paymentDetails.source.id);
@@ -158,10 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const confirmCheckbox = document.getElementById('confirm-checkbox');
         const flowHppToggleEl = document.getElementById('flow-hpp-toggle');
         if (confirmCheckbox && flowHppToggleEl) {
-            // Initialize state (toggle enabled when unchecked)
             flowHppToggleEl.disabled = !!confirmCheckbox.checked;
-
-            // Update when checkbox changes
             confirmCheckbox.addEventListener('change', (e) => {
                 flowHppToggleEl.disabled = !!e.target.checked;
             });
@@ -172,27 +146,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Show loading state
     loadingContainer.style.display = 'block';
-
-    // If payload is passed via URL (level-2 QR scan), decode and store into sessionStorage
-    try {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('data')) {
-            const data = params.get('data');
-            try {
-                // decode base64 (handles UTF-8)
-                const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(data))));
-                const parsed = JSON.parse(jsonStr);
-                sessionStorage.setItem('paymentPayload', JSON.stringify(parsed));
-                console.log('Loaded payment payload from URL data param');
-                // Remove query string to keep URL clean
-                history.replaceState(null, '', window.location.pathname);
-            } catch (e) {
-                console.warn('Failed to decode payment payload from URL', e);
-            }
-        }
-    } catch (e) {
-        console.warn('No URL params to process', e);
-    }
 
     // Simulate a small delay for better UX
     setTimeout(() => {
@@ -206,50 +159,78 @@ function loadPaymentData() {
     const errorContainer = document.getElementById('error-container');
 
     try {
-        // Retrieve payload from sessionStorage
-        const payloadStr = sessionStorage.getItem('paymentPayload');
+        // Retrieve customer data from sessionStorage
+        const customerDataStr = sessionStorage.getItem('phoneShopCustomerData');
 
-        if (!payloadStr) {
-            throw new Error('Payment data not found. Please complete the insurance application form first.');
+        if (!customerDataStr) {
+            throw new Error('Customer data not found. Please complete the form first.');
         }
 
-        const payload = JSON.parse(payloadStr);
+        const customerData = JSON.parse(customerDataStr);
 
-        // Validate payload structure
-        if (!payload.customer || !payload.products || !Array.isArray(payload.products) || payload.products.length === 0 || !payload.amount) {
-            throw new Error('Invalid payment data structure.');
+        // Build the payment payload
+        let amount, currency;
+        
+        if (customerData.country === 'HK') {
+            amount = 12900; // 129.00 HKD in cents
+            currency = 'HKD';
+        } else if (customerData.country === 'US') {
+            amount = 1600; // 16.00 USD in cents
+            currency = 'USD';
+        } else if (customerData.country === 'CN') {
+            amount = 12000; // 120.00 CNY in cents
+            currency = 'CNY';
+        } else {
+            amount = 6200; // 62.00 SAR in cents
+            currency = 'SAR';
         }
+
+        // Create complete payload for payment
+        const payload = {
+            country: customerData.country,
+            currency: currency,
+            amount: amount,
+            customer: {
+                name: customerData.name,
+                email: customerData.email,
+                phone_country_code: getPhoneCountryCode(customerData.country),
+                phone_number: customerData.phone
+            },
+            products: [
+                {
+                    name: customerData.productName || 'Classic iPhone Case',
+                    quantity: 1,
+                    unit_price: amount,
+                    reference: 'iphone-case-demo',
+                    description: customerData.productDescription
+                }
+            ]
+        };
+
+        // Store payload in sessionStorage for use in toggleActionButtons
+        sessionStorage.setItem('paymentPayload', JSON.stringify(payload));
 
         // Display customer information
-        document.getElementById('display-name').textContent = payload.customer.name || '-';
-        document.getElementById('display-email').textContent = payload.customer.email || '-';
+        document.getElementById('display-name').textContent = customerData.name || '-';
+        document.getElementById('display-email').textContent = customerData.email || '-';
+        document.getElementById('display-phone').textContent = customerData.phone || '-';
+        document.getElementById('display-country').textContent = customerData.country || '-';
+        document.getElementById('display-address').textContent = customerData.address || '-';
+        document.getElementById('display-currency').textContent = currency || 'HKD';
         
-        const phoneDisplay = payload.customer.phone_country_code + ' ' + payload.customer.phone_number;
-        document.getElementById('display-phone').textContent = phoneDisplay || '-';
+        // Display product name if custom value provided
+        document.getElementById('display-product').textContent = customerData.productName || 'Classic iPhone Case';
+        document.getElementById('display-reference').textContent = customerData.productDescription || 'iphone-case-demo';
         
-        document.getElementById('display-country').textContent = payload.country || '-';
-
-        // Display product information (show first product, or summary if multiple)
-        const firstProduct = payload.products[0];
-        const productDisplay = payload.products.length > 1 
-            ? `${firstProduct.name} +${payload.products.length - 1} more`
-            : firstProduct.name;
-        document.getElementById('display-product').textContent = productDisplay || '-';
-        document.getElementById('display-reference').textContent = firstProduct.reference || '-';
-
-        // Display amount information
-        document.getElementById('display-currency').textContent = payload.currency || 'HKD';
-        
-        // Convert amount from minor units (cents) to major units with thousand separator
-        const amountInMajorUnits = (payload.amount / 100).toFixed(2);
+        // Convert amount from minor units (cents) to major units
+        const amountInMajorUnits = (amount / 100).toFixed(2);
         const formattedAmount = parseFloat(amountInMajorUnits).toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
         document.getElementById('display-amount-formatted').textContent = formattedAmount;
 
-        // Log payload for debugging
-        console.log('Payment Payload Loaded:', payload);
+        console.log('Payment Payload Prepared:', payload);
 
         // Hide loading, show content
         loadingContainer.style.display = 'none';
@@ -271,6 +252,16 @@ function loadPaymentData() {
     }
 }
 
+function getPhoneCountryCode(country) {
+    const codes = {
+        'HK': '+852',
+        'US': '+1',
+        'CN': '+86',
+        'SA': '+966'
+    };
+    return codes[country] || '+852';
+}
+
 function toggleActionButtons() {
     const checkbox = document.getElementById('confirm-checkbox');
     const actionButtons = document.getElementById('action-buttons');
@@ -278,27 +269,18 @@ function toggleActionButtons() {
     
     if (!checkbox.checked) {
         actionButtons.style.display = 'none';
-        // clear any mounted flow UI
         const flowContainer = document.getElementById('flow-container');
         if (flowContainer) flowContainer.innerHTML = '';
-        // clear card info display
         const cardInfoDisplay = document.getElementById('card-info-display');
         if (cardInfoDisplay) cardInfoDisplay.style.display = 'none';
     } else {
         actionButtons.style.display = 'flex';
 
-        // Decide Flow vs HPP mode based on toggle
         const useFlow = localStorage.getItem('useFlow') === 'true';
 
         if (useFlow) {
-            // Hide the back button initially and show it after 3 seconds
             if (backButton) {
                 backButton.style.display = 'none';
-                // setTimeout(() => {
-                //     if (backButton) {
-                //         backButton.style.display = 'block';
-                //     }
-                // }, 2000);
             }
 
             // Flow: create payment session and initialize the Checkout Flow component
@@ -306,22 +288,12 @@ function toggleActionButtons() {
                 try {
                     const payloadStr = sessionStorage.getItem('paymentPayload');
                     if (!payloadStr) {
-                        alert('Payment data not found. Please complete the insurance application form first.');
+                        alert('Payment data not found. Please complete the form first.');
                         return;
                     }
                     const payload = JSON.parse(payloadStr);
 
-                    // Note: Customer ID retrieval for Remember Me deferred - will implement with stored card feature
-                    console.log('Flow mode: Remember Me (RM)');
-                    
-                    // Include customer.id in payload if available - Flow will handle saved card display
-                    if (false) {  // Deferred: will use stored card feature later
-                        // payload.customer.id = customerId;
-                        // console.log('Customer ID will be sent to Flow:', customerId);
-                        // console.log('Flow will display saved cards if available for this customer');
-                    } else {
-                        console.log('No customer ID - Flow will show new card form with Remember Me consent');
-                    }
+                    console.log('Flow mode: Creating payment session');
 
                     const response = await fetch('/create-payment-sessions', {
                         method: 'POST',
@@ -362,9 +334,9 @@ function toggleActionButtons() {
                             onPaymentCompleted: async (_component, paymentResponse) => {
                                 console.log('Payment completed', paymentResponse);
                                 
-                                // Extract payment ID and fetch customer ID from payment details
                                 if (paymentResponse && paymentResponse.id) {
-                                    // Fetch and store customer ID for future use
+                                    const payloadStr = sessionStorage.getItem('paymentPayload');
+                                    const payload = JSON.parse(payloadStr);
                                     await fetchAndStoreCustomerId(paymentResponse.id, payload.customer.email);
                                 }
                                 
@@ -375,7 +347,6 @@ function toggleActionButtons() {
                             onChange: (component) => {
                                 console.log('onChange', component.type, component.isValid && component.isValid());
                                 
-                                // Hide card info display if payment method is not card
                                 if (component.type !== 'card') {
                                     const cardInfoDisplay = document.getElementById('card-info-display');
                                     if (cardInfoDisplay && cardInfoDisplay.style.display === 'block') {
@@ -386,13 +357,11 @@ function toggleActionButtons() {
                             },
                             onCardBinChanged: (_component, cardMetadata) => {
                                 console.log('BIN changed:', cardMetadata);
-                                // If cardMetadata is empty/null, it means the card number was cleared
                                 if (!cardMetadata || Object.keys(cardMetadata).length === 0) {
                                     updateCardInfoDisplay(null);
                                 } else {
                                     updateCardInfoDisplay(cardMetadata);
                                 }
-                                // Accept the card by default (return nothing or { continue: true })
                                 return { continue: true };
                             },
                             onError: (component, error) => {
@@ -413,7 +382,11 @@ function toggleActionButtons() {
                         });
 
                         const flowComponent = checkout.create('flow');
-                        flowComponent.mount(document.getElementById('flow-container'));
+                        const flowContainer = document.getElementById('flow-container');
+                        if (flowContainer) {
+                            flowContainer.style.minHeight = '400px';  // Ensure proper height for Flow component
+                        }
+                        flowComponent.mount(flowContainer);
                     } catch (initErr) {
                         console.warn('Checkout Flow init failed or not available:', initErr);
                         const flowContainer = document.getElementById('flow-container');
@@ -430,17 +403,16 @@ function toggleActionButtons() {
                 }
             })();
         } else {
-            // HPP: show a Pay button inside flow-container that calls create-payment-link2 and redirects
+            // HPP: show a Pay button
             const flowContainer = document.getElementById('flow-container');
-            // Clear card info display (only relevant for Flow mode)
             const cardInfoDisplay = document.getElementById('card-info-display');
             if (cardInfoDisplay) cardInfoDisplay.style.display = 'none';
             
             if (flowContainer) {
                 flowContainer.innerHTML = '';
+                flowContainer.style.minHeight = 'auto';  // Remove large spacing for HPP mode
                 const pay = document.createElement('button');
                 pay.id = 'hpp-pay-btn';
-                // Use the same pay button styling as the insurance form
                 pay.className = 'pay-btn show';
                 pay.textContent = 'Pay';
                 flowContainer.appendChild(pay);
@@ -452,15 +424,14 @@ function toggleActionButtons() {
 
                         const payloadStr = sessionStorage.getItem('paymentPayload');
                         if (!payloadStr) {
-                            alert('Payment data not found. Please complete the insurance application form first.');
+                            alert('Payment data not found. Please complete the form first.');
                             pay.disabled = false;
                             pay.textContent = 'Pay';
                             return;
                         }
                         const payload = JSON.parse(payloadStr);
 
-                        // Note: Customer ID retrieval for stored card feature deferred
-                        console.log('HPP mode - Stored card feature to be implemented later');
+                        console.log('HPP mode - Creating payment link');
 
                         const response = await fetch('/create-payment-link2', {
                             method: 'POST',
@@ -494,25 +465,21 @@ function toggleActionButtons() {
 }
 
 function goBackToForm() {
-    // Return to the insurance form
-    window.location.href = '/insurance-form.html';
+    window.location.href = '/easy-checkout-demo/phone-case-shop.html';
 }
 
 // Helper function to update card info display with BIN lookup metadata
 function updateCardInfoDisplay(cardMetadata) {
-    // Log the complete cardMetadata object from onCardBinChanged event
     console.log('=== Card BIN Metadata ===');
     console.log(JSON.stringify(cardMetadata, null, 2));
     console.log('========================');
     
     const cardInfoDisplay = document.getElementById('card-info-display');
     
-    // Hide if no metadata or if metadata indicates insufficient card number digits
     if (!cardMetadata || Object.keys(cardMetadata).length === 0) {
         if (cardInfoDisplay) {
             cardInfoDisplay.style.display = 'none';
         }
-        // Hide all rows
         const rows = ['card-bin-row', 'card-brand-row', 'card-type-row', 'card-category-row', 'card-issuer-row', 'card-issuer-country-row'];
         rows.forEach(rowId => {
             const row = document.getElementById(rowId);
@@ -521,7 +488,6 @@ function updateCardInfoDisplay(cardMetadata) {
         return;
     }
 
-    // Helper to show/hide and update a row
     const updateRow = (rowId, valueId, value) => {
         const row = document.getElementById(rowId);
         const valueEl = document.getElementById(valueId);
@@ -534,7 +500,6 @@ function updateCardInfoDisplay(cardMetadata) {
         }
     };
 
-    // Count how many fields have valid data
     let validFieldCount = 0;
     const checkField = (value) => {
         if (value && value !== '-' && value !== 'unknown' && value !== '' && value !== null && value !== undefined) {
@@ -551,13 +516,11 @@ function updateCardInfoDisplay(cardMetadata) {
     const issuerValue = checkField(cardMetadata.issuer || cardMetadata.issuer_name);
     const issuerCountryValue = checkField(cardMetadata.issuer_country_name);
 
-    // Only show the display if at least one field has valid data
     if (validFieldCount > 0) {
         if (cardInfoDisplay) {
             cardInfoDisplay.style.display = 'block';
         }
         
-        // Update each field
         updateRow('card-bin-row', 'card-bin-value', binValue);
         updateRow('card-brand-row', 'card-brand-value', brandValue);
         updateRow('card-type-row', 'card-type-value', typeValue);
@@ -565,57 +528,8 @@ function updateCardInfoDisplay(cardMetadata) {
         updateRow('card-issuer-row', 'card-issuer-value', issuerValue);
         updateRow('card-issuer-country-row', 'card-issuer-country-value', issuerCountryValue);
     } else {
-        // No valid fields, hide the entire display
         if (cardInfoDisplay) {
             cardInfoDisplay.style.display = 'none';
         }
     }
 }
-
-/*function proceedToCheckout() {
-    try {
-        const payloadStr = sessionStorage.getItem('paymentPayload');
-        const payload = JSON.parse(payloadStr);
-
-        // Log the payload being sent
-        console.log('Proceeding to checkout with payload:', payload);
-
-        // Send payment request to backend
-        fetch('/create-payment-link', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                    try {
-                        const data = JSON.parse(text);
-                        throw new Error(data.error || 'Payment link creation failed');
-                    } catch (e) {
-                        throw new Error('Failed to create payment link: ' + text);
-                    }
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.link) {
-                // Redirect to Checkout.com Hosted Payments Page
-                window.location.href = data.link;
-            } else {
-                throw new Error('No payment link returned from server');
-            }
-        })
-        .catch(error => {
-            console.error('Checkout error:', error);
-            alert('Error proceeding to checkout: ' + error.message);
-        });
-
-    } catch (error) {
-        console.error('Error in proceedToCheckout:', error);
-        alert('Error: ' + error.message);
-    }
-}*/

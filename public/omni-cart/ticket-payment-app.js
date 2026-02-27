@@ -7,6 +7,8 @@ const paymentEligibilityState = {
     cardNumber: ''
 };
 
+let isPresaleFlow = true;
+
 const HOLD_DURATION_MS = 5 * 60 * 1000;
 
 function getQueryParams() {
@@ -30,7 +32,7 @@ function buildNextUrl(context, nextPage) {
 function goToTickets(event) {
     event.preventDefault();
     clearSavedToken();
-    window.location.href = '/tickets.html';
+    window.location.href = '/omni-cart/tickets.html';
 }
 
 function goToSeatSelection(event) {
@@ -38,7 +40,7 @@ function goToSeatSelection(event) {
     clearSavedToken();
     sessionStorage.removeItem('ticketHoldExpiresAt');
     const context = getQueryParams();
-    window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
+    window.location.href = buildNextUrl(context, '/omni-cart/ticket-seat-selection.html');
 }
 
 function formatCurrency(amount) {
@@ -312,8 +314,9 @@ function updatePaymentFormVisibility() {
     const digits = cardInput.value.replace(/\D/g, '');
     const isComplete = digits.length === 16;
     const isEligible = paymentEligibilityState.isEligible;
+    const shouldShow = isPresaleFlow ? (isComplete && isEligible) : isComplete;
     
-    if (isComplete && isEligible) {
+    if (shouldShow) {
         showPaymentFormSections();
     } else {
         hidePaymentFormSections();
@@ -454,6 +457,8 @@ function parseExpiry(value) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const context = getQueryParams();
+    isPresaleFlow = context.status === 'presale';
+    paymentEligibilityState.isEligible = !isPresaleFlow;
     const selectionRaw = sessionStorage.getItem('ticketSeatSelection');
     const selection = selectionRaw ? JSON.parse(selectionRaw) : null;
     
@@ -477,8 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const criteriaBtn = document.getElementById('criteria-settings-btn');
     const criteriaModal = document.getElementById('criteria-modal-overlay');
     
-    const shouldShowSavedCard = savedCard && context.status === 'presale';
-    const shouldShowNewCardForm = !savedCard || context.status === 'onsale';
+    const shouldShowSavedCard = savedCard && isPresaleFlow;
+    const shouldShowNewCardForm = !savedCard || !isPresaleFlow;
 
     if (shouldShowSavedCard) {
         savedCardActions.classList.remove('hidden');
@@ -487,11 +492,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (shouldShowNewCardForm) {
         savedCardActions.classList.add('hidden');
         paymentForm.classList.remove('hidden');
-        if (criteriaBtn) criteriaBtn.style.display = 'block';
+        if (criteriaBtn) criteriaBtn.style.display = isPresaleFlow ? 'block' : 'none';
         
-        // Setup criteria for new card form
-        loadCriteriaPreferences();
-        updateCriteriaDisplay();
+        if (isPresaleFlow) {
+            // Setup criteria for new card form
+            loadCriteriaPreferences();
+            updateCriteriaDisplay();
+        }
     }
 
     // Setup criteria modal for new card form
@@ -547,6 +554,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const digits = formatted.replace(/\D/g, '');
             paymentEligibilityState.cardNumber = digits;
+
+            if (!isPresaleFlow) {
+                paymentEligibilityState.isEligible = digits.length === 16;
+                payNewCardBtn.disabled = digits.length !== 16;
+                setPaymentEligibilityStatus('', '');
+                updatePaymentFormVisibility();
+                return;
+            }
 
             if (digits.length < 16) {
                 paymentEligibilityState.isEligible = false;
@@ -632,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentFormEl.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            if (!paymentEligibilityState.isEligible) {
+            if (isPresaleFlow && !paymentEligibilityState.isEligible) {
                 setPaymentEligibilityStatus('Please use an eligible card', 'error');
                 return;
             }
@@ -727,7 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => {
                 clearSavedToken();
                 sessionStorage.removeItem('ticketHoldExpiresAt');
-                window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
+                window.location.href = buildNextUrl(context, '/omni-cart/ticket-seat-selection.html');
             });
         }
     });

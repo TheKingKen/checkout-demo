@@ -18,14 +18,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Navigate to phone case shop
     if (phoneCaseBtn) {
         phoneCaseBtn.addEventListener('click', function () {
-            window.location.href = '/phone-case-shop.html';
+            window.location.href = '/easy-checkout-demo/phone-case-shop.html';
         });
     }
 
     // Navigate to new phone case shop (product catalog)
     if (newPhoneCaseBtn) {
         newPhoneCaseBtn.addEventListener('click', function () {
-            window.location.href = '/all-products.html?from=index';
+            window.location.href = '/omni-cart/all-products.html?from=index';
         });
     }
 
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (insuranceBtn) {
         insuranceBtn.addEventListener('click', function () {
             if (!loginModal) {
-                window.location.href = '/insurance-form.html';
+                window.location.href = '/insurance-form/insurance-form.html';
                 return;
             }
 
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const enteredPassword = passwordInput ? passwordInput.value : '';
 
             if (enteredUsername === INSURANCE_USERNAME && enteredPassword === INSURANCE_PASSWORD) {
-                window.location.href = '/insurance-form.html';
+                window.location.href = '/insurance-form/insurance-form.html';
                 return;
             }
 

@@ -136,11 +136,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Category card click handlers
     phoneCaseCard.addEventListener('click', () => {
-        window.location.href = '/phone-case-catalog.html';
+        window.location.href = '/omni-cart/phone-case-catalog.html';
     });
 
     giftCardsCard.addEventListener('click', () => {
-        window.location.href = '/gift-cards.html';
+        window.location.href = '/omni-cart/gift-cards.html';
     });
 
     // Checkout button
@@ -154,10 +154,10 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('cart', JSON.stringify(cart));
         
         // Save the source page for cart breadcrumb navigation
-        localStorage.setItem('checkoutSourcePage', '/all-products.html');
+        localStorage.setItem('checkoutSourcePage', '/omni-cart/all-products.html');
         
         // Redirect to checkout page
-        window.location.href = '/checkout.html';
+        window.location.href = '/omni-cart/checkout.html';
     });
 
     // Initialize currency utilities
@@ -178,19 +178,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // Navigation handlers for category cards
     if (phoneCaseCard) {
         phoneCaseCard.addEventListener('click', () => {
-            window.location.href = '/phone-case-catalog.html';
+            window.location.href = '/omni-cart/phone-case-catalog.html';
         });
     }
     
     if (giftCardsCard) {
         giftCardsCard.addEventListener('click', () => {
-            window.location.href = '/gift-cards.html';
+            window.location.href = '/omni-cart/gift-cards.html';
         });
     }
     
     if (ticketsCard) {
         ticketsCard.addEventListener('click', () => {
-            window.location.href = '/tickets.html';
+            window.location.href = '/omni-cart/tickets.html';
         });
     }
 });

@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Try to fetch a public tunnel URL from the server (if cloudflared is running)
                 const encoded = base64EncodeUnicode(JSON.stringify(payload));
                 const buildAndGenerate = (base) => {
-                    const link = `${base.replace(/\/+$/,'')}/user-auth.html?data=${encodeURIComponent(encoded)}`;
+                    const link = `${base.replace(/\/+$/,'')}/insurance-form/user-auth.html?data=${encodeURIComponent(encoded)}`;
                     generateQRCode(link);
                 };
 
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // fall back to using the current origin so the developer can test on the same device.
                 const probeUrlReachable = async (baseUrl, timeout = 3000) => {
                     try {
-                        const probe = `${baseUrl.replace(/\/+$/,'')}/user-auth.html`;
+                        const probe = `${baseUrl.replace(/\/+$/,'')}/insurance-form/user-auth.html`;
                         const controller = new AbortController();
                         const id = setTimeout(() => controller.abort(), timeout);
                         const resp = await fetch(probe, { method: 'GET', cache: 'no-store', signal: controller.signal });
@@ -343,7 +343,7 @@ function redirectToPayment() {
     if (useFlow) {
         // Flow mode: redirect to payment-flow.html via sessionStorage
         sessionStorage.setItem('paymentPayload', JSON.stringify(payload));
-        window.location.href = '/user-auth.html';
+        window.location.href = '/insurance-form/user-auth.html';
     } else {
         // HPP mode: call /create-payment-link2 and redirect to HPP
         (async () => {

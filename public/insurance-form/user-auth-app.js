@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const payloadStr = sessionStorage.getItem('paymentPayload');
   if (!payloadStr) {
     document.getElementById('error-container').innerHTML = '<div class="error-message show">Payment data not found. Please return to the form.</div>' +
-      '<div style="margin-top:12px;"><button class="btn btn-back" onclick="window.location.href=\'/insurance-form.html\'">Back to Form</button></div>';
+      '<div style="margin-top:12px;"><button class="btn btn-back" onclick="window.location.href=\'/insurance-form/insurance-form.html\'">Back to Form</button></div>';
     document.getElementById('back-btn').style.display = 'none';
     return;
   }
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Confirm click: redirect to payment-flow.html (sessionStorage already set)
   confirmBtn.addEventListener('click', () => {
     if (confirmBtn.disabled) return;
-    window.location.href = '/payment-flow.html';
+    window.location.href = '/insurance-form/payment-flow.html';
   });
 
 });

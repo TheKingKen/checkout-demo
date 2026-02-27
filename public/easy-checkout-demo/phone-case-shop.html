@@ -3,27 +3,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>iPhone Case Checkout Demo</title>
+    <title>Easy Checkout Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../style.css">
 </head>
 <body>
 <div class="checkout-container">
     <header>
-        <h1>iPhone Case Checkout Demo</h1>
-        <img src="/merchant-logo.png"
-             alt="iPhone case" class="product-image"/>
+        <h1>Easy Checkout Demo</h1>
+        <img src="https://cdn.builtin.com/cdn-cgi/image/f=auto,fit=contain,w=200,h=200,q=100/sites/www.builtin.com/files/2026-01/Logo_Symbol_Full%20Colour.png" alt="CKO Logo"/>
+        <!-- <img src="/merchant-logo.png"
+             alt="iPhone case" class="product-image"/> -->
     </header>
     <section class="order-summary">
         <h2>Order Summary</h2>
         <div class="product-details">
-            <span class="product-name">Classic iPhone Case</span>
+            <input type="text" id="product-name" class="product-name" value="Classic iPhone Case" placeholder="Enter product name">
             <span class="product-price hkd-price active">HKD 129</span>
             <span class="product-price usd-price active">USD 16</span>
             <span class="product-price eur-price">CNY 120</span>
             <span class="product-price sar-price">SAR 62</span>
         </div>
-        <p>Compatible with iPhone 13/14/15. Durable, shockproof, and stylish.</p>
+        <textarea id="product-description" class="product-description" placeholder="Enter product description">Compatible with iPhone 13/14/15. Durable, shockproof, and stylish.</textarea>
     </section>
     <form id="checkout-form">
         <h2>Your Details</h2>
@@ -50,13 +51,14 @@
             <label for="customer-phone">Phone</label>
             <input type="text" id="customer-phone" name="phone" placeholder="e.g. 852-61234567" required>
         </div>
-        <button type="submit" class="checkout-btn">Checkout (Pay Securely)</button>
+        <button type="submit" class="checkout-btn" id="checkout-hpp-btn">Checkout (HPP)</button>
+        <button type="button" class="checkout-btn" id="checkout-flow-btn">Checkout (Flow)</button>
         <p class="note">You'll be redirected to a secure Checkout.com page to complete your payment.</p>
     </form>
     <div id="error-message" class="error-message"></div>
     <footer>
         <span class="security">PCI DSS Level 1 | Secure Checkout <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Lock_font_awesome.svg/24px-Lock_font_awesome.svg.png" alt="Secure"></span>
-        <span>&copy; 2025 iPhone Case Shop Demo</span>
+        <span>&copy; Easy Checkout Demo</span>
     </footer>
 </div>
 <script src="phone-case-shop-app.js"></script>

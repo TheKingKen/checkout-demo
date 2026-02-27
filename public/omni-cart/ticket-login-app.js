@@ -16,7 +16,7 @@ function buildNextUrl({ event, price, index, status }, nextPage) {
 }
 
 function redirectToNextStep(context) {
-    window.location.href = buildNextUrl(context, '/ticket-seat-selection.html');
+    window.location.href = buildNextUrl(context, '/omni-cart/ticket-seat-selection.html');
 }
 
 function persistLoginProfile() {

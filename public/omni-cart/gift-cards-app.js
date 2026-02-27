@@ -226,10 +226,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         localStorage.setItem('cart', JSON.stringify(cart));
         
         // Save the source page for cart breadcrumb navigation
-        localStorage.setItem('checkoutSourcePage', '/gift-cards.html');
+        localStorage.setItem('checkoutSourcePage', '/omni-cart/gift-cards.html');
         
         // Redirect to checkout page
-        window.location.href = '/checkout.html';
+        window.location.href = '/omni-cart/checkout.html';
     });
 
     // Express Checkout button (digital-only)
@@ -418,6 +418,10 @@ async function resumeGiftCardForm() {
         // Remove resize listener if it exists
         if (expressLayout._resizeHandler) {
             window.removeEventListener('resize', expressLayout._resizeHandler);
+        }
+        // Disconnect Flow ResizeObserver if it exists
+        if (expressLayout._flowResizeObserver) {
+            expressLayout._flowResizeObserver.disconnect();
         }
         expressLayout.classList.remove('visible');
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -854,6 +858,16 @@ async function handleExpressCheckout() {
         flowDisplay.innerHTML = '';
         const flowComponent = checkout.create('flow');
         flowComponent.mount(flowDisplay);
+        
+        // Add ResizeObserver to track Flow component height changes and adjust container
+        const flowResizeObserver = new ResizeObserver(() => {
+            const layout = document.getElementById('gift-express-layout');
+            if (layout && layout._adjustHeight) {
+                layout._adjustHeight();
+            }
+        });
+        flowResizeObserver.observe(flowDisplay);
+        layout._flowResizeObserver = flowResizeObserver;
     } catch (error) {
         console.error('Express Checkout error:', error);
         const flowDisplay = document.getElementById('flow-display');

@@ -39,6 +39,66 @@ document.addEventListener('DOMContentLoaded', function () {
     );
     updatePrice();
 
+    // Handle HPP button (form submit)
+    const hppBtn = document.getElementById('checkout-hpp-btn');
+    if (hppBtn) {
+        hppBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+        });
+    }
+
+    // Handle Flow button (navigate to payment-flow page)
+    const flowBtn = document.getElementById('checkout-flow-btn');
+    if (flowBtn) {
+        flowBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            errorMessage.textContent = "";
+
+            // Validate form
+            const customerName = form['customer-name'].value.trim();
+            const customerEmail = form['customer-email'].value.trim();
+            const country = form.country.value;
+            const address = form['customer-address'].value.trim();
+            const phone = form['customer-phone'].value.trim();
+            const productName = document.getElementById('product-name').value.trim();
+            const productDescription = document.getElementById('product-description').value.trim();
+
+            if (!customerName || !customerEmail || !address || !phone) {
+                errorMessage.textContent = "Please fill in all required fields.";
+                return;
+            }
+
+            let currency;
+            if (country === 'HK') {
+                currency = 'HKD';
+            } else if (country === 'US') {
+                currency = 'USD';
+            } else if (country === 'CN') {
+                currency = 'CNY';
+            } else {
+                currency = 'SAR';
+            }
+
+            // Store customer data in sessionStorage
+            const customerData = {
+                name: customerName,
+                email: customerEmail,
+                phone: phone.replace(/\D/g, ''),
+                country: country,
+                address: address,
+                currency: currency,
+                productName: productName,
+                productDescription: productDescription
+            };
+
+            sessionStorage.setItem('phoneShopCustomerData', JSON.stringify(customerData));
+
+            // Navigate to phone case payment page
+            window.location.href = '/easy-checkout-demo/phone-case-shop-payment.html';
+        });
+    }
+
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
         errorMessage.textContent = "";
@@ -75,6 +135,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // Get product name and description from inputs
+        const productName = document.getElementById('product-name').value.trim() || 'Classic iPhone Case';
+        const productDescription = document.getElementById('product-description').value.trim();
+
         const payload = {
             country: country,
             currency: currency,
@@ -86,10 +150,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 phone_number: customerPhone
             },
             product: {
-                name: 'Classic iPhone Case',
+                name: productName,
                 quantity: 1,
                 unit_price: price,
-                reference: 'iphone-case-demo'
+                reference: 'iphone-case-demo',
+                description: productDescription
             }
         };
 

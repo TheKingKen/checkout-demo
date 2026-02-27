@@ -76,7 +76,7 @@ function loadCart() {
     // If cart is empty, redirect to catalog
     if (cart.length === 0) {
         alert('Your cart is empty');
-        window.location.href = '/phone-case-catalog.html';
+        window.location.href = '/omni-cart/phone-case-catalog.html';
     }
 }
 

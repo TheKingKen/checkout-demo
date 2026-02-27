@@ -155,7 +155,7 @@ app.post('/create-payment-link', async (req, res) => {
         success_url: `${baseUrl}/success.html`,
         failure_url: `${baseUrl}/failure.html`,
         cancel_url: `${baseUrl}/cancel.html`,
-        display_name: "iPhone Case Shop",
+        display_name: "Easy Checkout Demo",
         description: `${firstProduct.name}${productList.length > 1 ? ` +${productList.length - 1} more` : ''} (${country === 'HK' ? 'HKD' : 'USD'})`
     };
 

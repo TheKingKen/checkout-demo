@@ -1,7 +1,11 @@
 // public/ticket-seat-selection-app.js
 
-const SEAT_ROWS = ['A', 'B', 'C', 'D'];
-const SEAT_COLUMNS = 8;
+const SEAT_ROWS = {
+    'A': { seats: 4, color: '#fcd34d' },    // Gold
+    'B': { seats: 8, color: '#86efac' },    // Green
+    'C': { seats: 8, color: '#60a5fa' },    // Blue
+    'D': { seats: 4, color: '#f87171' }     // Red
+};
 const MAX_TICKETS = 8;
 
 const eligibilityState = {
@@ -237,22 +241,28 @@ function buildSeatGrid() {
     if (!grid) return;
     grid.innerHTML = '';
 
-    SEAT_ROWS.forEach((row) => {
-        for (let col = 1; col <= SEAT_COLUMNS; col++) {
+    Object.entries(SEAT_ROWS).forEach(([row, config]) => {
+        const rowContainer = document.createElement('div');
+        rowContainer.className = `seat-row seat-${row.toLowerCase()}`;
+        rowContainer.dataset.category = row;
+        
+        for (let col = 1; col <= config.seats; col++) {
             const seatId = `${row}${col}`;
             const seatButton = document.createElement('button');
             seatButton.type = 'button';
             seatButton.className = 'seat';
             seatButton.textContent = seatId;
             seatButton.dataset.seat = seatId;
+            seatButton.dataset.category = row;
             seatButton.disabled = true;
 
             if (Math.random() < 0.15) {
                 seatButton.classList.add('unavailable');
             }
 
-            grid.appendChild(seatButton);
+            rowContainer.appendChild(seatButton);
         }
+        grid.appendChild(rowContainer);
     });
 }
 
@@ -306,9 +316,12 @@ function generateSeatLabel(eventName, sessionValue) {
     for (let i = 0; i < seed.length; i++) {
         hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
     }
-    const rowIndex = Math.abs(hash) % SEAT_ROWS.length;
-    const colIndex = (Math.abs(hash) % SEAT_COLUMNS) + 1;
-    return `${SEAT_ROWS[rowIndex]}${colIndex}`;
+    const rows = Object.keys(SEAT_ROWS);
+    const rowIndex = Math.abs(hash) % rows.length;
+    const selectedRow = rows[rowIndex];
+    const maxCols = SEAT_ROWS[selectedRow].seats;
+    const colIndex = (Math.abs(hash) % maxCols) + 1;
+    return `${selectedRow}${colIndex}`;
 }
 
 let ticketQuantity = 1;
@@ -523,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Redirect after 3 seconds
                 setTimeout(() => {
                     persistSelection(context);
-                    window.location.href = buildNextUrl(context, '/ticket-payment.html');
+                    window.location.href = buildNextUrl(context, '/omni-cart/ticket-payment.html');
                 }, 3000);
             } catch (error) {
                 setBinEligibilityStatus(error.message, 'error');
@@ -637,8 +650,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
-            const section = document.getElementById('presale-eligibility-section');
-            if (section) section.classList.add('hidden');
+            sessionStorage.removeItem('ticketSeatSelection');
+            window.location.href = '/omni-cart/tickets.html';
         });
     }
 
@@ -689,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Redirect after 3 seconds
             setTimeout(() => {
                 persistSelection(context);
-                window.location.href = buildNextUrl(context, '/ticket-payment.html');
+                window.location.href = buildNextUrl(context, '/omni-cart/ticket-payment.html');
             }, 3000);
         });
     }
@@ -715,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             persistSelection(context);
-            window.location.href = buildNextUrl(context, '/ticket-payment.html');
+            window.location.href = buildNextUrl(context, '/omni-cart/ticket-payment.html');
         });
     }
 
@@ -723,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelSeatBtn) {
         cancelSeatBtn.addEventListener('click', () => {
             sessionStorage.removeItem('ticketSeatSelection');
-            window.location.href = '/tickets.html';
+            window.location.href = '/omni-cart/tickets.html';
         });
     }
 });
