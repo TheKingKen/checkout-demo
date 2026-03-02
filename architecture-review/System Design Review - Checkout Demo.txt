@@ -1,0 +1,921 @@
+================================================================================
+SYSTEM DESIGN REVIEW (SDR)
+Checkout.com E-Commerce Demo Application
+================================================================================
+
+Template Version: 1.0
+Date: March 2, 2026
+Author: Ken So
+Status: [Draft - Ready for Staff+ Review]
+
+================================================================================
+1. OVERVIEW
+================================================================================
+
+Project: checkout-demo
+Purpose: Minimal e-commerce checkout integration demo showcasing Checkout.com 
+         Hosted Payments Page (HPP) and Flow API capabilities.
+
+Scope: Three feature modules with regional pricing, currency conversion, and 
+       payment integration.
+
+Key integrations:
+  - Checkout.com Payment Sessions API
+  - Checkout.com HPP (Hosted Payments Page)
+  - Checkout.com Flow Web Component
+  - Currency conversion service (external rates)
+
+Teams involved:
+  - Product: Payment Integration
+  - Backend: Node.js / Express
+  - Frontend: Vanilla JavaScript
+  - Security: CKO (Checkout.com)
+
+--- SYSTEM ARCHITECTURE DIAGRAM ---
+
+                        ┌─────────────────────────────┐
+                        │         User Browser        │
+                        │  ┌───────────────────────┐  │
+                        │  │   localStorage        │  │
+                        │  │   (cart, user data)   │  │
+                        │  └───────────────────────┘  │
+                        │  ┌───────────────────────┐  │
+                        │  │   sessionStorage      │  │
+                        │  │   (seat, payment ctx) │  │
+                        │  └───────────────────────┘  │
+                        └──────────┬──────────────────┘
+                                   │ HTTPS (TLS 1.2+)
+                                   ▼
+                        ┌─────────────────────────────┐
+                        │     Route53 DNS Service     │
+                        │   (checkout-demo.aws.com)   │
+                        └──────────┬──────────────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────────────┐
+                        │    CloudFront CDN (Global)  │
+                        │   - Static asset caching    │
+                        │   - TLS termination         │
+                        │   - DDoS protection (basic) │
+                        └──────────┬──────────────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────────────┐
+                        │  Application Load Balancer  │
+                        │   - Health checks (30s)     │
+                        │   - HTTPS listener (443)    │
+                        │   - Target: ECS tasks       │
+                        └──────────┬──────────────────┘
+                                   │
+                                   ▼
+               ┌───────────────────────────────────────────┐
+               │         ECS Fargate Container             │
+               │  ┌─────────────────────────────────────┐  │
+               │  │      Node.js Express (server.js)    │  │
+               │  │                                      │  │
+               │  │  Endpoints:                          │  │
+               │  │   POST /create-payment-sessions     │  │
+               │  │   POST /card-metadata               │  │
+               │  │   POST /tokenize-card               │  │
+               │  │   GET  /api/checkout-config         │  │
+               │  │   GET  / (static files)             │  │
+               │  │                                      │  │
+               │  │  Modules:                            │  │
+               │  │   - /public/omni-cart/              │  │
+               │  │   - /public/easy-checkout-demo/     │  │
+               │  │   - /public/insurance-form/         │  │
+               │  └─────────────────────────────────────┘  │
+               │           │                   │             │
+               │           │ Secrets           │ Logs        │
+               │           ▼                   ▼             │
+               │  ┌──────────────────┐  ┌─────────────┐     │
+               │  │ AWS Secrets Mgr  │  │  CloudWatch │     │
+               │  │  - CK_SECRET     │  │    Logs     │     │
+               │  │  - CHANNEL_ID    │  │  (7d retention) │ │
+               │  └──────────────────┘  └─────────────┘     │
+               └───────────────────────────────────────────┘
+                           │                   │
+                           │ API Calls         │ FX Rates
+                           │ (Bearer Token)    │ (Cached)
+                           ▼                   ▼
+        ┌─────────────────────────────┐  ┌────────────────┐
+        │    Checkout.com API         │  │  Currency API  │
+        │  (Sandbox Environment)      │  │  (fixer.io)    │
+        │                             │  │                │
+        │  Services:                  │  │  Returns:      │
+        │   - Payment Sessions        │  │   EUR, USD,    │
+        │   - Card Metadata (BIN)     │  │   GBP, AED,    │
+        │   - Card Tokenization       │  │   CNY, JPY,    │
+        │   - 3DS Authentication      │  │   SGD rates    │
+        │                             │  │                │
+        │  Components:                │  └────────────────┘
+        │   - HPP (Hosted Page)       │
+        │   - Flow (Web Component)    │
+        └─────────────────────────────┘
+
+Network Boundaries:
+  ═══════════════════════════════════════════════════════════════
+  │ Public Internet (HTTPS only)                               │
+  ═══════════════════════════════════════════════════════════════
+  │ AWS VPC (Public Subnets)                                   │
+  │  - CloudFront, ALB, ECS Fargate                            │
+  ═══════════════════════════════════════════════════════════════
+  │ Checkout.com Infrastructure (External)                     │
+  ═══════════════════════════════════════════════════════════════
+
+Security Controls:
+  ✓ TLS 1.2+ encryption (all network traffic)
+  ✓ Secrets Manager IAM role (ECS task execution role)
+  ✓ No hardcoded credentials (injected at runtime)
+  ✓ Input validation (server-side on all endpoints)
+  ✓ CORS disabled (same-origin only)
+  ✓ CloudWatch encrypted at rest
+
+--- PAYMENT FLOW SEQUENCE DIAGRAM ---
+
+SCENARIO 1: Happy Path (Phone Case Purchase via Flow)
+
+User          Frontend        Backend         Checkout.com      Flow Component
+ │                │               │                 │                 │
+ │  Add to cart  │               │                 │                 │
+ │──────────────>│               │                 │                 │
+ │               │ Store in      │                 │                 │
+ │               │ localStorage  │                 │                 │
+ │               │<──────────────│                 │                 │
+ │               │               │                 │                 │
+ │ Go to checkout│               │                 │                 │
+ │──────────────>│               │                 │                 │
+ │               │               │                 │                 │
+ │ Fill address  │               │                 │                 │
+ │──────────────>│               │                 │                 │
+ │               │               │                 │                 │
+ │ Submit payment│               │                 │                 │
+ │──────────────>│               │                 │                 │
+ │               │ POST /create- │                 │                 │
+ │               │ payment-      │                 │                 │
+ │               │ sessions      │                 │                 │
+ │               │──────────────>│                 │                 │
+ │               │               │ POST /payment-  │                 │
+ │               │               │ sessions        │                 │
+ │               │               │ (CK_SECRET)     │                 │
+ │               │               │────────────────>│                 │
+ │               │               │                 │                 │
+ │               │               │ 201 Created     │                 │
+ │               │               │ { token: "..." }│                 │
+ │               │               │<────────────────│                 │
+ │               │ { token: "..." }                │                 │
+ │               │<──────────────│                 │                 │
+ │               │               │                 │                 │
+ │               │ Initialize Flow                 │                 │
+ │               │ with token    │                 │                 │
+ │               │─────────────────────────────────────────────────>│
+ │               │               │                 │                 │
+ │               │               │                 │ Load component  │
+ │               │<─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│
+ │               │               │                 │                 │
+ │ Enter card    │               │                 │                 │
+ │──────────────>│─────────────────────────────────────────────────>│
+ │               │               │                 │                 │
+ │               │               │                 │ Process payment │
+ │               │               │                 │<────────────────│
+ │               │               │                 │                 │
+ │               │               │                 │ 3DS required?   │
+ │               │               │                 │ (if yes)        │
+ │               │               │                 │   ┌──────────┐  │
+ │ 3DS challenge │               │                 │   │3DS Issuer│  │
+ │<─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─>│   ACS    │  │
+ │               │               │                 │   └──────────┘  │
+ │ Complete 3DS  │               │                 │                 │
+ │─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─>│              │
+ │               │               │                 │                 │
+ │               │               │                 │ Payment Success │
+ │               │               │                 │ { status: "Authorized" }
+ │               │               │                 │────────────────>│
+ │               │               │                 │                 │
+ │               │ onPaymentCompleted event        │                 │
+ │               │<─────────────────────────────────────────────────│
+ │               │ Clear cart    │                 │                 │
+ │               │ (localStorage)│                 │                 │
+ │               │               │                 │                 │
+ │ Redirect to   │               │                 │                 │
+ │ /success.html │               │                 │                 │
+ │<──────────────│               │                 │                 │
+ │               │               │                 │                 │
+
+SCENARIO 2: Failure Path (Invalid Card / API Error)
+
+User          Frontend        Backend         Checkout.com
+ │                │               │                 │
+ │ Submit payment│               │                 │
+ │──────────────>│               │                 │
+ │               │ POST /create- │                 │
+ │               │ payment-      │                 │
+ │               │ sessions      │                 │
+ │               │──────────────>│                 │
+ │               │               │ POST /payment-  │
+ │               │               │ sessions        │
+ │               │               │────────────────>│
+ │               │               │                 │
+ │               │               │ 401 Unauthorized│
+ │               │               │ OR 429 Rate Limit│
+ │               │               │<────────────────│
+ │               │ { error: "..." }               │
+ │               │<──────────────│                 │
+ │               │               │                 │
+ │ Show error msg│               │                 │
+ │ "Payment      │               │                 │
+ │ service       │               │                 │
+ │ unavailable"  │               │                 │
+ │<──────────────│               │                 │
+ │               │               │                 │
+ │ Retry button  │               │                 │
+ │──────────────>│               │                 │
+ │               │ (loop back)   │                 │
+
+SCENARIO 3: Presale BIN Eligibility Check (Tickets)
+
+User          Frontend        Backend         Checkout.com
+ │                │               │                 │
+ │ Enter BIN     │               │                 │
+ │ (first 6      │               │                 │
+ │  digits)      │               │                 │
+ │──────────────>│               │                 │
+ │               │ POST /card-   │                 │
+ │               │ metadata      │                 │
+ │               │ { number: "4242..", type: "bin" }
+ │               │──────────────>│                 │
+ │               │               │ POST /metadata  │
+ │               │               │────────────────>│
+ │               │               │                 │
+ │               │               │ { scheme: "visa",
+ │               │               │   issuer: "...",│
+ │               │               │   card_type: "credit" }
+ │               │               │<────────────────│
+ │               │ Return metadata│                 │
+ │               │<──────────────│                 │
+ │               │               │                 │
+ │               │ Check against │                 │
+ │               │ criteria      │                 │
+ │               │ (scheme,      │                 │
+ │               │  issuer)      │                 │
+ │               │               │                 │
+ │ Show eligible │               │                 │
+ │ OR ineligible │               │                 │
+ │<──────────────│               │                 │
+ │               │               │                 │
+ │ (if eligible) │               │                 │
+ │ Redirect to   │               │                 │
+ │ payment page  │               │                 │
+ │<──────────────│               │                 │
+
+Data Flow Summary:
+1. User actions stored in browser (localStorage/sessionStorage)
+2. Payment requests proxied through backend (never direct from browser)
+3. Backend authenticates with CK_SECRET (never exposed to frontend)
+4. Checkout.com returns tokens (session or card tokens)
+5. Frontend mounts Flow component with token (secure iframe)
+6. Card data stays within Checkout.com (PCI compliant)
+7. Backend only receives payment result (approved/declined)
+
+================================================================================
+2. USER JOURNEYS
+================================================================================
+
+--- HAPPY PATH: Phone Case Purchase (Omni-Cart) ---
+1. User lands on all-products.html
+2. Selects "Phone Cases" category
+3. Views phone case catalog, adds items to cart
+4. Proceeds to checkout
+5. Fills shipping address + payment info
+6. Checkout.com Flow component processes card (test card)
+7. Payment succeeds
+8. Redirected to success.html
+9. Cart cleared, checkout complete
+
+--- HAPPY PATH: Gift Card Purchase (Express Checkout) ---
+1. User navigates to gift-cards.html
+2. Selects design, amount, enters recipient/sender info
+3. Clicks "Express Checkout"
+4. Order summary displayed alongside Checkout.com Flow
+5. Completes payment with test card
+6. Redirected to success.html
+
+--- HAPPY PATH: Ticket Purchase (Presale BIN Flow) ---
+1. User navigates to tickets.html
+2. Selects ticket event (presale or on-sale)
+3. At seat-selection.html, enters BIN (first 6 digits of test card)
+4. BIN eligibility check via Checkout.com Card Metadata API
+5. If eligible, shown loading overlay → redirected to ticket-payment.html
+6. Completes payment with full test card via Flow
+7. Redirected to success.html
+
+--- HAPPY PATH: Insurance Form ---
+1. User logs in with preset credentials (kenso/12345678)
+2. Completes insurance form, personal info
+3. Proceeds to payment
+4. Selects Flow or HPP mode for payment
+5. Completes with test card
+6. Redirected to success.html
+
+--- FAILURE PATH: Invalid Input ---
+1. User attempts checkout with missing/invalid fields (email, phone, address)
+2. Form validation fails server-side
+3. Error message displayed to user
+4. User corrects input and retries
+
+--- FAILURE PATH: Card Eligibility Fails (BIN Flow) ---
+1. User enters BIN that doesn't match presale criteria
+2. Card Metadata API returns ineligible card
+3. Error message shown: "Card not eligible for presale"
+4. User can enter different BIN or skip to on-sale flow
+
+--- FAILURE PATH: Checkout.com API Unavailable ---
+1. Payment session creation fails (timeout/rate limit)
+2. Backend returns error to frontend
+3. Frontend displays: "Payment service unavailable. Please try again later."
+4. User can retry or abandon cart
+
+--- FAILURE PATH: 3DS Authentication Required ---
+1. Card requires 3D Secure verification
+2. Checkout.com redirects to 3DS provider
+3. User completes verification
+4. If successful, payment completes; otherwise, fails
+5. User returned to payment form or error page
+
+================================================================================
+3. API
+================================================================================
+
+--- BACKEND ENDPOINTS ---
+
+POST /create-payment-sessions
+  Purpose: Create a Checkout.com payment session for checkout or express mode
+  Request body:
+    {
+      "customer": {
+        "email": "string",
+        "name": "string",
+        "phone_number": "string",
+        "phone_country_code": "string"
+      },
+      "amount": number (cents, e.g., 1500 = 15.00),
+      "currency": "string" (HKD, USD, EUR, AED, CNY, JPY, SGD, GBP),
+      "products": [
+        {
+          "name": "string",
+          "quantity": number,
+          "unit_price": number (cents),
+          "reference": "string"
+        }
+      ],
+      "country": "string" (ISO 2-letter country code)
+    }
+  Response: { "token": "string", "error": "string" }
+  Security: Requires CK_SECRET and PROCESSING_CHANNEL_ID env vars
+  Error handling: Returns { error, details } if Checkout.com API fails
+
+POST /card-metadata
+  Purpose: Check card BIN eligibility (presale flows only)
+  Request body:
+    {
+      "number": "string" (BIN or full card number),
+      "type": "string" (bin or card),
+      "format": "basic",
+      "reference": "string"
+    }
+  Response: { "scheme": "string", "issuer": "string", "card_type": "string" }
+  Security: Requires CK_SECRET
+  Note: Only used for presale BIN eligibility checks
+
+POST /tokenize-card
+  Purpose: Tokenize a card for future use (saved cards in presale flow)
+  Request body:
+    {
+      "number": "string",
+      "expiry_month": number,
+      "expiry_year": number,
+      "cvv": "string",
+      "name": "string"
+    }
+  Response: { "token": "string", "last4": "string", ... }
+  Security: Requires CK_SECRET
+
+GET /api/checkout-config
+  Purpose: Return Checkout.com public key to frontend
+  Response: { "publicKey": "string" }
+  Security: Public endpoint (no sensitive data)
+
+GET / (and other static routes)
+  Purpose: Serve static HTML/CSS/JS files
+  Files served from /public directory
+  Supports subdirectories: /omni-cart/, /insurance-form/, /easy-checkout-demo/
+
+--- FRONTEND DEPENDENCIES ---
+
+External Libraries:
+  - Checkout.com Web Components (https://checkout-web-components.checkout.com/)
+    * Provides Flow component and HPP integration
+  - axios (1.12.2) - HTTP client for backend calls
+  - dotenv (17.2.2) - Environment variable loading
+  - express (5.1.0) - Web framework
+
+Frontend APIs (JavaScript):
+  - CurrencyUtils: currency conversion, localization helpers
+  - Payment session creation via fetch POST /create-payment-sessions
+  - Card metadata check via fetch POST /card-metadata
+  - Cart state management via localStorage
+  - Session state management via sessionStorage
+
+================================================================================
+4. ARCHITECTURE CONSIDERATIONS
+================================================================================
+
+--- SYSTEM DESIGN APPROACH ---
+
+Monolithic demo application optimized for learning and regional customization.
+
+Module Structure:
+  /public/omni-cart/
+    - all-products.html + app.js        (product catalog, cart)
+    - checkout.html + app.js            (checkout flow, payment)
+    - phone-case-catalog.html + app.js  (category view)
+    - gift-cards.html + app.js          (digital gift cards)
+    - tickets.html + app.js             (ticket presale/onsale)
+    - ticket-seat-selection.html + app.js (seat map + BIN eligibility)
+    - ticket-payment.html + app.js      (final payment, 3DS handling)
+
+  /public/easy-checkout-demo/
+    - phone-case-shop.html + app.js     (simplified phone case shop)
+    - phone-case-shop-payment.html + app.js (payment form)
+
+  /public/insurance-form/
+    - insurance-form.html + app.js      (insurance application)
+    - user-auth.html + app.js           (login)
+    - payment-flow.html + app.js        (payment with Flow/HPP toggle)
+
+  /public/
+    - app.js                            (entry point, module routing)
+    - style.css                         (shared styles)
+    - currency-utils.js                 (localization + conversion)
+    - index.html                        (landing page)
+    - success.html, failure.html, cancel.html (static result pages)
+
+Backend:
+  - server.js                           (Express app, API endpoints)
+  - .env                                (secrets: CK_SECRET, PROCESSING_CHANNEL_ID)
+
+--- DATA FLOW ---
+
+1. User submits checkout form
+2. Frontend validates input
+3. Frontend calls POST /create-payment-sessions
+4. Backend creates payment session with Checkout.com API
+5. Backend returns payment session token
+6. Checkout.com Flow component mounts in browser
+7. User enters test card via Flow
+8. Flow handles 3DS if required
+9. On success, frontend redirects to success.html
+10. Cart cleared from localStorage
+
+--- ARCHITECTURE RATIONALE ---
+
+Decision: Vanilla JavaScript (no frameworks)
+Rationale: Minimal dependencies, easy to understand for learning, 
+          direct control over Checkout.com component lifecycle
+
+Decision: localStorage for cart state
+Rationale: Persists across page reloads, simple for demo, 
+          no server-side session management needed
+
+Decision: sessionStorage for payment context
+Rationale: Passes query parameters between pages (event, price, seat, status)
+          Auto-clears on browser close
+
+Decision: RegionalPricing logic in JavaScript
+Rationale: Dynamic currency selection, transparent conversion rates,
+          supports Test cards with multiple currencies
+
+Decision: No database (demo only)
+Rationale: Test data only, no persistence required, faster deployment
+
+--- ALTERNATIVE APPROACHES CONSIDERED ---
+
+1. Use React/Vue framework
+   - Rejected: Adds complexity for a minimal demo
+   - Used vanilla JS for transparency
+
+2. Server-side session management
+   - Rejected: Unnecessary for stateless demo, localStorage sufficient
+
+3. Store card tokens for recurring payments
+   - Partial adoption: Tokenization available in presale flow but not required
+   - Full adoption rejected: Demo doesn't require saved cards at scale
+
+================================================================================
+5. RELIABILITY
+================================================================================
+
+--- ERROR HANDLING ---
+
+Backend (server.js):
+  - Try-catch blocks on all Checkout.com API calls
+  - Logs full error responses for debugging
+  - Returns { error, details } to frontend
+  - 500 status for server errors, 400 for bad requests
+
+Frontend:
+  - Defensive parsing of API responses (JSON.parse with fallback)
+  - User-friendly error messages (don't expose raw API errors)
+  - Retry buttons on checkout failures
+  - Session recovery (stored seat selection, cart items)
+
+Payment Failures:
+  - User prompted to retry with different card
+  - Cart state preserved across retries
+  - Clear error messaging (e.g., "Card declined", "Invalid expiry")
+
+3DS Failures:
+  - Checkout.com Flow handles 3DS challenge
+  - If user cancels 3DS, returned to payment form
+  - Clear messaging: "3DS verification required"
+
+--- RESILIENCE ---
+
+Timeouts: 
+  - Checkout.com API calls wrap in Promise with timeout logic
+  - Frontend shows loading overlay + timeout message after 30s
+
+Rate Limiting:
+  - Checkout.com API enforces rate limits
+  - Backend returns 429 to frontend
+  - Frontend displays: "Too many requests. Please wait before retrying."
+
+Offline handling:
+  - Cart and seat selection stored in sessionStorage
+  - If offline during checkout, data persists until cleared
+  - When online, user can resume
+
+Idempotency:
+  - Checkout.com payment sessions are idempotent by design (same token)
+  - Duplicate submission prevented by disabling button during request
+
+--- TESTING STRATEGY ---
+
+Unit Tests:
+  - Currency conversion functions
+  - Input validation (email format, phone length, address fields)
+  - Cart item addition/removal logic
+  - BIN eligibility criteria checking
+
+Integration Tests:
+  - Mock Checkout.com API responses
+  - Test payment session creation flow
+  - Test card metadata API calls
+  - Test error handling (invalid responses, timeouts)
+
+E2E Tests (Cypress/Playwright):
+  - Happy path: add to cart → checkout → payment → success
+  - Failure path: invalid input → error → retry → success
+  - Presale BIN flow: enter BIN → eligibility check → payment
+  - Currency switching: change currency → verify prices update
+
+================================================================================
+6. SCALABILITY & PERFORMANCE
+================================================================================
+
+--- CURRENT SCOPE ---
+
+Load expectations:
+  - Demo only, ~1-10 concurrent users
+  - No SLA or performance targets defined
+  - Used for learning, not production
+
+Performance characteristics:
+  - Static HTML/CSS/JS served from CDN (CloudFront)
+  - Checkout.com handles actual payment processing
+  - No database queries (test data only)
+  - Currency conversion via cached external rates
+
+--- FUTURE SCALING CONSIDERATIONS ---
+
+Bottlenecks (if scaling):
+  1. Currency conversion API (cached daily, could be bottleneck at scale)
+  2. Checkout.com API rate limits (per documentation)
+  3. Session state in localStorage (limited to ~5MB per browser)
+  4. No server-side cart persistence (scaling would require Redis/database)
+
+Recommendations for scale:
+  - Cache currency rates in Redis (TTL: 1 hour)
+  - Move cart state to server-side session (Redis/DynamoDB)
+  - Implement payment session service for idempotency
+  - Add CDN caching headers to static assets
+  - Monitor Checkout.com API latency and rate limits
+
+Current setup:
+  - No caching headers needed (demo only)
+  - No rate limiting on backend (demo only)
+  - No database bottlenecks (no database)
+
+================================================================================
+7. SECURITY
+================================================================================
+
+--- SECURITY REQUIREMENTS (Mandatory) ---
+
+Q1: What authentication/authorization is required?
+A1: Demo only. Optional login on insurance-form (preset credentials: kenso/12345678).
+    No real user authentication. All features accessible without login.
+    Authorization: None (all pages/APIs publicly accessible).
+
+Q2: What are the data classification/sensitivity levels?
+A2: Low. Demo only, no real PII or PCI data stored.
+    Test cards used (Checkout.com test case numbers).
+    No persistent storage of customer data (ephemeral, in-memory only).
+
+Q3: Are secrets properly handled?
+A3: Yes. Secrets (CK_SECRET, PROCESSING_CHANNEL_ID) stored in .env file (NOT versioned).
+    Loaded at runtime via dotenv.
+    Never logged or exposed in responses.
+    Never committed to git (in .gitignore).
+
+Q4: Is input validation performed?
+A4: Yes. Server-side validation on all endpoints:
+    - Email format validation (regex)
+    - Phone number format (digits + optional +)
+    - Required fields checked (customer name, address, amount)
+    - Product reference validated
+    - Country code validated against supported list
+
+Q5: What is the trust boundary and network access?
+A5: Trust boundary:
+      - Frontend (browser) -> Backend (origin same-site)
+      - Backend -> Checkout.com API (authenticated with CK_SECRET)
+    Network access:
+      - HTTPS only (TLS 1.2+)
+      - CORS disabled (same-origin only)
+      - Backend listens on localhost:4242 (development) or behind ALB (AWS)
+
+Q6: Are there any PII/PCI concerns?
+A6: Minimal. Only test data used, no real customers.
+    Card entry happens on Checkout.com HPP/Flow (not on our app).
+    Card numbers NEVER stored or transmitted through our app.
+    PCI scope: Out of scope (Checkout.com handles PCI compliance).
+    PII scope: Minimal (test email/phone only, not stored).
+
+Q7: What is the approach to third-party integrations?
+A7: Checkout.com:
+      - Authenticate with API key (CK_SECRET)
+      - Over HTTPS only
+      - Validate response structure and error codes
+      - Log errors for debugging (sanitized, no sensitive data)
+    Currency conversion API:
+      - Calls external service (fixer.io or similar)
+      - Cache results to minimize API calls
+      - Graceful fallback to hardcoded rates if API unreachable
+
+Q8: What crypto algorithms/protocols are used?
+A8: HTTPS (TLS 1.2+) for all network traffic.
+    Card cryptography: Handled by Checkout.com (outside our scope).
+    No custom crypto implemented (not needed for demo).
+
+Q9: Are there any compliance requirements?
+A9: PCI DSS: Not applicable (no card storage, Checkout.com handles compliance).
+    GDPR: Not applicable (no real personal data).
+    CCPA: Not applicable (demo only).
+
+Q10: Is there a security incident response plan?
+A10: Not needed for demo. If compromised:
+     - Revoke API keys immediately
+     - Update .env and redeploy
+     - Check git history for any leaked secrets
+     - Monitor Checkout.com account for unauthorized transactions
+
+--- SECURITY CONTROLS ---
+
+Input validation:
+  - Server-side validation on all POST endpoints
+  - Reject unexpected fields
+  - Validate types, lengths, formats
+  - Escape output to prevent XSS
+
+Secrets management:
+  - .env file (local development)
+  - AWS Secrets Manager or SSM Parameter Store (AWS Playground)
+  - Never log secrets
+  - Never commit .env to git
+
+CORS:
+  - Same-origin only (no CORS headers)
+  - Prevents cross-site attacks
+
+HTTPS:
+  - All external communication over TLS
+  - Self-signed cert for localhost acceptable for demo
+
+API authentication:
+  - Checkout.com API key in Authorization header
+  - All backend calls require valid API key
+  - No API key exposed in client-side code
+
+Session security:
+  - sessionStorage (not persistent across browsers)
+  - localStorage for cart (user can clear any time)
+  - No sensitive data in storage (only product IDs, amounts)
+
+Error handling:
+  - Don't expose stack traces to frontend
+  - Log full errors server-side only
+  - Return generic error messages to user
+
+--- TESTING & DEPLOYMENT SECURITY ---
+
+Code review:
+  - All code changes reviewed before merge
+  - Focus on input validation, secret handling, error messages
+
+Dependency scanning:
+  - npm audit before deployment
+  - Pin versions in package.json
+  - Update regularly (but before production)
+
+Deployment:
+  - Ensure .env not included in Docker image or artifact
+  - Secrets injected at runtime (ECS task definition env vars)
+  - No hardcoded credentials
+
+================================================================================
+8. OBSERVABILITY
+================================================================================
+
+--- LOGGING ---
+
+Backend (server.js):
+  - console.log for key lifecycle events:
+    * Incoming requests (method, path, params)
+    * Checkout.com API calls (sanitized request/response)
+    * Errors (stack trace, API error details)
+  - No logging of sensitive data (secrets, card numbers, PII)
+  - Logs written to stdout (CloudWatch captures in AWS)
+
+Frontend (browser console):
+  - console.log for payment flow milestones:
+    * Payment session created
+    * Flow component mounted
+    * Form validation passed/failed
+    * Success/error redirects
+  - User can inspect via browser developer tools
+
+Checkout.com integration:
+  - Log payment session token (for correlation only, not sensitive)
+  - Log API responses (errors only, not success data)
+
+--- MONITORING (Not Required for Demo) ---
+
+For future production:
+  - CloudWatch custom metrics for:
+    * Payment success/failure rates
+    * API latency (Checkout.com response times)
+    * Cart abandonment rates
+    * Form validation failure rates
+  - CloudWatch Logs Insights for trend analysis
+  - SNS alerts for payment API degradation
+
+Current setup: Basic logging only (no metrics/dashboards)
+
+--- DEBUGGING ---
+
+Development:
+  - Set DEBUG=* in .env to enable verbose logging
+  - Browser DevTools for frontend inspection
+  - curl or Postman for API testing
+
+Staging/AWS:
+  - CloudWatch Logs in AWS console
+  - tail -f on container logs if needed
+  - ECS task logs for correlated errors
+
+================================================================================
+9. COST
+================================================================================
+
+--- AWS PLAYGROUND COST ESTIMATE (Monthly) ---
+
+Compute:
+  - ECS Fargate: 0.256vCPU x 512MB RAM x 730 hours x $0.0439/hour = ~$8.25
+  - (Minimal load, most of the time idle)
+
+Networking:
+  - Route53: $0.50 (hosted zone)
+  - CloudFront: ~$0.10 (minimal traffic, cached assets)
+  - Data transfer: ~$0 (inside AWS free tier for demo load)
+  - ALB: $16 (if used, fixed cost)
+
+Storage:
+  - No database (saves ~$20/month for RDS micro)
+  - S3 (if used for static assets): ~$0 (minimal storage)
+  - CloudWatch Logs: ~$0.50 (minimal volume)
+
+Secrets Manager:
+  - $0.40 (secret storage)
+
+--- TOTAL ESTIMATED COST: $25-40/month (AWS Playground limits apply) ---
+
+Optimization opportunities:
+  - Use Lambda for API (serverless, pay per request)
+  - Move static assets to S3 + CloudFront (cheaper than ECS)
+  - Remove ALB if using Lambda (no cost for simple routing)
+  - Use DynamoDB on-demand (pay per request, scale to zero)
+
+Not optimized cost (full AWS):
+  - ECS Fargate (always-on): $50-100/month
+  - RDS (if added): $20-50/month
+  - ALB: $16/month fixed
+
+================================================================================
+10. MIGRATIONS
+================================================================================
+
+Not applicable for demo. If scaling to production:
+
+Data Migration:
+  - Cart data: localStorage → RDS/DynamoDB
+  - Session state: sessionStorage → Redis/DynamoDB
+  - User accounts: New table (if planning to store logins)
+
+API Migration:
+  - Custom payment endpoint → API Gateway + Lambda
+  - Static assets: server.js → S3 + CloudFront
+
+Infrastructure Migration:
+  - Localhost → ECS Fargate (or Lambda)
+  - .env file → AWS Secrets Manager
+  - SQLite (if added) → RDS PostgreSQL/Aurora
+
+Testing:
+  - Run parallel systems (old + new) during cutover
+  - Test data integrity (cart, orders)
+  - Verify Checkout.com integration (same token structure)
+
+Rollback plan:
+  - Keep old ECS task definition, switch back if issues
+  - DNS cutover via Route53 weighted routing
+
+================================================================================
+11. FUTURE WORK
+================================================================================
+
+Potential enhancements (post-demo):
+
+1. User accounts & persistence:
+   - Add database (RDS PostgreSQL or DynamoDB)
+   - User registration/login with hashing
+   - Persistent cart across sessions
+   - Order history
+
+2. Additional payment methods:
+   - Digital wallets (Apple Pay, Google Pay)
+   - Bank transfers (SEPA, ACH)
+   - Buy now, pay later (BNPL)
+
+3. Advanced presale features:
+   - Priority queue for high-demand tickets
+   - Waitlist management
+   - Seat hold expiration logic (current: 5 minutes)
+
+4. Localization:
+   - Multi-language support (Chinese, Hindi, etc.)
+   - Locale-aware formatting (dates, numbers)
+   - RTL support for Arabic/Hebrew
+
+5. Observability:
+   - Structured logging (JSON format)
+   - Application Performance Monitoring (APM)
+   - Custom metrics dashboard
+
+6. Mobile optimization:
+   - Responsive design refinement
+   - Mobile payment flows (PWA)
+   - App Shell caching
+
+7. Automation:
+   - Unit/integration test suite (Jest)
+   - E2E test suite (Cypress)
+   - CI/CD pipeline (GitHub Actions)
+
+================================================================================
+12. SIGN-OFF
+================================================================================
+
+System Design Review Status: [DRAFT - PENDING REVIEW]
+
+SDR approval required from: [Staff+ Engineer / Technical Lead]
+
+Next steps:
+1. Schedule SDR review meeting
+2. Address feedback from reviewers
+3. Update this document with decisions
+4. Proceed to Architecture Review Board (ARB) approval
+
+---
+Generated: March 2, 2026
+Version: 1.0 Draft

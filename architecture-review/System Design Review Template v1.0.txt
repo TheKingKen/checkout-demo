@@ -1,0 +1,56 @@
+System Design Review Template v1.0
+
+
+Contents
+
+Overview
+User Journeys
+API
+Architecture Considerations
+Reliability
+Scalability and Performance
+Security
+Observability
+Cost
+Migrations
+Future work
+Review outcom
+See System Design Review Guidance
+
+  for how to fill out this template
+Overview
+
+ 
+User Journeys
+
+ 
+API
+
+ 
+Architecture Considerations
+
+ 
+Reliability
+
+ 
+Scalability and Performance
+
+ 
+Security
+
+This is a mandatory section with a list of mandatory questions to be answered. See System Design Review Guidance | Security
+
+ 
+Observability
+
+ 
+Cost
+
+ 
+Migrations
+
+ 
+Future work
+
+ 
+Review outcom

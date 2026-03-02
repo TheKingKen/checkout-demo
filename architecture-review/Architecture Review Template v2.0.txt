@@ -1,0 +1,58 @@
+Architecture Review Template v2.0
+
+
+
+
+
+
+Template Version: 2.0
+Contents
+
+Context
+System Design Review
+Infrastructure
+Information Security
+CKO Standards
+[Optional] Service Group Request
+Context
+
+Brief overview of the solution and a diagram (similar to System Design Review Guidance | Diagram
+
+):
+System Design Review
+
+This is required before for an ARB review can be done. More info on the process can be found at Architecture Review Board | System Design Review
+
+ .
+
+
+
+
+
+
+
+Infrastructure
+
+
+
+
+
+
+
+
+Information Security
+
+
+
+
+
+
+
+
+CKO Standards
+
+All new services must be built into an AWS Gen 3 Account
+
+
+
+

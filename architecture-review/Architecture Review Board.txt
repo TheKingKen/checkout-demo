@@ -1,0 +1,115 @@
+Architecture Review Board
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Overview
+When to think about the Architecture Review process?
+How does the Architecture Review process help teams?
+What designs should go through the Architecture Review process?
+Process
+Overview
+System Design Review
+Architecture Review Board
+FAQs
+How does the Staff Engineer work out that an ARB approval is required before build?
+Can the build start before the design?
+Architecture Review Board Team
+Overview
+
+When to think about the Architecture Review process?
+
+Teams should plan ahead and build the Architecture Review process early into the development lifecycle in order to get faster feedback and not be delayed towards the end of the project. It’s easy and quick to change a design document but can cause major impact if a team has to change a design after it’s been implemented.
+How does the Architecture Review process help teams?
+
+The Architecture Review process is a way for teams to meet with experts in their fields to:
+Learn from them and progress their career
+Build better software which is easier to support so KTLO should be lower
+Less Critical Commitment/Tech Debt work so teams can focus on building new things
+Easier and quicker build times as no rework is required so teams have less pressure
+It enables communication with upstream/downstream/related teams so teams are aware of who is building what and what project dependencies there are on them
+What designs should go through the Architecture Review process?
+
+If you are building a new product/service or feature to an existing one (feature is defined as any change that opens additional interfaces, a major change in the way current architecture happens, or any substantial body of work not having had a review - if in doubt, just ask in #ask-architecture on Slack or your Staff+ engineer)
+Deploying to any internet visible environment (including Playground)
+Examples below:
+New connection from an existing service to a datastore or other service
+Integrating a new subdomain to a new or existing service
+e.g. adding payments subdomain logic to a CMS service or consuming payments data from a CMS service
+New service creation
+A feature which spans more than one service
+A migration from one datastore to another
+Process
+
+Overview
+
+<img src: /Users/ken.so/Workspace/checkout-demo/architecture-review/overview-flow-chart.png />
+
+System Design Review
+
+Template: System Design Review Template v1.0
+
+ 
+Guidance: System Design Review Guidance
+
+ 
+What is it?
+This is a in-depth review of the proposed technical design
+Performed at either pillar or group-level
+Who creates the design?
+The team building the solution
+Who approves the design?
+The Staff+ engineer for the pillar/group. See Checkout Staff+ Group  to find your pillar’s Staff+ engineer.
+One other Staff+ engineer (ideally outside the pillar)
+Format
+It would be mostly up to the Staff+ engineer for the pillar/group but the recommendation is to review async with some SSE1/2s who are close to the area and a few who are not and then optionally have a meeting for Q/A and discussions before final approval
+How-to
+Fill out the System Design template
+Coordinate with your Staff engineer for review
+Example
+Example filled out System Design Review doc showing the level of detail required: Architecture Review - Bank Payouts US 2nd BIN (Pathward) 
+Architecture Review Board
+
+Template: Architecture Review Template v2.0
+
+ 
+What is it?
+This is now a more lightweight review of whether the solution meets CKO policies (e.g. approved tooling and tech and security requirements)
+Who creates the design?
+The team building the solution
+Who approves the design?
+Approved by the leader of the ARB for that week
+Format
+Schedule the presentation with a link to the ARB doc. You’ll get a 20min slot to present and get sign-off.
+How-to
+Fill out the ARB template
+Schedule your review on the ARB schedule here:  Architecture Review Board Schedule   
+Present at ARB and get sign-off
+FAQs
+
+How does the Staff Engineer work out that an ARB approval is required before build?
+
+If the design meets the criteria for an ARB (see Software Development Lifecycle Standard (SDLC) | 2.1.1 Solution Architecture
+
+) then an ARB must be performed and approval granted before the build is completed. If the design doesn’t meet the criteria for ARB then the SDR must be approved at pillar level and the Staff engineer must present the approved SDR at the ARB meeting where there’ll be a retrospective approval.
+Additionally there are particular security questions on the System Design Review guidance doc where they specify that particular answers to the questions require an ARB approval.
+Can the build start before the design?
+
+In some instances where the build is complex or a PoC is required to test out ideas and designs, some of the build can happen before the architecture reviews. The Staff Engineer should be part of the decision to start a PoC before a System Design Review is approved. The idea is to minimize the code that’s written before Architecture Reviews to avoid rework, reduce tech debt and speed up the process overall.
+Architecture Review Board Team
+
+Architecture Review Board consists of two members from each area of Product / Teams. Make sure at least one member is present in the meeting, also encourage your team members to swap places with you occasionally.
+
+
+

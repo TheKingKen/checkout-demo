@@ -1,0 +1,493 @@
+================================================================================
+ARCHITECTURE REVIEW (ARB) PRESENTATION
+Checkout.com E-Commerce Demo Application
+================================================================================
+
+Template Version: 2.0
+Date: March 2, 2026
+Presenter: Ken So
+Review Status: [Pending ARB Approval]
+
+Presentation Time: 20 minutes
+Approval Body: Architecture Review Board
+
+================================================================================
+CONTEXT
+================================================================================
+
+Project: checkout-demo
+Purpose: Minimal e-commerce checkout integration showcasing Checkout.com HPP 
+         and Flow API with multiple payment scenarios.
+
+High-level architecture:
+  - Frontend: Vanilla JavaScript (3 feature modules)
+  - Backend: Node.js Express
+  - Payment processor: Checkout.com (API + HPP + Flow)
+  - Hosting: AWS Playground (Route53, CloudFront, ECS Fargate)
+
+Key metrics:
+  - Users: Demo only (~1-10 concurrent)
+  - Load: Minimal (learning/showcase purposes)
+  - Availability: Best-effort (no SLA)
+
+---
+
+SYSTEM DIAGRAM
+
+                        ┌─────────────────────────────┐
+                        │         User Browser        │
+                        │  ┌───────────────────────┐  │
+                        │  │   localStorage        │  │
+                        │  │   (cart, user data)   │  │
+                        │  └───────────────────────┘  │
+                        │  ┌───────────────────────┐  │
+                        │  │   sessionStorage      │  │
+                        │  │   (seat, payment ctx) │  │
+                        │  └───────────────────────┘  │
+                        └──────────┬──────────────────┘
+                                   │ HTTPS (TLS 1.2+)
+                                   ▼
+                        ┌─────────────────────────────┐
+                        │     Route53 DNS Service     │
+                        │   (checkout-demo.aws.com)   │
+                        └──────────┬──────────────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────────────┐
+                        │    CloudFront CDN (Global)  │
+                        │   - Static asset caching    │
+                        │   - TLS termination         │
+                        │   - DDoS protection (basic) │
+                        └──────────┬──────────────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────────────┐
+                        │  Application Load Balancer  │
+                        │   - Health checks (30s)     │
+                        │   - HTTPS listener (443)    │
+                        │   - Target: ECS tasks       │
+                        └──────────┬──────────────────┘
+                                   │
+                                   ▼
+               ┌───────────────────────────────────────────┐
+               │         ECS Fargate Container             │
+               │  ┌─────────────────────────────────────┐  │
+               │  │      Node.js Express (server.js)    │  │
+               │  │                                      │  │
+               │  │  Endpoints:                          │  │
+               │  │   POST /create-payment-sessions     │  │
+               │  │   POST /card-metadata               │  │
+               │  │   POST /tokenize-card               │  │
+               │  │   GET  /api/checkout-config         │  │
+               │  │   GET  / (static files)             │  │
+               │  │                                      │  │
+               │  │  Modules:                            │  │
+               │  │   - /public/omni-cart/              │  │
+               │  │   - /public/easy-checkout-demo/     │  │
+               │  │   - /public/insurance-form/         │  │
+               │  └─────────────────────────────────────┘  │
+               │           │                   │             │
+               │           │ Secrets           │ Logs        │
+               │           ▼                   ▼             │
+               │  ┌──────────────────┐  ┌─────────────┐     │
+               │  │ AWS Secrets Mgr  │  │  CloudWatch │     │
+               │  │  - CK_SECRET     │  │    Logs     │     │
+               │  │  - CHANNEL_ID    │  │  (7d retention) │ │
+               │  └──────────────────┘  └─────────────┘     │
+               └───────────────────────────────────────────┘
+                           │                   │
+                           │ API Calls         │ FX Rates
+                           │ (Bearer Token)    │ (Cached)
+                           ▼                   ▼
+        ┌─────────────────────────────┐  ┌────────────────┐
+        │    Checkout.com API         │  │  Currency API  │
+        │  (Sandbox Environment)      │  │  (fixer.io)    │
+        │                             │  │                │
+        │  Services:                  │  │  Returns:      │
+        │   - Payment Sessions        │  │   EUR, USD,    │
+        │   - Card Metadata (BIN)     │  │   GBP, AED,    │
+        │   - Card Tokenization       │  │   CNY, JPY,    │
+        │   - 3DS Authentication      │  │   SGD rates    │
+        │                             │  │                │
+        │  Components:                │  └────────────────┘
+        │   - HPP (Hosted Page)       │
+        │   - Flow (Web Component)    │
+        └─────────────────────────────┘
+
+Network Boundaries:
+  ═══════════════════════════════════════════════════════════════
+  │ Public Internet (HTTPS only)                               │
+  ═══════════════════════════════════════════════════════════════
+  │ AWS VPC (Public Subnets)                                   │
+  │  - CloudFront, ALB, ECS Fargate                            │
+  ═══════════════════════════════════════════════════════════════
+  │ Checkout.com Infrastructure (External)                     │
+  ═══════════════════════════════════════════════════════════════
+
+Security Controls:
+  ✓ TLS 1.2+ encryption (all network traffic)
+  ✓ Secrets Manager IAM role (ECS task execution role)
+  ✓ No hardcoded credentials (injected at runtime)
+  ✓ Input validation (server-side on all endpoints)
+  ✓ CORS disabled (same-origin only)
+  ✓ CloudWatch encrypted at rest
+
+---
+
+Three feature modules accessible from main landing page:
+  1. Omni-Cart (all-products, checkout, gift-cards, tickets, seat selection)
+  2. Easy Checkout Demo (phone case shop with simplified checkout)
+  3. Insurance Form (insurance application with payment flow)
+
+================================================================================
+SYSTEM DESIGN REVIEW
+================================================================================
+
+Detailed SDR completed and reviewed: [Yes / Pending Review]
+
+SDR document location:
+  /architecture-review/System Design Review - Checkout Demo.txt
+
+Key design decisions documented:
+  ✓ Vanilla JavaScript (no frameworks) - simplified, transparent
+  ✓ localStorage for cart state - persistent across reloads
+  ✓ sessionStorage for context - passes data between pages
+  ✓ No database (demo only) - test data only
+  ✓ Regional pricing logic - supports multiple currencies
+
+Security decisions from SDR:
+  ✓ No card storage - cards processed via Checkout.com only
+  ✓ Test cards only - no real PII or PCI scope
+  ✓ Secrets in AWS Secrets Manager - not in code
+  ✓ Server-side input validation - email, phone, address
+  ✓ HTTPS only - TLS 1.2+ for all traffic
+
+Reliability decisions:
+  ✓ Error handling on all API calls - graceful degradation
+  ✓ User-friendly error messages - transparent feedback
+  ✓ Session recovery - cart/seat selection preserved
+  ✓ 3DS support via Flow - secure authentication
+
+Performance decisions:
+  ✓ CDN caching for static assets - CloudFront
+  ✓ External API caching - currency rates (manual)
+  ✓ No database - eliminates bottleneck
+
+================================================================================
+INFRASTRUCTURE
+================================================================================
+
+--- DEPLOYMENT ARCHITECTURE ---
+
+Production environment: AWS Playground Account
+
+Layers:
+  1. DNS & CDN
+     - Route53 (public hosted zone)
+     - CloudFront (distribution for static assets)
+
+  2. Load Balancing
+     - Application Load Balancer (ALB)
+     - Health checks every 30s
+     - Auto-scaling group: 1-2 instances (manual scaling)
+
+  3. Compute
+     - ECS Fargate (managed containers, no EC2 management)
+     - Task definition: Node.js 18+ image
+     - Memory: 512MB, vCPU: 0.256
+     - Environment variables: Injected at runtime
+
+  4. Secrets Management
+     - AWS Secrets Manager for CK_SECRET, PROCESSING_CHANNEL_ID
+     - TLS encryption at rest
+     - Access via IAM role (ECS task)
+
+  5. Monitoring & Logging
+     - CloudWatch Logs (container stdout)
+     - CloudWatch Alarms (optional, not configured)
+     - No persistent storage (logs auto-retained 7 days)
+
+--- DEPLOYMENT PROCESS ---
+
+Build:
+  1. Build Docker image (Node.js + npm dependencies)
+  2. Push to ECR (Elastic Container Registry)
+
+Deploy:
+  1. Update ECS task definition (new image version)
+  2. Update ECS service (rolling deployment)
+  3. ALB health checks verify new container
+  4. Old container stops after 60s grace period
+
+Rollback:
+  1. Revert to previous task definition (1 click in AWS console)
+  2. ECS service updates to previous version
+  3. ALB redirects traffic back
+
+--- SCALABILITY ---
+
+Current capacity: 1-10 concurrent users (demo load)
+
+Horizontal scaling (if needed):
+  - Increase ECS Fargate task count (auto-scaling group min/max)
+  - ALB distributes traffic across tasks
+
+Vertical scaling (if needed):
+  - Increase task spec (memory, vCPU)
+  - No database, so compute is only bottleneck
+
+Bottlenecks identified:
+  - Checkout.com API rate limits (external dependency)
+  - Currency conversion API (could cache in Redis)
+  - No caching layer needed for current load
+
+--- DISASTER RECOVERY ---
+
+RTO (Recovery Time Objective): Not defined (demo only)
+RPO (Recovery Point Objective): Not defined (no data persistence)
+
+If region fails:
+  1. No automatic failover (single region only)
+  2. Manual: Re-deploy in different region (new ECS cluster)
+  3. Update Route53 to point to new ALB
+
+Backup strategy:
+  - No backups needed (stateless app, no database)
+  - Code backed up in git
+
+================================================================================
+INFORMATION SECURITY
+================================================================================
+
+--- SECURITY POSTURE ---
+
+Threat model:
+  ✓ Network eavesdropping - mitigated by HTTPS
+  ✓ Card theft - mitigated by using Checkout.com (not storing cards)
+  ✓ Account takeover - N/A (optional demo login only)
+  ✓ API key exposure - mitigated by AWS Secrets Manager
+  ✓ SQL injection - N/A (no database)
+  ✓ XSS attacks - mitigated by escaping output
+
+Compliance scope:
+  ✓ PCI DSS - Out of scope (Checkout.com handles cards)
+  ✓ GDPR - Not applicable (no real customer data)
+  ✓ CCPA - Not applicable (no persistent user tracking)
+
+Security controls in place:
+  ✓ Input validation (server-side)
+  ✓ Secrets management (AWS Secrets Manager)
+  ✓ HTTPS/TLS (CloudFront + ALB)
+  ✓ CORS disabled (same-origin only)
+  ✓ Error message sanitization (no stack traces to frontend)
+  ✓ No sensitive logging (secrets/cards never logged)
+
+Testing:
+  ✓ Manual security review of API endpoints
+  ✓ npm audit for dependency vulnerabilities
+  ✓ Code review before deployment (developer + lead)
+
+--- AUTHENTICATION & AUTHORIZATION ---
+
+User authentication:
+  - Optional (insurance form only)
+  - Hardcoded credentials for demo (kenso / 12345678)
+  - No real authentication system
+  - No cookies/sessions stored
+
+API authentication:
+  - Checkout.com API key (CK_SECRET) - stored in AWS Secrets Manager
+  - Authorization header on all outbound requests
+  - Key rotated manually (not automated for demo)
+
+Frontend authorization:
+  - N/A (all features accessible without login)
+  - No role-based access control
+
+--- DATA PROTECTION ---
+
+Data in transit:
+  - HTTPS/TLS 1.2+ for all external communication
+  - CloudFront enforces TLS
+
+Data at rest:
+  - No sensitive data persisted
+  - Cart/session data in browser storage (user-controlled)
+  - logs in CloudWatch (encrypted)
+  - Secrets in AWS Secrets Manager (encrypted)
+
+Data encryption:
+  - TLS only (no custom encryption needed)
+  - Checkout.com handles card encryption
+
+Secrets rotation:
+  - CK_SECRET: Manual rotation (update in AWS Secrets Manager)
+  - PROCESSING_CHANNEL_ID: Manual rotation
+  - Not automated for demo (would need Lambda function)
+
+--- INCIDENT RESPONSE ---
+
+Incident types & response:
+  1. API key compromised
+     - Action: Revoke key immediately in Checkout.com dashboard
+     - Action: Update new key in AWS Secrets Manager
+     - Action: Redeploy containers (automatic secret refresh)
+     - Timeline: <5 minutes
+
+  2. Unauthorized payment
+     - Action: Check Checkout.com transaction logs
+     - Action: Verify test card was used (not real card)
+     - Action: No refund needed (demo only)
+
+  3. Service outage (ECS/ALB failure)
+     - Action: Restart ECS service (auto-recovery disabled for demo)
+     - Action: Check CloudWatch Logs for errors
+     - Action: Rollback container if issue detected
+     - Timeline: <10 minutes
+
+  4. DDoS attack
+     - Action: CloudFront absorbs basic DDoS
+     - Action: Enable WAF on CloudFront if needed
+     - Action: Scale ECS task count if CPU spikes
+
+Postmortem:
+  - Not required for demo (no customer impact)
+  - Document any lessons learned
+
+================================================================================
+CKO STANDARDS
+================================================================================
+
+Compliance checklist:
+
+  ✓ Generation 3 AWS Account Used
+    - Account: [CKO AWS Playground]
+    - Region: [Specify region used]
+    - Baseline: [Specify which CKO baseline applied]
+
+  ✓ Infrastructure as Code
+    - Terraform/CloudFormation: [Not used - manual setup acceptable for demo]
+    - Infrastructure documented in this ARB
+
+  ✓ Container Security
+    - Image scanning: npm audit before build (no SAST currently)
+    - Base image: Node.js 18 (official Docker image)
+    - No hardcoded secrets in image
+
+  ✓ Logging & Monitoring
+    - CloudWatch Logs: Enabled (7-day retention)
+    - Metrics: Not required (demo only)
+    - Alarms: Not configured (not required for demo)
+
+  ✓ Backup & Recovery
+    - Data backup: N/A (no persistent data)
+    - Code backup: git (primary, GitHub or internal)
+    - RTO/RPO: Not defined (demo only)
+
+  ✓ Network Security
+    - Private subnets: N/A (demo uses public endpoints)
+    - Security groups: [Describe inbound/outbound rules]
+    - WAF: Not enabled (demo only), can enable if DDoS risk
+
+  ✓ API Security
+    - API keys stored in Secrets Manager: ✓
+    - No API key in code or logs: ✓
+    - HTTPS enforced: ✓
+    - Input validation on server: ✓
+
+  ✓ Data Classification
+    - No PII stored: ✓ (demo data only)
+    - No credentials stored: ✓ (Secrets Manager)
+    - Encryption at rest: ✓ (CloudWatch + Secrets Manager)
+
+  ✓ Change Management
+    - Code review before deploy: [Yes / Manual process]
+    - Deployment process documented: ✓ (above)
+    - Rollback procedure: ✓ (one-click ECS rollback)
+
+================================================================================
+OPTIONAL: SERVICE GROUP REQUEST
+================================================================================
+
+[Not applicable - demo application, no service group required]
+
+If escalating to shared services:
+  - Payment service (dedicated team)
+  - Observability platform (shared logging)
+  - Database service (if scaling)
+
+================================================================================
+SUPPORTING DOCUMENTS
+================================================================================
+
+Detailed System Design Review:
+  - /architecture-review/System Design Review - Checkout Demo.txt
+
+Referenced templates:
+  - /architecture-review/System Design Review Template v1.0.txt
+  - /architecture-review/System Design Review Guidance.txt
+  - /architecture-review/Architecture Review Template v2.0.txt
+
+Architectural diagrams:
+  - [To be added] System diagram (ASCII or image)
+  - [To be added] Payment flow sequence diagram
+  - [To be added] Data model (if applicable)
+
+Code repository:
+  - /Users/ken.so/Workspace/checkout-demo (local)
+  - [GitHub link] (if available)
+
+================================================================================
+APPROVAL CHECKLIST
+================================================================================
+
+Before submitting to ARB:
+  ☐ SDR reviewed and approved by Staff+ engineer
+  ☐ All security questions in SDR answered
+  ☐ Architecture diagram created/validated
+  ☐ Cost estimate reviewed
+  ☐ Deployment procedure tested
+  ☐ Rollback procedure documented
+
+During ARB review:
+  ☐ Architecture aligns with CKO standards (Gen 3 AWS, etc.)
+  ☐ Security concerns addressed
+  ☐ Scalability plan agreed upon
+  ☐ Disaster recovery acceptable for risk level
+  ☐ Cost within budget
+
+ARB Approval: [ ] APPROVED  [ ] CONDITIONALLY APPROVED  [ ] REJECTED
+
+ARB Lead Name: _________________________
+Signature/Date: _________________________
+
+Conditions (if any):
+  _________________________________
+  _________________________________
+
+================================================================================
+APPENDIX: GLOSSARY
+================================================================================
+
+ARB: Architecture Review Board
+SDR: System Design Review
+HPP: Hosted Payments Page (Checkout.com)
+Flow: Web component for payment (Checkout.com)
+3DS: 3D Secure (card authentication)
+BIN: Bank Identification Number (first 6 digits of card)
+PSP: Payment Service Provider (Checkout.com)
+PCI: Payment Card Industry Data Security Standard
+PII: Personally Identifiable Information
+RTO: Recovery Time Objective
+RPO: Recovery Point Objective
+TLS: Transport Layer Security
+ECS: Elastic Container Service (AWS)
+ALB: Application Load Balancer (AWS)
+IAM: Identity and Access Management (AWS)
+ECR: Elastic Container Registry (AWS)
+
+================================================================================
+Document Version: 1.0 Draft
+Generated: March 2, 2026
+Last Update: [Date of latest change]
+

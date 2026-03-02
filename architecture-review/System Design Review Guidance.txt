@@ -1,0 +1,349 @@
+System Design Review Guidance
+
+
+
+Contents
+
+How to use this document
+CKO Standards
+Overview
+Context
+Teams involved
+Diagram
+Security
+User Journeys
+Expected scenario(s)
+Other scenarios(s)
+API
+Public API Spec
+Internal API
+Architecture Considerations
+Microservices Considerations
+Event Driven Architecture Considerations
+Alternative Solutions
+Data Modelling
+AI/ML
+Infrastructure
+Evaluation
+Observability
+Training & Data
+Reliability
+Resilience
+Application Consistency
+Idempotency
+Testing
+Unit Testing
+Integration Testing
+End-to-end testing
+Hermetic testing
+Load testing
+Scalability and Performance
+Caching
+Rate Limiting
+Multi-Region
+Observability
+SLOs
+Cost
+Migration
+Future work
+Review outcome
+How to use this document
+
+This document provides guidance on how to fill out the System Design Review template. There is specific guidance for each of the sections in the System Design Review template and the questions in this document should be addressed when filling out the System Design Review template.
+Please pay particular attention to the Security section below as there are mandatory questions here to be answered for all System Design Reviews. Some of these questions specify that a particular answer is going to mean that a formal ARB approval is required.
+CKO Standards
+
+When reviewing your design, you should meet the below requirements:
+Ensure your design meets InfoSec requirements (especially the Cloud Security Standard) CKO Information Security Policies and Standards Library  
+Cloud Security Standard - Checkout - Cloud Security Standard   
+Familiarise with the AWS architecture guidelines (created in line with SDLC) AWS Architecture Guidelines  
+For designing API and submitting, follow the guidelines [Archived] RFC: Merchant-facing API Review Process  
+If you are designing a Machine Learning architecture, follow the ML checklist Machine Learning Guidelines - WIP  
+Join the #ask-architecture, #api-review, #ask-security, #ask-developer-platform Slack channels to ask questions about standards and guidelines.
+Overview
+
+In the overview section, you can include the below details - context, team involved, diagram etc.
+Context
+
+A brief overview of the solution and what it’s going to be used for
+Example: The Care Bot Gateway is the service that receives API requests from our third party Chatbot on the dashboard. For example when a merchants asked for details about a specific payment ID, the chatbot will send an API requests to internal APIs via the bot gateway.
+Teams involved
+
+List out the teams involved in the solution:
+Teams that will be involved in building any part of the solution
+Teams that will maintain or support the solution i.e. the team that will be operationally responsible for the solution
+Upstream teams i.e. those that depend on the solution being built
+All of the above teams should be identified and involved in the System Design Review
+Diagram
+
+Provide details on the interface into your service, e.g. API - Rest, what FQDN, is it behind Edge Gateway, what protocol (TLS versions as well) you are using etc
+The diagram should show the dataflow clearly and should include:
+Compute (e.g. ECS/Lambda)
+Data storage (e.g. DynamoDB/PostgreSQL)
+Networking components (e.g. ALBs, NLBs, API Gateway, NAT Gateways)
+Networking:
+IP Rules
+Which VPC is the service in?
+Are there any existing services in this VPC? If so, what are they?
+Messaging components (e.g. SNS, SQS, Event Bridge, Kinesis)
+WAF (e.g. Edge Gateway or other)
+Caching (e.g. Redis, CDN)
+Example diagram: <img src: /Users/ken.so/Workspace/checkout-demo/architecture-review/Pricing Decentralizaiton Component Diagram.png />
+
+Security
+
+Below are mandatory questions to be answered and documented for all System Design Reviews. 
+Below is a list of questions and some of them specify what answers will require a formal approval at ARB (rather than just a presentation of the approved System Design Review at ARB).
+Do all components with a web interface, including internal components (for example, services, APIs, applications, or Lambdas), require authentication? (If answer is no then formal ARB approval required)
+Do all infrastructure components have IAM roles to provide least access to other infrastructure components? (If answer is no then formal ARB approval required)
+Are wildcard permissions (for example, *:*) avoided in IAM policies? (If answer is no then formal ARB approval required)
+Does the system require multiple authenticated individuals with different responsibilities or privileges?
+Briefly list the roles available in the system.
+Is role assignment controlled and auditable?
+Do you use personal accounts or credentials for authentication? (If answer is yes then formal ARB approval is required)
+Are shared credentials used for human access? (If answer is yes then formal ARB approval is required)
+Are all secrets and credentials, without exception, stored in a dedicated secrets manager? (If answer is no then formal ARB approval is required)
+Do you rotate credentials, API tokens, certificates, and encryption keys on a regular basis? (If any are not rotated then a formal ARB approval is required)
+Do you expect human access to be provided to S3, SFTP, Google Drive, databases, or other cloud-based storage systems?
+What kind of data will be stored on? E.g. screenshots, reports, etc.
+How will you control and manage who has access to the storage?
+Do you integrate with third-party services or accounts, or do internal components rely on third-party services? (If answer is yes then formal ARB approval is required)
+Do you use synthetic data for testing, or do you use data from production env? (If you use data from the production environment, formal ARB approval is required)
+Do you have PCI involved? (If answer is yes then formal ARB approval is required)
+Do you have PII involved?
+Do you log PII data? (If answer is yes then formal ARB approval is required)
+Do you share/expose/provide PII data to internal or external users? (If answer is yes then formal ARB approval is required)
+If you store PII, what is the retention period for this? (If the answer is more than 7 years then formal ARB approval is required)
+Do you expose public facing network interfaces? (If answer is yes then formal ARB approval is required)
+Do any system components provide file upload functionality? (If answer is yes then formal ARB approval is required)
+Do any system components process user input, including files, images, text, or other user-provided content?
+If yes, is the input strictly validated and properly sanitized before processing? Please briefly describe how (for example, using schemas, models, or a specific validation/sanitization library). (If answer is no then formal ARB approval is required)
+Which cryptographic algorithm(s) are used for encryption or integrity checks? Do you use any deprecated or weak  algorithms (for example: MD5, SHA-1, RC4, DES, 3DES, or RSA keys smaller than 2048 bits)?
+How are cryptographic keys generated? (If manual a formal ARB approval is required)
+Do you have Dependabot, CodeQL and SonarCloud enabled (where SAST analysis is applicable)?
+User Journeys
+
+For each of the scenarios (expected and other), include a sequence diagram (swim lane diagram) or architecture diagram with numbered arrows to show flow of data between services and what happens at each point
+Expected scenario(s)
+
+Include expected/happy paths here (e.g. where all services are up and healthy)
+Example:
+<img src: /Users/ken.so/Workspace/checkout-demo/architecture-review/incoming file process 1.png />
+Other scenarios(s)
+
+Include failure scenarios here
+Consider API calls which can happen more than once or events that can be received more than once or out of order
+Consider how retries will work
+Consider how the service will report that it cannot receive requests (i.e. it’s not healthy or some of its dependencies are not healthy)
+Example:
+<img src: /Users/ken.so/Workspace/checkout-demo/architecture-review/incoming file process 2.png />
+
+API
+
+This section should include details of the public and internal interfaces for the new solution
+Public API Spec
+
+If the API is publicly accessible, review your API spec against the API Standards
+Internal API
+
+Details of the interfaces with internal services e.g. type of data, format (JSON/other)
+What are the contract schemas? (i.e. API contracts or event contracts)
+Architecture Considerations
+
+Microservices Considerations
+
+Review Microservices Best Practices and provide information on where these couldn’t be followed (if any) e.g. domain spill-over, unknown bounded contexts, multiple services connecting to the same datastore
+What is the existing bounded context of any services that will be modified?
+Would the new design have more than one service connected to the same datastore? 
+If so, what is the reason for this and what is the plan to make data or schema changes or to test this?
+Do any of the services have bi-directional communication (e.g. they send messages or make API calls to each other in both directions and therefore there is a circular dependency)? 
+If so, what is the reason for this?
+What other options were considered?
+List any new services which won’t be part of a bounded context e.g. abstraction/anti-corruption layers for 3rd parties
+Event Driven Architecture Considerations
+
+Consider how you will handle:
+Events received out of order
+Eventual consistency (including events received days late)
+High volume of delayed events due to an upstream replay/issue
+Consider how you will ensure at-least-once delivery of messages that are published (e.g. outbox pattern)
+What type of events will be involved?
+Event notification?
+Event carried state transfer?
+Event sourcing?
+What messaging solution is chosen and why?
+Alternative Solutions
+
+Document any alternative solutions you’ve considered and why you have chosen the preferred solution
+It’s often useful to include a diagram and summary for the alternative solutions if they can’t be described clearly in text
+Data Modelling
+
+Include details about the data models:
+DynamoDB: Access Patterns, PK, SK, GSIs, LSIs
+Relational database: Table schemas
+What are the read and write access patterns?
+How have we ensured we won’t hit datastore limits (requests/s, hot partition limits)?
+How have we ensured that DynamoDB scans are not required? i.e. how do the GSI or PK/SK accommodate all access patterns?
+Explain how the data model can meet the performance/scalability goals
+If there is any eventual consistency (e.g. GSIs), how is this being handled?
+Is the use of transactions required in DynamoDB? If so, how and why? What are the cost/latency implications (if applicable)?
+AI/ML
+
+This section is mandatory for any solution utilising Machine Learning or Large Language Models (LLMs).
+Infrastructure
+
+Which specific models do you plan to use? (e.g., Gemini 2.5 Pro, Claude 3.5 Sonnet, answerdotai/ModernBERT-base)
+Will this workload need real-time inference or would it be suitable for batch async inference?
+Where are these models hosted for inference? What API do you plan on using? (e.g. AWS Bedrock CreateModelInvocationJob or Converse)
+Evaluation
+
+Describe how you will evaluate the AI system during development
+Provide an example input/output of your AI system. For a multi-stage AI system, please provide inputs/outputs of each stage of the pipeline.
+Which datasets were used and how were they labeled? (e.g, human-labeled, LLM-as-a-judge)
+What metrics will you track and where are they stored? (e.g. accuracy, macro f1 score)
+How do you plan to continuously re-evaluate the system performance on code changes?
+Observability
+
+Describe how you will evaluate the AI system when deployed
+How will you monitor if inputs or model responses are drifting away from the original distribution over time?
+Do you have a mechanism (e.g., Thumbs Up/Down) to capture "human-in-the-loop" signal that feeds back into your fine-tuning or evaluation datasets?
+If a model gives a "bad" answer, could you trace exactly which version of the full input (e.g. prompt, model, context) produced it?
+Training & Data
+
+Not required when using pre-trained only models e.g. LLM APIs
+If pre-training or fine-tuning a model, provide details on the datasets you plan to use
+How often is the model retrained? Which indicators are used to decide when it should be?
+Briefly describe the source and licensing of the data to ensure compliance
+Reliability
+
+Resilience
+
+How are all the services going to be redundant (e.g. handling crashes/restarts of any component)?
+How are transient errors handled for dependencies? What’s the retry interval, request timeout etc? When/where would exponential back-off be considered?
+What health checks would be configured for the application? (These are checks performed during normal operation to determine whether traffic should be disabled to that service or whether it should be restarted)
+What readiness checks would be configured for the application? (These checks are performed only during start-up/deployment and when complete, they would signal that traffic should be routed to the application)
+How can the application be shut down safely….
+In the event of graceful shutdown (SIGTERM)
+In the event of forced shutdown (SIGKILL)
+Application Consistency
+
+Provide details for how the application will recover from partial errors e.g. data is written to a table but the SNS message is not published
+Will the solution handle eventual consistency?
+Will eventual consistency not be tolerated and the distributed transaction needs to be rolled back?
+Idempotency
+
+List all operations which would cause an issue if the operation would happen more than once e.g. perform a payout, perform a balance movement, bill a client
+For each of the above operation:
+Describe how idempotency would be handled within your application (i.e. how it would not call the external dependency more than once or write to a table more than once)
+Describe how idempotency would be handled by the dependency (i.e. using an Idempotency key header on API calls to dependencies)
+How would concurrency be handled? i.e. if two operations execute at the same time, how would the second one be blocked? Is locking required? If so, how would this be implemented?
+Testing
+
+Unit Testing
+
+Unit tests run entirely in memory/in process without LocalStack or any infrastructure. They’re fast and reliable. 
+Low-level unit tests that test individual methods on a class should be discouraged as they lead to brittle tests which need to be changed during a code refactor which eventually means that code refactors are done less regularly and the code becomes harder to maintain and work with. Do, however, use low-level unit tests for particularly complex classes where there’s a lot of complex business logic.
+High-level unit tests test the entire service in memory e.g. makes an in-memory API call and asserts on data stored in the datastore. These are encouraged as it means that all internals of the application can be refactored without needing to change tests. It also means that all classes are tested together unlike low-level unit tests.
+Integration Testing
+
+Integration tests test a repository against a real datastore (LocalStack but ideally AWS)
+Either make sure that integration testing will be used or ensure that all paths/methods are called within end-to-end tests
+End-to-end testing
+
+In the absence of mature contract testing methods and tooling, end-to-end tests are needed to test multiple services together, especially across teams. These tests should be automated.
+The downsides to end-to-end testing are that they require deployment onto infrastructure and they are flaky and expensive to maintain so if testing a single service (or part of one), we can stick to unit or integration testing. They also provide late feedback as often the code is merged to main before they are run (or a team is pushing feature branches into QA and breaking the environment for other teams if there are bugs).
+Hermetic testing
+
+“Testing in a box”. This is where multiple services can be run on a GitHub Runner using LocalStack. This provides faster feedback to end-to-end testing but usually cannot test all applications however can be used in conjunction with end-to-end testing in the CI stage. 
+Load testing
+
+Automated load testing is encouraged. We should consider edge cases such as:
+Production load during a cache rebuild or cache failure
+High spike of production load (i.e. can the application auto-scale fast enough?)
+Also consider stress testing where we push more and more traffic till the application fails in order to find out the limits of the application (if we don’t have unlimited auto-scaling)
+Load tests should be scheduled and teams notified clearly of a test failure (i.e. a performance/scalability degradation) however ideally we should get these into the release pipeline to block releases if possible.
+Ensure that there are the correct assertions on load tests - i.e. ensure that SLOs are defined and measured so that the load test fails if SLOs are breached during the test
+Scalability and Performance
+
+How many requests per second are you expecting?
+How will the service scale (e.g. ECS/Lambda auto-scaling, data storage scaling considerations)?
+How will you assert that the service can handle this load? (load testing types etc.) Ideally measure SLOs during the load test and fail the load test if SLOs are breached
+What type of load test will be performed?
+Some incidents have been due to services failing under load during unexpected scenarios e.g. an upstream service failed for some time then there was a higher amount of messages/second and this overloaded a downstream service
+Consider edge cases which should be tested:
+High load during cache failure/rebuild
+High load during timeouts connecting to a dependency
+Burst of 2x expected max load
+High load during a backup operation (e.g. RDS snapshot)
+Spike testing - is it worth testing a sudden spike of high load? Can the service scale out fast enough?
+Soak testing - is it worth working out the upper limits of the application (i.e. when does it crash)?
+Longevity testing - this is a load test over a long time to try detect memory leaks or stability issues
+Is this service's performance critical enough that we should run the load test in the CD pipeline and block releases of code with performance regressions?
+If not in the CD pipeline and the load test runs on a schedule, how will the output of a failing load test be made visible to engineers? How is this handled during the sprint? Should we block releases till it's fixed?
+Caching
+
+Include details of the caching strategy e.g.
+What is the TTL on your cache items?
+What causes an invalidation of the cache (just time, or events/application logic too)?
+Do you have a playbook to invalidate the cache, or extend the objects in the cache TTL?
+Is the cache Redis and if it is does the jump-box have connectivity to manage it?
+Ensure that the application can handle expected max load when the cache is being rebuilt or is not available
+A cache improves performance but leads to eventually consistent data. Ensure that the max TTL on the cached items is acceptable.
+In-memory caches: These can lead to an inconsistent experience when requests query the same data on different ECS tasks
+If using DAX, ensure the below limitations are understood and handled:
+Can only run on EC2 instances in a VPC
+Consistent reads are offloaded onto DynamoDB (i.e. won't be cached)
+Negative caching means that the lack of an item in DynamoDB is cached in DAX for the TTL which means that a query for the item would not return it for the TTL even if DynamoDB has created the item
+Scaling out nodes means that the cache needs to built on the new node which means you should ensure that the performance hit is acceptable if there is live traffic at this time
+Rate Limiting
+
+Explain how you will configure and enable rate limiting for your solution
+What rate limits would be configured for the application?
+Multi-Region
+
+Include details on how your application could be setup for multi region
+Ideally design from the start, but at at minimum identify potential methods for running active/active/active in multi region (n, where n >= 3)
+Observability
+
+Include details on how you are enabling observability for your application. For example which logging system (DataDog, CloudWatch, etc) are you using, and how? What metrics are you using? Do you support APM or tracing?
+Consider Application security logging and monitoring standard 
+SLOs
+
+SLOs are critical as we require these defined so we can ensure our service is performing as it should do in PROD
+What is the data (indicators) which represents for ‘health’ of your service?
+What threshold/number is deemed as ‘healthy’ from that data?
+How do you calculate availability? What is regarded as ‘uptime’ and ‘downtime’?
+Cost
+
+Provide a rough idea of the cost of the solution (napkin math?)
+Provide details of any particularly expensive components
+Migration
+
+Is your service/feature replacing an existing component?
+What is your migration strategy?
+Consider validation of migrated data
+Shadow testing (i.e. validate the output of the new solution are the same as the original before switching live traffic)
+What is the rollback plan? How long does this take?
+Can there be a gradual migration (e.g. % traffic, by merchant tier or by merchant)?
+How quickly do you expect it to be complete?
+How would you test the migration?
+Future work
+
+Provide details of any further work required after this solution is completed (e.g. Phase 2 work, post-MVP work, additional future requirements)
+List any tech debt that will be created as part of this solution and what the plan is to pay it down
+Review outcome
+
+Staff+ engineer to write up:
+A summary of decisions made in the review process (if not already covered above)
+Document any notes which may be helpful for implementation or future evolution of the design
+Document the status of the SDR as below:
+DRAFT
+ - The document is being prepared and is not ready for comments yet
+IN PROGRESS
+ - The document is ready for early feedback or changes have been requested
+IN REVIEW
+ - The authors are actively seeking feedback and review
+APPROVED
+ - All reviewers have approved the RFC. The work is ready to be developed
+DROPPED
+ - The RFC is obsolete but the authors feel that it will be good documentation for future work
