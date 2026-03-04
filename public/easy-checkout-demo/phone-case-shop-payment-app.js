@@ -168,21 +168,12 @@ function loadPaymentData() {
 
         const customerData = JSON.parse(customerDataStr);
 
-        // Build the payment payload
-        let amount, currency;
-        
-        if (customerData.country === 'HK') {
-            amount = 12900; // 129.00 HKD in cents
-            currency = 'HKD';
-        } else if (customerData.country === 'US') {
-            amount = 1600; // 16.00 USD in cents
-            currency = 'USD';
-        } else if (customerData.country === 'CN') {
-            amount = 12000; // 120.00 CNY in cents
-            currency = 'CNY';
-        } else {
-            amount = 6200; // 62.00 SAR in cents
-            currency = 'SAR';
+        // Build the payment payload using customer-selected currency/amount
+        const currency = (customerData.currency || '').toUpperCase();
+        const amount = Number.isFinite(Number(customerData.amount)) ? Number(customerData.amount) : NaN;
+
+        if (!currency || !Number.isFinite(amount) || amount <= 0) {
+            throw new Error('Payment amount/currency not found. Please return to the form and enter price details again.');
         }
 
         // Create complete payload for payment
@@ -257,7 +248,27 @@ function getPhoneCountryCode(country) {
         'HK': '+852',
         'US': '+1',
         'CN': '+86',
-        'SA': '+966'
+        'SA': '+966',
+        'SG': '+65',
+        'JP': '+81',
+        'TH': '+66',
+        'GB': '+44',
+        'AU': '+61',
+        'NL': '+31',
+        'FR': '+33',
+        'DE': '+49',
+        'KW': '+965',
+        'AE': '+971',
+        'QA': '+974',
+        'BH': '+973',
+        'OM': '+968',
+        'CL': '+56',
+        'MX': '+52',
+        'BR': '+55',
+        'IN': '+91',
+        'KR': '+82',
+        'TW': '+886',
+        'MO': '+853'
     };
     return codes[country] || '+852';
 }

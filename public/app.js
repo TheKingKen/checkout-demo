@@ -32,21 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Navigate to insurance form
     if (insuranceBtn) {
         insuranceBtn.addEventListener('click', function () {
-            if (!loginModal) {
-                window.location.href = '/insurance-form/insurance-form.html';
-                return;
-            }
-
-            loginError.textContent = '';
-            loginModal.classList.add('show');
-            loginModal.setAttribute('aria-hidden', 'false');
-            if (usernameInput) {
-                usernameInput.value = INSURANCE_USERNAME;
-            }
-            if (passwordInput) {
-                passwordInput.value = '';
-                passwordInput.focus();
-            }
+            window.location.href = '/insurance-form/insurance-form.html';
         });
     }
 

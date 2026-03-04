@@ -3,41 +3,40 @@
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('checkout-form');
     const errorMessage = document.getElementById('error-message');
-    const hkdElem = document.querySelector('.hkd-price');
-    const usdElem = document.querySelector('.usd-price');
-    const eurElem = document.querySelector('.eur-price');
-    const sarElem = document.querySelector('.sar-price');
-    const countryRadios = document.getElementsByName('country');
+    const countrySelect = document.getElementById('country-select');
+    const customCurrencyInput = document.getElementById('custom-currency');
+    const customAmountInput = document.getElementById('custom-amount');
 
-    // Update price based on country selection
-    function updatePrice() {
-        if (document.querySelector('input[name="country"]:checked').value === 'HK') {
-            hkdElem.classList.add('active');
-            usdElem.classList.remove('active');
-            eurElem.classList.remove('active');
-            sarElem.classList.remove('active');
-        } else if (document.querySelector('input[name="country"]:checked').value === 'US') {
-            hkdElem.classList.remove('active');
-            usdElem.classList.add('active');
-            eurElem.classList.remove('active');
-            sarElem.classList.remove('active');
-        } else if (document.querySelector('input[name="country"]:checked').value === 'CN') {
-            hkdElem.classList.remove('active');
-            usdElem.classList.remove('active');
-            eurElem.classList.add('active');
-            sarElem.classList.remove('active');
-        } else {
-            hkdElem.classList.remove('active');
-            usdElem.classList.remove('active');
-            eurElem.classList.remove('active');
-            sarElem.classList.add('active');
-        }
+    // Map currency code to valid country codes
+    const CURRENCY_COUNTRY_MAP = {
+        'HKD': ['HK', 'MO'],
+        'CNY': ['CN'],
+        'USD': ['US'],
+        'GBP': ['GB'],
+        'AUD': ['AU'],
+        'JPY': ['JP'],
+        'SGD': ['SG'],
+        'THB': ['TH'],
+        'KRW': ['KR'],
+        'TWD': ['TW'],
+        'MOP': ['MO'],
+        'EUR': ['NL', 'FR', 'DE'],
+        'SAR': ['SA'],
+        'AED': ['AE'],
+        'QAR': ['QA'],
+        'KWD': ['KW'],
+        'BHD': ['BH'],
+        'OMR': ['OM'],
+        'MXN': ['MX'],
+        'BRL': ['BR'],
+        'CLP': ['CL'],
+        'INR': ['IN'],
+    };
+
+    function isCurrencyValidForCountry(currencyCode, countryCode) {
+        const validCountries = CURRENCY_COUNTRY_MAP[currencyCode] || [];
+        return validCountries.includes(countryCode);
     }
-
-    countryRadios.forEach(radio =>
-        radio.addEventListener('change', updatePrice)
-    );
-    updatePrice();
 
     // Handle HPP button (form submit)
     const hppBtn = document.getElementById('checkout-hpp-btn');
@@ -54,30 +53,54 @@ document.addEventListener('DOMContentLoaded', function () {
         flowBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             errorMessage.textContent = "";
+            errorMessage.classList.remove('show');
 
             // Validate form
             const customerName = form['customer-name'].value.trim();
             const customerEmail = form['customer-email'].value.trim();
-            const country = form.country.value;
+            const country = countrySelect.value;
             const address = form['customer-address'].value.trim();
             const phone = form['customer-phone'].value.trim();
             const productName = document.getElementById('product-name').value.trim();
             const productDescription = document.getElementById('product-description').value.trim();
 
-            if (!customerName || !customerEmail || !address || !phone) {
+            if (!customerName || !customerEmail || !country || !address || !phone) {
                 errorMessage.textContent = "Please fill in all required fields.";
+                errorMessage.classList.add('show');
                 return;
             }
 
-            let currency;
-            if (country === 'HK') {
-                currency = 'HKD';
-            } else if (country === 'US') {
-                currency = 'USD';
-            } else if (country === 'CN') {
-                currency = 'CNY';
-            } else {
-                currency = 'SAR';
+            // Currency is determined by custom input
+            const currency = customCurrencyInput.value.trim().toUpperCase();
+            const amountStr = customAmountInput.value.trim();
+            
+            if (!currency) {
+                errorMessage.textContent = "Please enter a currency code.";
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            if (!amountStr) {
+                errorMessage.textContent = "Please enter an amount.";
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            const amountFloat = parseFloat(amountStr);
+            if (isNaN(amountFloat) || amountFloat <= 0) {
+                errorMessage.textContent = "Please enter a valid amount.";
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            const amount = Math.round(amountFloat * 100); // Convert to minor units
+
+            // Validate that currency code matches the selected country
+            if (!isCurrencyValidForCountry(currency, country)) {
+                const validCurrencies = Object.keys(CURRENCY_COUNTRY_MAP).filter(curr => CURRENCY_COUNTRY_MAP[curr].includes(country)).join(', ');
+                errorMessage.textContent = `Currency ${currency} is not valid for ${countrySelect.options[countrySelect.selectedIndex].text}. Valid currencies: ${validCurrencies || 'None registered'}`;
+                errorMessage.classList.add('show');
+                return;
             }
 
             // Store customer data in sessionStorage
@@ -88,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 country: country,
                 address: address,
                 currency: currency,
+                amount: amount,
                 productName: productName,
                 productDescription: productDescription
             };
@@ -102,50 +126,96 @@ document.addEventListener('DOMContentLoaded', function () {
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
         errorMessage.textContent = "";
-
-        const country = form.country.value;
-        let amount, currency, price, phone_country_code;
-
-        if (country === 'HK') {
-            amount = 12900; // 129.00 HKD in cents
-            currency = 'HKD';
-            price = 12900;
-            phone_country_code = '+852';
-        } else if (country === 'US') {
-            amount = 1600; // 16.00 USD in cents
-            currency = 'USD';
-            price = 1600;
-            phone_country_code = '+1';
-        } else if (country === 'CN') {
-            amount = 12000; // 120.00 CNY in cents
-            currency = 'CNY';
-            price = 12000;
-            phone_country_code = '+86';
-        } else {
-            amount = 6200; // 62.00 SAR in cents
-            currency = 'SAR';
-            price = 6200;
-            phone_country_code = '+966';
-        }
+        errorMessage.classList.remove('show');
 
         // Basic client-side validation
-        let customerPhone = form.phone.value.replace(/\D/g, '');
-        if (customerPhone.length < 7) {
-            errorMessage.textContent = "Please enter a valid phone number.";
+        const customerName = form['customer-name'].value.trim();
+        const customerEmail = form['customer-email'].value.trim();
+        const country = countrySelect.value;
+        const address = form['customer-address'].value.trim();
+        const productName = document.getElementById('product-name').value.trim() || 'Classic iPhone Case';
+        const productDescription = document.getElementById('product-description').value.trim();
+        
+        if (!customerName || !customerEmail || !country || !address) {
+            errorMessage.textContent = "Please fill in all required fields.";
+            errorMessage.classList.add('show');
             return;
         }
 
-        // Get product name and description from inputs
-        const productName = document.getElementById('product-name').value.trim() || 'Classic iPhone Case';
-        const productDescription = document.getElementById('product-description').value.trim();
+        let customerPhone = form.phone.value.replace(/\D/g, '');
+        if (customerPhone.length < 7) {
+            errorMessage.textContent = "Please enter a valid phone number.";
+            errorMessage.classList.add('show');
+            return;
+        }
+
+        // Validate custom currency and amount
+        const currency = customCurrencyInput.value.trim().toUpperCase();
+        const amountStr = customAmountInput.value.trim();
+        
+        if (!currency || !amountStr) {
+            errorMessage.textContent = "Please enter both currency code and amount.";
+            errorMessage.classList.add('show');
+            return;
+        }
+
+        const amountFloat = parseFloat(amountStr);
+        if (isNaN(amountFloat) || amountFloat <= 0) {
+            errorMessage.textContent = "Please enter a valid amount.";
+            errorMessage.classList.add('show');
+            return;
+        }
+
+        // Validate that currency code matches the selected country
+        if (!isCurrencyValidForCountry(currency, country)) {
+            const validCurrencies = Object.keys(CURRENCY_COUNTRY_MAP).filter(curr => CURRENCY_COUNTRY_MAP[curr].includes(country)).join(', ');
+            errorMessage.textContent = `Currency ${currency} is not valid for ${countrySelect.options[countrySelect.selectedIndex].text}. Valid currencies: ${validCurrencies || 'None registered'}`;
+            errorMessage.classList.add('show');
+            return;
+        }
+
+        const amount = Math.round(amountFloat * 100); // Convert to cents
+        const price = amount;
+        const phone_country_code = getPhoneCountryCode(country);
+
+        // Helper function to get phone country code
+        function getPhoneCountryCode(countryCode) {
+            const countryCodeMap = {
+                'HK': '+852',
+                'US': '+1',
+                'CN': '+86',
+                'SA': '+966',
+                'SG': '+65',
+                'JP': '+81',
+                'TH': '+66',
+                'GB': '+44',
+                'AU': '+61',
+                'NL': '+31',
+                'FR': '+33',
+                'DE': '+49',
+                'KW': '+965',
+                'AE': '+971',
+                'QA': '+974',
+                'BH': '+973',
+                'OM': '+968',
+                'CL': '+56',
+                'MX': '+52',
+                'BR': '+55',
+                'IN': '+91',
+                'KR': '+82',
+                'TW': '+886',
+                'MO': '+853'
+            };
+            return countryCodeMap[countryCode] || '+1';
+        }
 
         const payload = {
             country: country,
             currency: currency,
             amount: amount,
             customer: {
-                name: form['customer-name'].value,
-                email: form['customer-email'].value,
+                name: customerName,
+                email: customerEmail,
                 phone_country_code: phone_country_code,
                 phone_number: customerPhone
             },
@@ -199,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Network error creating payment link: ' + (err.message || err));
             
             errorMessage.textContent = 'Error: ' + (err.message || 'Failed to create payment link.');
+            errorMessage.classList.add('show');
             button.disabled = false;
             button.innerText = 'Checkout (Pay Securely)';
         }

@@ -33,6 +33,69 @@ const PAYMENT_SESSIONS_API_URL = 'https://api.sandbox.checkout.com/payment-sessi
 const fs = require('fs');
 const os = require('os');
 
+// Helper: Map country code to correct phone country code
+const COUNTRY_PHONE_CODE_MAP = {
+  'HK': '+852',
+  'US': '+1',
+  'CN': '+86',
+  'SA': '+966',
+  'SG': '+65',
+  'JP': '+81',
+  'TH': '+66',
+  'GB': '+44',
+  'AU': '+61',
+  'NL': '+31',
+  'FR': '+33',
+  'DE': '+49',
+  'KW': '+965',
+  'AE': '+971',
+  'QA': '+974',
+  'BH': '+973',
+  'OM': '+968',
+  'CL': '+56',
+  'MX': '+52',
+  'BR': '+55',
+  'IN': '+91',
+  'KR': '+82',
+  'TW': '+886',
+  'MO': '+853',
+};
+
+// Helper: Map currency code to country codes
+const CURRENCY_COUNTRY_MAP = {
+  'HKD': ['HK', 'MO'],
+  'CNY': ['CN'],
+  'USD': ['US'],
+  'GBP': ['GB'],
+  'AUD': ['AU'],
+  'JPY': ['JP'],
+  'SGD': ['SG'],
+  'THB': ['TH'],
+  'KRW': ['KR'],
+  'TWD': ['TW'],
+  'MOP': ['MO'],
+  'EUR': ['NL', 'FR', 'DE'],
+  'SAR': ['SA'],
+  'AED': ['AE'],
+  'QAR': ['QA'],
+  'KWD': ['KW'],
+  'BHD': ['BH'],
+  'OMR': ['OM'],
+  'MXN': ['MX'],
+  'BRL': ['BR'],
+  'CLP': ['CL'],
+  'INR': ['IN'],
+};
+
+function getPhoneCountryCode(countryCode) {
+  return COUNTRY_PHONE_CODE_MAP[countryCode] || '+1';
+}
+
+function isCurrencyValidForCountry(currencyCode, countryCode) {
+  const validCountries = CURRENCY_COUNTRY_MAP[currencyCode] || [];
+  return validCountries.includes(countryCode);
+}
+
 // Helper: determine the correct base URL for redirect targets
 // If the client is accessing via the public tunnel URL, use that for redirects.
 // Otherwise, use the request origin (localhost) so redirects stay consistent with the client's access method.
@@ -123,14 +186,14 @@ app.post('/create-payment-link', async (req, res) => {
           },
           phone: {
             number: customer.phone_number || '',
-            country_code: customer.phone_country_code || '+852',
+            country_code: getPhoneCountryCode(country || 'HK'),
           },
         },
         customer: {
             name: customer.name,
             email: customer.email,
             phone: {
-                country_code: customer.phone_country_code,
+                country_code: getPhoneCountryCode(country || 'HK'),
                 number: customer.phone_number
             }
         },
@@ -459,7 +522,7 @@ app.post('/create-payment-link2', async (req, res) => {
             email: customer.email,
             phone: {
                 number: customer.phone_number || '',
-                country_code: customer.phone_country_code || '+852',
+                country_code: getPhoneCountryCode(country || 'HK'),
             },
             ...(customer.id && { id: customer.id })  // Include customer.id if provided
         },
@@ -477,7 +540,7 @@ app.post('/create-payment-link2', async (req, res) => {
           },
           phone: {
             number: customer.phone_number || '',
-            country_code: customer.phone_country_code || '+852',
+            country_code: getPhoneCountryCode(country || 'HK'),
           },
         },
         risk: {
@@ -605,7 +668,7 @@ app.post("/create-payment-sessions", async (req, res) => {
         },
         phone: {
           number: customer.phone_number || '',
-          country_code: customer.phone_country_code || '+852',
+          country_code: getPhoneCountryCode(country || 'HK'),
         },
       },
       billing: {
@@ -616,7 +679,7 @@ app.post("/create-payment-sessions", async (req, res) => {
         },
         phone: {
           number: customer.phone_number || '',
-          country_code: customer.phone_country_code || '+852',
+          country_code: getPhoneCountryCode(country || 'HK'),
         },
       },
       risk: {
