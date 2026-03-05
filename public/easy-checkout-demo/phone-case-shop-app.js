@@ -6,37 +6,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const countrySelect = document.getElementById('country-select');
     const customCurrencyInput = document.getElementById('custom-currency');
     const customAmountInput = document.getElementById('custom-amount');
-
-    // Map currency code to valid country codes
-    const CURRENCY_COUNTRY_MAP = {
-        'HKD': ['HK', 'MO'],
-        'CNY': ['CN'],
-        'USD': ['US'],
-        'GBP': ['GB'],
-        'AUD': ['AU'],
-        'JPY': ['JP'],
-        'SGD': ['SG'],
-        'THB': ['TH'],
-        'KRW': ['KR'],
-        'TWD': ['TW'],
-        'MOP': ['MO'],
-        'EUR': ['NL', 'FR', 'DE'],
-        'SAR': ['SA'],
-        'AED': ['AE'],
-        'QAR': ['QA'],
-        'KWD': ['KW'],
-        'BHD': ['BH'],
-        'OMR': ['OM'],
-        'MXN': ['MX'],
-        'BRL': ['BR'],
-        'CLP': ['CL'],
-        'INR': ['IN'],
-    };
-
-    function isCurrencyValidForCountry(currencyCode, countryCode) {
-        const validCountries = CURRENCY_COUNTRY_MAP[currencyCode] || [];
+    const shared = window.CheckoutShared || {};
+    const CURRENCY_COUNTRY_MAP = shared.CURRENCY_COUNTRY_MAP || {};
+    const isCurrencyValidForCountry = shared.isCurrencyValidForCountry || function (currencyCode, countryCode) {
+        const validCountries = CURRENCY_COUNTRY_MAP[(currencyCode || '').toUpperCase()] || [];
         return validCountries.includes(countryCode);
-    }
+    };
+    const getValidCurrenciesForCountry = shared.getValidCurrenciesForCountry || function (countryCode) {
+        return Object.keys(CURRENCY_COUNTRY_MAP).filter((currencyCode) => CURRENCY_COUNTRY_MAP[currencyCode].includes(countryCode));
+    };
+    const getPhoneCountryCode = shared.getPhoneCountryCode || function () { return '+1'; };
 
     // Handle HPP button (form submit)
     const hppBtn = document.getElementById('checkout-hpp-btn');
@@ -97,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Validate that currency code matches the selected country
             if (!isCurrencyValidForCountry(currency, country)) {
-                const validCurrencies = Object.keys(CURRENCY_COUNTRY_MAP).filter(curr => CURRENCY_COUNTRY_MAP[curr].includes(country)).join(', ');
+                const validCurrencies = getValidCurrenciesForCountry(country).join(', ');
                 errorMessage.textContent = `Currency ${currency} is not valid for ${countrySelect.options[countrySelect.selectedIndex].text}. Valid currencies: ${validCurrencies || 'None registered'}`;
                 errorMessage.classList.add('show');
                 return;
@@ -168,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Validate that currency code matches the selected country
         if (!isCurrencyValidForCountry(currency, country)) {
-            const validCurrencies = Object.keys(CURRENCY_COUNTRY_MAP).filter(curr => CURRENCY_COUNTRY_MAP[curr].includes(country)).join(', ');
+            const validCurrencies = getValidCurrenciesForCountry(country).join(', ');
             errorMessage.textContent = `Currency ${currency} is not valid for ${countrySelect.options[countrySelect.selectedIndex].text}. Valid currencies: ${validCurrencies || 'None registered'}`;
             errorMessage.classList.add('show');
             return;
@@ -177,37 +156,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const amount = Math.round(amountFloat * 100); // Convert to cents
         const price = amount;
         const phone_country_code = getPhoneCountryCode(country);
-
-        // Helper function to get phone country code
-        function getPhoneCountryCode(countryCode) {
-            const countryCodeMap = {
-                'HK': '+852',
-                'US': '+1',
-                'CN': '+86',
-                'SA': '+966',
-                'SG': '+65',
-                'JP': '+81',
-                'TH': '+66',
-                'GB': '+44',
-                'AU': '+61',
-                'NL': '+31',
-                'FR': '+33',
-                'DE': '+49',
-                'KW': '+965',
-                'AE': '+971',
-                'QA': '+974',
-                'BH': '+973',
-                'OM': '+968',
-                'CL': '+56',
-                'MX': '+52',
-                'BR': '+55',
-                'IN': '+91',
-                'KR': '+82',
-                'TW': '+886',
-                'MO': '+853'
-            };
-            return countryCodeMap[countryCode] || '+1';
-        }
 
         const payload = {
             country: country,

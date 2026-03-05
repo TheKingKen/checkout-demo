@@ -1,5 +1,8 @@
 // public/phone-case-shop-payment-app.js
 
+const shared = window.CheckoutShared || {};
+const getPhoneCountryCode = shared.getPhoneCountryCode || function () { return '+1'; };
+
 // Helper: Get stored customer ID based on email (returns null for new customers)
 function getCustomerId(email) {
     if (!email) return null;
@@ -241,36 +244,6 @@ function loadPaymentData() {
             </button>
         `;
     }
-}
-
-function getPhoneCountryCode(country) {
-    const codes = {
-        'HK': '+852',
-        'US': '+1',
-        'CN': '+86',
-        'SA': '+966',
-        'SG': '+65',
-        'JP': '+81',
-        'TH': '+66',
-        'GB': '+44',
-        'AU': '+61',
-        'NL': '+31',
-        'FR': '+33',
-        'DE': '+49',
-        'KW': '+965',
-        'AE': '+971',
-        'QA': '+974',
-        'BH': '+973',
-        'OM': '+968',
-        'CL': '+56',
-        'MX': '+52',
-        'BR': '+55',
-        'IN': '+91',
-        'KR': '+82',
-        'TW': '+886',
-        'MO': '+853'
-    };
-    return codes[country] || '+852';
 }
 
 function toggleActionButtons() {
