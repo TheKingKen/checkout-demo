@@ -153,12 +153,13 @@ app.post('/create-payment-link', async (req, res) => {
     
     const firstProduct = productList[0];
 
-  // Determine base URL for redirect targets (prefer public tunnel when available)
-  const baseUrl = resolvePublicBase(req);
+    // Determine base URL for redirect targets (prefer public tunnel when available)
+    const baseUrl = resolvePublicBase(req);
 
-    // Dynamic logic: assign currency & payment methods based on country
-    let allow_payment_methods = ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn', 'tamara', 'octopus'];
-    //let allow_payment_methods = ['card'];
+    // Card-only configuration for phone-case-shop HPP submit flow.
+    // Send both allow/disable and enabled/disabled keys for API compatibility.
+    const allow_payment_methods = ['card'];
+    const disable_payment_methods = ['applepay', 'googlepay'];
 
 
     // let billing = { address: { country } };
@@ -205,16 +206,17 @@ app.post('/create-payment-link', async (req, res) => {
             unit_price: p.unit_price
         })),
         payment_type: `Regular`,
-        // "payment_method_configuration": {
-        //     "card": {
-        //     "store_payment_details": "enabled"
-        //     }
-        // },
+        payment_method_configuration: {
+            card: {
+              store_payment_details: "collect_consent"  // Always 'collect_consent' to let HPP handle saved card display and consent
+            }
+        },
         // "stored_card": {
         //     "customer_id": "cus_dbompbxe6gfuxosnb62bopwjnm"
         // },
         processing_channel_id: PROCESSING_CHANNEL_ID,
-        allow_payment_methods: allow_payment_methods,
+        // allow_payment_methods: allow_payment_methods,
+        disabled_payment_methods: disable_payment_methods,
         success_url: `${baseUrl}/success.html`,
         failure_url: `${baseUrl}/failure.html`,
         cancel_url: `${baseUrl}/cancel.html`,
@@ -485,15 +487,17 @@ app.post('/create-payment-link2', async (req, res) => {
     
     const firstProduct = productList[0];
 
-    let allow_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
-    // let allow_payment_methods = ['card','applepay', 'googlepay', 'alipay_hk', 'alipay_cn'];
-    let disable_payment_methods = ['card'];
+    // Card-only configuration for HPP mode in phone-case-shop payment page.
+    // Send both allow/disable and enabled/disabled keys for API compatibility.
+    // const allow_payment_methods = ['card'];
+    const disable_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'alipay_cn', 'tamara', 'octopus'];
+    // const disable_payment_methods = ['applepay', 'googlepay'];
 
     // Determine base URL for redirect targets (prefer public tunnel when available)
     const baseUrl = resolvePublicBase(req);
 
     // Always use collect_consent - let Flow/HPP handle saved card display automatically
-    const storePaymentDetails = 'collect_consent';
+    const storePaymentDetails = 'disabled';
     
     console.log('Creating HPP link with store_payment_details:', storePaymentDetails);
     if (customer.id) {
@@ -569,8 +573,8 @@ app.post('/create-payment-link2', async (req, res) => {
             })
         },
         processing_channel_id: PROCESSING_CHANNEL_ID,
-        allow_payment_methods: allow_payment_methods,
-        disable_payment_methods: disable_payment_methods,
+        // allow_payment_methods: allow_payment_methods,
+        disabled_payment_methods: disable_payment_methods,
         success_url: `${baseUrl}/success.html`,
         failure_url: `${baseUrl}/failure.html`,
         cancel_url: `${baseUrl}/cancel.html`,
@@ -625,6 +629,8 @@ app.post("/create-payment-sessions", async (req, res) => {
     // Use provided payment methods or default values
     let enabledMethods = enable_payment_methods || ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn','tamara', 'octopus'];
     let disabledMethods = disable_payment_methods || [];
+    // let enabledMethods = ['card']
+    // let disabledMethods = ['applepay', 'googlepay'];
 
     console.log('enable payment methods:', enabledMethods);
     console.log('disable payment methods:', disabledMethods);
@@ -711,6 +717,7 @@ app.post("/create-payment-sessions", async (req, res) => {
       },
       enabled_payment_methods: enabledMethods,
       ...(disabledMethods.length > 0 && { disabled_payment_methods: disabledMethods }),
+      // disabled_payment_methods: disabledMethods,
       processing_channel_id: PROCESSING_CHANNEL_ID
     };
 
