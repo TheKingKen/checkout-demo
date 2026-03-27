@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Network Tokens Auditorium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="network-token-page">
+<div class="auditorium-shell">
+    <div class="auditorium-topbar">
+        <a class="auditorium-home-link" href="/" data-i18n-en="Back to Demo Portal" data-i18n-zh="返回演示入口">Back to Demo Portal</a>
+        <div class="auditorium-topbar-actions">
+            <a class="auditorium-tech-link" href="/network-tokens-engineering.html" data-i18n-en="Tech Version" data-i18n-zh="技术版">Tech Version</a>
+            <button id="auditorium-lang-toggle" type="button" class="auditorium-lang-btn" data-lang="en">简体中文</button>
+            <div class="auditorium-badge" data-i18n-en="Built for non-technical audiences" data-i18n-zh="为非技术观众打造">Built for non-technical audiences</div>
+        </div>
+    </div>
+
+    <section class="auditorium-hero">
+        <h1 data-i18n-en="Network Tokens, Explained Like a Live Auditorium Session" data-i18n-zh="网络代币：像在千人礼堂演讲一样讲清楚">Network Tokens, Explained Like a Live Auditorium Session</h1>
+        <p data-i18n-en="Imagine replacing fragile card details with a smarter digital identity that is safer, updates itself, and helps more payments get approved." data-i18n-zh="想象一下：我们用更聪明的数字身份替代脆弱的卡号信息，它更安全、可自动更新，还能让更多支付通过。">Imagine replacing fragile card details with a smarter digital identity that is safer, updates itself, and helps more payments get approved.</p>
+        <div class="auditorium-hero-actions">
+            <a class="auditorium-demo-link" href="/easy-checkout-demo/phone-case-shop.html" data-i18n-en="Try Live Easy Checkout Demo" data-i18n-zh="进入实时 Easy Checkout 演示">Try Live Easy Checkout Demo</a>
+        </div>
+    </section>
+
+    <section class="auditorium-grid" aria-label="Core idea cards" data-aria-en="Core idea cards" data-aria-zh="核心概念卡片">
+        <article class="auditorium-card">
+            <h2 data-i18n-en="What is a network token?" data-i18n-zh="什么是网络代币？">What is a network token?</h2>
+            <p data-i18n-en="A network token is a card-network-issued stand-in for the real card number. The real card details stay hidden behind the scenes while payments run using this safer digital identity." data-i18n-zh="网络代币是由卡组织签发的“替代卡号”。真实卡信息始终隐藏在后台，支付过程使用这个更安全的数字身份完成。">A network token is a card-network-issued stand-in for the real card number. The real card details stay hidden behind the scenes while payments run using this safer digital identity.</p>
+            <ul class="auditorium-list">
+                <li data-i18n-en="Issued by Visa or Mastercard networks." data-i18n-zh="由 Visa 或 Mastercard 卡组织签发。">Issued by Visa or Mastercard networks.</li>
+                <li data-i18n-en="Unique to your merchant context." data-i18n-zh="与您的商户环境绑定。">Unique to your merchant context.</li>
+                <li data-i18n-en="Works with one-time transaction cryptograms." data-i18n-zh="配合每笔交易一次性的加密验证码（cryptogram）。">Works with one-time transaction cryptograms.</li>
+            </ul>
+        </article>
+
+        <article class="auditorium-card">
+            <h2 data-i18n-en="Why people care" data-i18n-zh="为什么大家都重视它">Why people care</h2>
+            <p data-i18n-en="Customers keep paying smoothly even when their physical card expires or is replaced. Businesses see fewer failed recurring charges and less checkout friction." data-i18n-zh="即使实体卡过期或换卡，客户仍可顺畅支付。企业会看到更少的周期扣款失败和更低的支付摩擦。">Customers keep paying smoothly even when their physical card expires or is replaced. Businesses see fewer failed recurring charges and less checkout friction.</p>
+            <ul class="auditorium-list">
+                <li data-i18n-en="Fewer declines from expired cards." data-i18n-zh="减少因卡片过期导致的拒付。">Fewer declines from expired cards.</li>
+                <li data-i18n-en="Better fraud resistance due to cryptograms." data-i18n-zh="由于 cryptogram 机制，抗欺诈能力更强。">Better fraud resistance due to cryptograms.</li>
+                <li data-i18n-en="Potential uplift in authorization rates." data-i18n-zh="有机会提升授权通过率。">Potential uplift in authorization rates.</li>
+            </ul>
+        </article>
+    </section>
+
+    <section class="auditorium-callout" aria-label="Simple analogy" data-aria-en="Simple analogy" data-aria-zh="简单类比">
+        <h2 data-i18n-en="Simple analogy" data-i18n-zh="简单类比">Simple analogy</h2>
+        <p data-i18n-en="Merchant-stored card is like saving a contact in your phone. Network token is like that contact being maintained by the mobile network itself, so the number stays reachable even if the SIM card changes." data-i18n-zh="商户自存卡好比把联系人存在手机里；网络代币则像由运营商维护这个联系人，即使 SIM 卡变化，也能继续接通。">Merchant-stored card is like saving a contact in your phone. Network token is like that contact being maintained by the mobile network itself, so the number stays reachable even if the SIM card changes.</p>
+    </section>
+
+    <section aria-label="How provisioning works" data-aria-en="How provisioning works" data-aria-zh="代币开通如何运作">
+        <div class="auditorium-card">
+            <h2 data-i18n-en="How provisioning works in 4 easy steps" data-i18n-zh="代币开通：4 步看懂">How provisioning works in 4 easy steps</h2>
+            <div class="auditorium-step-track">
+                <article class="auditorium-step">
+                    <div class="step-index">1</div>
+                    <h3 data-i18n-en="Card entered once" data-i18n-zh="首次输入卡信息">Card entered once</h3>
+                    <p data-i18n-en="The customer enters card details during a normal checkout." data-i18n-zh="客户在正常结账时输入卡信息。">The customer enters card details during a normal checkout.</p>
+                </article>
+                <article class="auditorium-step">
+                    <div class="step-index">2</div>
+                    <h3 data-i18n-en="Provisioning requested" data-i18n-zh="发起代币开通请求">Provisioning requested</h3>
+                    <p data-i18n-en="Checkout.com asks Visa or Mastercard for a network token linked to that card." data-i18n-zh="Checkout.com 向 Visa 或 Mastercard 请求与该卡绑定的网络代币。">Checkout.com asks Visa or Mastercard for a network token linked to that card.</p>
+                </article>
+                <article class="auditorium-step">
+                    <div class="step-index">3</div>
+                    <h3 data-i18n-en="Token issued and stored" data-i18n-zh="代币签发并保存">Token issued and stored</h3>
+                    <p data-i18n-en="The network token is saved in Vault and tied to future payments." data-i18n-zh="网络代币保存在 Vault 中，并用于后续支付。">The network token is saved in Vault and tied to future payments.</p>
+                </article>
+                <article class="auditorium-step">
+                    <div class="step-index">4</div>
+                    <h3 data-i18n-en="Future payments improve" data-i18n-zh="后续支付更稳定">Future payments improve</h3>
+                    <p data-i18n-en="Next charges use token + cryptogram, while lifecycle updates are handled automatically." data-i18n-zh="后续扣款使用“代币 + cryptogram”，卡片生命周期更新也会自动处理。">Next charges use token + cryptogram, while lifecycle updates are handled automatically.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="auditorium-comparison" aria-label="Comparison table" data-aria-en="Comparison table" data-aria-zh="对比表格">
+        <table>
+            <thead>
+            <tr>
+                <th data-i18n-en="Topic" data-i18n-zh="维度">Topic</th>
+                <th data-i18n-en="Merchant-Stored Card" data-i18n-zh="商户保存卡">Merchant-Stored Card</th>
+                <th data-i18n-en="Network Token" data-i18n-zh="网络代币">Network Token</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td data-i18n-en="Who issues it" data-i18n-zh="由谁签发">Who issues it</td>
+                <td data-i18n-en="Processor vault system" data-i18n-zh="支付服务商的 Vault 系统">Processor vault system</td>
+                <td data-i18n-en="Card network (Visa or Mastercard)" data-i18n-zh="卡组织（Visa 或 Mastercard）">Card network (Visa or Mastercard)</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="Card replacement handling" data-i18n-zh="换卡后的处理">Card replacement handling</td>
+                <td data-i18n-en="Can fail until customer updates card" data-i18n-zh="客户更新前可能失败">Can fail until customer updates card</td>
+                <td data-i18n-en="Network keeps underlying details updated" data-i18n-zh="由卡组织自动更新底层卡信息">Network keeps underlying details updated</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="Security model" data-i18n-zh="安全机制">Security model</td>
+                <td data-i18n-en="Stored reference to card" data-i18n-zh="保存卡信息引用">Stored reference to card</td>
+                <td data-i18n-en="Token plus per-transaction cryptogram" data-i18n-zh="代币 + 每笔交易 cryptogram">Token plus per-transaction cryptogram</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="Your code for basic usage" data-i18n-zh="基础接入代码">Your code for basic usage</td>
+                <td data-i18n-en="Store and reuse instrument ID" data-i18n-zh="保存并复用 instrument ID">Store and reuse instrument ID</td>
+                <td data-i18n-en="Often automatic once enabled on account" data-i18n-zh="账号启用后通常自动生效">Often automatic once enabled on account</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="When explicit provisioning API is useful" data-i18n-zh="何时需要显式调用 provisioning API">When explicit provisioning API is useful</td>
+                <td data-i18n-en="Not applicable" data-i18n-zh="不适用">Not applicable</td>
+                <td data-i18n-en="Backfill existing cards, force synchronous readiness, multi-processor portability" data-i18n-zh="历史卡批量补开通、要求同步可用、跨处理商可移植">Backfill existing cards, force synchronous readiness, multi-processor portability</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="auditorium-card" aria-label="When to call provisioning APIs" data-aria-en="When to call provisioning APIs" data-aria-zh="何时直接调用 provisioning API">
+        <h2 data-i18n-en="When you would call provisioning APIs directly" data-i18n-zh="你会直接调用 provisioning API 的场景">When you would call provisioning APIs directly</h2>
+        <ul class="auditorium-list">
+            <li data-i18n-en="You are migrating a large existing card base and want token readiness before the next billing run." data-i18n-zh="你在迁移大量历史卡，并希望在下一次批量扣款前就完成代币就绪。">You are migrating a large existing card base and want token readiness before the next billing run.</li>
+            <li data-i18n-en="You have your own card-on-file vault and need to tokenize those cards through Checkout.com." data-i18n-zh="你有自建卡片存储系统，需要通过 Checkout.com 把这些卡代币化。">You have your own card-on-file vault and need to tokenize those cards through Checkout.com.</li>
+            <li data-i18n-en="You need synchronous behavior for specific first-transaction policies." data-i18n-zh="你有风控或业务策略，要求首笔交易按同步模式处理。">You need synchronous behavior for specific first-transaction policies.</li>
+            <li data-i18n-en="You want to export network tokens and request cryptograms for use with another processor." data-i18n-zh="你希望导出网络代币并申请 cryptogram，用于其他收单或处理平台。">You want to export network tokens and request cryptograms for use with another processor.</li>
+        </ul>
+    </section>
+
+    <p class="auditorium-footer" data-i18n-en="Source concept: Checkout.com docs on network tokens and provisioning behavior." data-i18n-zh="内容来源：Checkout.com 关于网络代币与 provisioning 行为的官方文档。">Source concept: Checkout.com docs on network tokens and provisioning behavior.</p>
+</div>
+<script src="network-tokens-auditorium.js"></script>
+</body>
+</html>

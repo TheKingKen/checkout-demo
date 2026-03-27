@@ -1,0 +1,944 @@
+Integration Lifecycle Demo Plan
+Version: 1.5
+Audience: Merchant commercial leaders + merchant integration engineers + solution architects
+Goal: Build a new page (not a fix of existing auditorium pages) that clearly teaches end-to-end checkout lifecycle with side-by-side UX + frontend code + backend logic + webhook timeline.
+
+============================================================
+1) Mission And Non-Negotiables
+============================================================
+Primary outcome
+- Create a dedicated demonstration experience for merchant integration teams that explains payment lifecycle from user journey to backend orchestration and webhook-driven state transitions.
+
+Hard requirements from stakeholder
+- Add a startup page before the presentation experience to configure demo context.
+- Startup page must collect and apply:
+  - Merchant vertical
+  - Website locale
+  - Order-item currency
+  - Merchant name
+  - Website text content shown during demo
+- Startup page must define and expose the exact configurable website text content set required by the demo.
+- Configurable website text must align to the chosen merchant vertical and reference the display pattern of:
+  - gift-cards journey for digital-goods
+  - phone-case-catalog journey for physical-goods
+- Startup page is mandatory-gated: user must complete required setup fields before entering the demo website.
+- Build a NEW page for presentation and technical walkthrough.
+- Show side-by-side:
+  1. Web UX behavior
+  2. Frontend implementation details
+  3. Backend request/response logic
+  4. Webhook events at each lifecycle moment
+- Add a merchant vertical switch:
+  - Digital-goods mode (example: gift cards journey)
+  - Physical-goods mode (example: phone case catalog journey)
+  - UX must clearly differ by vertical, including shipping address requirement in physical-goods flow and no shipping address in digital-goods flow.
+  - Digital-goods showcase must explicitly reference and mirror the express checkout journey style used in the gift-cards page.
+- Cover multiple frontend integration approaches:
+  - Checkout Flow component
+  - HPP redirect
+  - Custom-built UI with Payments API
+- Include detailed configuration examples (parameters passed vs omitted and resulting behavior).
+- Include lifecycle moments at least for:
+  - User authorization
+  - Capture success
+  - Payment decline path
+- Keep content understandable for both commercial and engineering audiences.
+- Webhook display rule:
+  - Approved/declined outcomes are to be driven by real test-card execution during demo.
+  - Presentation should display webhook/event output returned by the actual payment result path.
+  - Fallback rule: if a real webhook receiver cannot be implemented in this phase, use pre-scripted branch simulation to show webhook events for approved/declined/captured branches.
+- Desktop-only presentation target:
+  - The experience is designed for desktop width only.
+  - Use full available desktop screen width.
+  - Mobile compatibility is not required for this project.
+- In-demo navigation controls:
+  - Every demo page must have a BACK button for previous-page navigation.
+  - Every demo page must have an EXIT control that returns directly to the startup page.
+- Language scope rule:
+  - UX/explanatory presentation supports English + Simplified Chinese.
+  - Code and webhook payload display remain in English only.
+- Code panel visual requirement:
+  - Side-by-side code display must use a black coding-software-style background to clearly distinguish code from website text content.
+- PDF export requirement:
+  - The user must be able to export the entire presentation as a downloadable PDF file.
+  - PDF content must include:
+    - A configuration cover section: startup page settings (merchant name, payment stack, vertical, currency, enabled payment methods, 3DS status)
+    - Per-step sections for the chosen scenario: UX rendering, code panel content, webhook events
+  - PDF export must be accessible from a dedicated export control visible during the demo.
+  - PDF output must be self-contained and readable without live browser interaction.
+  - PDF generation must use a browser-compatible approach with no server-side dependency (for example, html2pdf.js via CDN).
+  - Exported UX text must reflect startup context substitution (merchant name, product content, etc.).
+- Startup page payment configuration requirement:
+  - The startup page must configure the payment stack and behavioral parameters of the demo, in addition to merchant branding context.
+  - Payment stack selection: which integration type to showcase (Flow component, HPP redirect, Full card payments API). This selection pre-determines the primary scenario shown in the demo.
+  - Stored card strategy: Remember Me / self-built stored card / no aids for returning buyer. This selection determines whether and how returning-buyer stored-card capabilities are highlighted.
+  - Payment type: one-time payment or recurring payment. Drives emphasis on recurring credential configuration in technical content.
+  - Payment method selection: checkboxes for card, Apple Pay, Google Pay (default: all three enabled). Determines which payment method option buttons/widgets appear in the UX stage.
+  - 3DS enabled toggle: controls whether the 3DS authentication step is shown in relevant flows.
+  - These payment configuration selections must drive the scenario shown, the payment method widgets rendered in the UX stage, and the configuration parameters highlighted in the technical console.
+- Product content prefill requirement:
+  - Product name, product description, and product price must be prefilled by the Product Writer Agent with commercially realistic placeholder values.
+  - These fields must remain fully editable by the user on the startup page before entering the demo.
+  - Product price display must be consistent with the selected currency.
+
+Out of scope for this project
+- Refactoring existing non-technical and technical auditorium pages.
+- Full production hardening or complete PCI architecture implementation.
+- Live external dependency on third-party docs at runtime.
+
+============================================================
+2) Deliverable Definition
+============================================================
+Main deliverable
+- A new single-page interactive presentation module in public/ that supports guided scenario playback.
+
+Startup gateway deliverable
+- Add a startup setup page in front of the presentation flow.
+- Startup setup is required before accessing the demo experience.
+- Startup setup values become runtime context for UX and technical console rendering.
+- Startup page must clearly separate:
+  - required user-entered text fields
+  - required payment configuration selections (payment stack, stored card strategy, payment type, payment methods, 3DS)
+  - prefilled placeholder text fields that user may optionally edit (including product name, description, and price prefilled by Product Writer)
+
+Entry and rollout deliverable
+- Add a new entry button on index page for this integration lifecycle presentation.
+- Before launch readiness:
+  - Dim button color
+  - Place button at the bottom of portal button list
+- At launch readiness:
+  - Promote button styling and visibility
+  - Add line description: "It is designed for the use of solution engineering."
+- Retirement action:
+  - Remove the entire network-tokens-auditorium page experience from active portal usage path.
+
+PDF export deliverable
+- Add a dedicated PDF export control visible during the demo (for example, in the demo header or presenter utility area).
+- PDF generator must capture the full scenario walkthrough in a static, self-contained document.
+- PDF must be usable as a leave-behind or offline reference document after a live demo session.
+
+Proposed files (initial)
+- public/integration-lifecycle-startup.html
+- public/integration-lifecycle-startup.css
+- public/integration-lifecycle-startup.js
+- public/integration-lifecycle-studio.html
+- public/integration-lifecycle-studio.css
+- public/integration-lifecycle-studio.js
+- public/integration-lifecycle-content.js (structured scenario config + code snippets + webhook data)
+
+Optional support files (if needed)
+- public/integration-lifecycle-mock-server.json (frontend-only simulation payloads)
+- docs for internal notes are optional and should only be created if explicitly requested.
+
+============================================================
+3) Experience Blueprint (What The Audience Sees)
+============================================================
+Top-level layout
+- Header: Page purpose, audience mode selector, merchant vertical switch, scenario selector, BACK, EXIT.
+- Main split view:
+  - Left panel: "UX Stage" (visual checkout behavior playback)
+  - Right panel: "Technical Console" (tabs for Frontend, Backend, Config, Webhooks)
+- Bottom timeline rail:
+  - Step-by-step lifecycle nodes with status states (pending, current, success, failed)
+
+Recommended tabs in Technical Console
+- Frontend tab:
+  - Rendered code snippet for current scenario + current lifecycle step
+  - Highlights active lines relevant to the step
+- Backend tab:
+  - API route and payload mapping for that step
+- Config tab:
+  - "Pass this parameter" vs "Omit this parameter" examples
+  - Behavior delta explanation
+- Webhooks tab:
+  - Simulated inbound event JSON
+  - Event order and idempotency hints
+
+Code panel visual treatment
+- Code areas in Frontend, Backend, and Webhooks tabs must use black background and coding-editor-like appearance.
+- Ensure sufficient contrast for projector usage.
+
+Audience mode switch
+- Commercial mode:
+  - Simplified language
+  - Focus on UX impact, conversion, trust, retry handling
+- Engineering mode:
+  - Full payload details, event schemas, implementation gotchas
+
+Merchant vertical switch
+- Digital-goods mode:
+  - No shipping address collection
+  - UX must mirror gift-cards express checkout showcase behavior
+- Physical-goods mode:
+  - Shipping address collection visible and required in relevant steps
+  - UX resembles phone-case catalog checkout path
+- The same technical console should update contextually for each vertical where behavior differs.
+
+Language support
+- English + Simplified Chinese for UX labels/explanations only
+- Code snippets and webhook payloads remain English-only
+
+Viewport support
+- Desktop-only target; optimize for projector and wide monitors
+- Use full-screen width with generous split-pane real estate
+- Do not allocate implementation effort to mobile adaptation in this phase
+
+Startup flow and navigation behavior
+- Step 1: User lands on startup setup page.
+- Step 2: User completes all required setup fields.
+- Step 3: User enters demo website with setup context applied.
+- During demo: BACK navigates to previous demo page/step; EXIT always returns to startup page and resets or rehydrates setup according to chosen state policy.
+
+Startup text-content model
+- The startup page must define which website texts are configurable for presentation.
+- Required configurable text groups:
+  - Global brand and checkout text
+  - Product-listing text
+  - Product detail/supporting text (including product name, description, and price — prefilled by Product Writer)
+  - Cart / order summary text
+  - Success / confirmation text
+- Digital-goods text model must reference gift-cards journey patterns, including item-card display, category/title text, short benefit text, CTA language, and delivery-oriented confirmation text.
+- Physical-goods text model must reference phone-case-catalog journey patterns, including catalog headers, item names, item short descriptions, product detail/support copy, shipping-related text, and cart summary language.
+- The plan must treat these texts as merchant-configurable demo inputs rather than hardcoded copy.
+
+Startup payment configuration model
+- The startup page must configure the payment integration path and checkout behavior for the demo:
+  - Payment stack: selects which integration scenario is demoed (Flow / HPP / Full card payments API)
+  - Stored card strategy: configures returning-buyer experience shown in the demo
+  - Payment type: one-time vs recurring — drives recurring credential examples in technical console
+  - Payment methods: checkbox multi-select determining which checkout payment options are rendered
+  - 3DS: toggles whether strong authentication step is shown in the authorization flow
+
+============================================================
+4) Scenario Matrix (Core Teaching Paths)
+============================================================
+Scenario A: Flow component card payment
+- Frontend: Load Flow component, session token handling, callbacks
+- Backend: Create payment session endpoint
+- Config examples:
+  - enabled_payment_methods / disabled_payment_methods
+  - success_url / failure_url / cancel_url
+- Webhooks:
+  - payment_approved OR payment_declined
+  - payment_captured (if capture happens)
+
+Scenario B: HPP redirect
+- Frontend: Create payment link request and redirect
+- Backend: Hosted payments request body construction
+- Config examples:
+  - processing channel, customer object, return links
+  - capture mode choices
+- Webhooks:
+  - payment_authorized
+  - payment_captured / payment_declined
+
+Scenario C: Custom card UI + Payments API
+- Frontend: Secure card collection orchestration pattern (demo-safe abstraction)
+- Backend: Direct /payments call pattern
+- Config examples:
+  - stored_credential flags (CIT/MIT style context)
+  - network token provisioning flag behavior
+- Webhooks:
+  - authorization result
+  - delayed capture and decline branch
+
+Scenario D: Stored card follow-up payment
+- Frontend: Returning user selection flow
+- Backend: source.id/instrument reuse path
+- Config examples:
+  - recurring flag strategy
+  - when to request explicit provisioning vs rely on automatic behavior
+- Webhooks:
+  - recurring payment events and failure handling
+
+Scenario E: Vertical-differentiated checkout journey
+- Digital-goods branch:
+  - Gift-card express checkout style flow with email delivery, no shipping step
+  - Showcase baseline references existing gift-cards express checkout behavior
+- Physical-goods branch:
+  - Catalog/cart style flow with shipping form and fulfillment-focused fields
+- Technical differences to teach:
+  - Validation and payload differences for address-related fields
+  - UX and backend behavior delta driven by vertical switch
+
+============================================================
+5) Work Breakdown Structure (Agent-Executable Units)
+============================================================
+Phase 0 - Foundation and guardrails
+Owner: Lead Integration Architect Agent (Copilot Primary)
+Tasks
+- Define canonical lifecycle step taxonomy used across all scenarios.
+- Finalize naming conventions for scenario IDs, event IDs, and tab IDs.
+- Set success criteria and acceptance gates.
+- Define startup-gate required fields and validation rules.
+- Define the full website-text inventory that startup page must collect or prefill.
+Output
+- Approved structure skeleton in content config.
+Dependencies
+- None
+
+Phase 0.5 - Cross-agent oversight governance
+Owner: Oversight Agent
+Tasks
+- Oversee all working agents and monitor inter-phase dependencies.
+- Detect and resolve content, schema, and UI responsibility conflicts between agents.
+- Enforce implementation contract adherence and merge-safety rules.
+- Approve phase handoff checkpoints before downstream execution begins.
+Output
+- Conflict log, resolution notes, and signed-off handoff checklist per phase.
+Dependencies
+- Phase 0
+
+Phase 1 - Content system and scenario config
+Owner: Content Modeling Agent
+Tasks
+- Build structured content model (JSON-like module) for scenarios, steps, code blocks, webhook payloads.
+- Include bilingual text keys for explanatory copy.
+- Include parameter behavior notes (pass/omit table).
+- Include startup-config-driven text token substitution model.
+- Model vertical-specific website text groups for:
+  - digital-goods / gift-cards style product display
+  - physical-goods / phone-case-catalog style product display
+Output
+- integration-lifecycle-content.js
+Dependencies
+- Phase 0, Phase 0.5
+Parallelizable
+- Yes, can proceed with UI shell in parallel after schema is frozen.
+
+Phase 2 - UI shell and split layout
+Owner: Frontend Experience Agent
+Tasks
+- Build desktop-optimized split-pane layout with independent scrolling and sticky timeline.
+- Implement audience mode, merchant vertical switch, language toggle, scenario switch controls.
+- Maximize usable width on desktop screens.
+- Implement BACK and EXIT controls on each demo page.
+- Implement black code-editor-style visual treatment for all code panels.
+Output
+- integration-lifecycle-studio.html + integration-lifecycle-studio.css baseline
+Dependencies
+- Phase 0, Phase 0.5
+Parallelizable
+- Yes with Phase 1 (after schema contract handshake).
+
+Phase 2.5 - Startup page and gate logic
+Owner: Frontend Experience Agent
+Tasks
+- Build startup setup page UI and validation states.
+- Require completion of all mandatory fields before enabling entry to demo.
+- Persist startup context for demo runtime consumption.
+- Distinguish required user-input fields from optional prefilled editable text fields.
+- Surface vertical-specific text sections so startup page matches gift-cards and phone-case-catalog display patterns.
+- Build payment configuration section with the following required selectors:
+  - Payment stack selector: Flow component | HPP redirect | Full card payments API
+  - Stored card strategy selector: Remember Me | Self-built stored card | No aids for returning buyer
+  - Payment type selector: One-time payment | Recurring payment
+  - Payment method checkboxes: Card / Apple Pay / Google Pay (default: all three enabled; at least one required)
+  - 3DS enabled toggle: Yes / No (default: Yes)
+- Build product content section with editable fields prefilled by Product Writer Agent:
+  - Product name
+  - Product description
+  - Product price (display value consistent with selected currency)
+- Group startup fields clearly: Demo Setup, Payment Configuration, Brand and Checkout Copy, Product Content, Catalog and Listing Copy, Fulfillment and Confirmation Copy.
+Output
+- integration-lifecycle-startup.html + integration-lifecycle-startup.css + integration-lifecycle-startup.js
+Dependencies
+- Phase 0, Phase 0.5
+
+Phase 2.8 - PDF Export System
+Owner: Developer Education Agent
+Tasks
+- Implement PDF export capability that produces a structured, self-contained document of the full presentation.
+- PDF cover section must include:
+  - Merchant name, payment stack chosen, merchant vertical, currency
+  - Enabled payment methods, 3DS status, stored card strategy, payment type
+  - Startup product content snapshot (product name, description, price)
+- Per-step sections must include (for all steps in index order):
+  - Step label and lifecycle stage name
+  - UX stage visual rendering snapshot (captured as image or clean HTML block)
+  - Active code panel content for that step (frontend code, backend code, or config — whichever is most relevant)
+  - Webhook event payload if applicable to the step
+- Use browser-compatible PDF generation with no server-side dependency (for example, html2pdf.js via CDN or window.print with dedicated print stylesheet).
+- Export trigger must use reserved ID demo-export-pdf, visible in demo header or presenter utility area.
+- Exported startup context token substitutions must be reflected in UX text within the PDF.
+- Respect audience mode (commercial/engineering) at the time of export.
+Output
+- PDF export capability integrated into demo runtime
+- Export trigger control wired to reserved ID demo-export-pdf
+Dependencies
+- Phase 2 (layout shell must exist), Phase 3 (runtime state must be stable), Phase 4 (rendering engine needed for code/webhook capture)
+Parallelizable
+- Shell/trigger can start after Phase 2; full content capture requires Phase 3 and Phase 4 outputs.
+
+Phase 3 - Runtime state engine
+Owner: Frontend State Logic Agent
+Tasks
+- Implement state machine: startup context -> scenario -> step/page -> tab -> language -> audience mode.
+- Sync left UX stage, right code tabs, and bottom timeline.
+- Implement next/previous/play-auto walkthrough controls.
+- Implement BACK and EXIT behavior contracts.
+Output
+- integration-lifecycle-studio.js core state manager
+Dependencies
+- Phase 1, Phase 2, Phase 2.5, Phase 0.5
+Parallelizable
+- Partial
+
+Phase 4 - Code and webhook rendering engine
+Owner: Developer Education Agent
+Tasks
+- Render syntax-styled code panels with optional line emphasis.
+- Render webhook event payloads and sequence status from actual returned result path in test-card runs.
+- Implement fallback rendering path for pre-scripted webhook branch simulation when live webhook receiver output is unavailable.
+- Render parameter toggles with behavior explanations.
+- Enforce code-panel visual consistency with black background and coding-editor style.
+Output
+- Completed tab renderers and scenario-specific data binding
+Dependencies
+- Phase 1, Phase 3, Phase 0.5
+
+Phase 5 - Scenario quality pass
+Owner: Payments Domain QA Agent
+Tasks
+- Validate technical consistency of each scenario:
+  - step order
+  - API parameter correctness at demo level
+  - webhook ordering plausibility
+- Add edge-case notes:
+  - authorize-only then capture
+  - decline and retry
+  - idempotency and duplicate webhook reception
+Output
+- Revised content set with validated teaching paths
+Dependencies
+- Phase 4
+
+Phase 5.5 - Oversight conflict audit
+Owner: Oversight Agent
+Tasks
+- Run cross-agent conflict audit on schema keys, component IDs, styling ownership, and navigation behavior.
+- Resolve collisions and publish final integration directives.
+Output
+- Conflict-free integration signoff report.
+Dependencies
+- Phase 1, Phase 2, Phase 2.5, Phase 3, Phase 4, Phase 5
+
+Phase 6.5 - Product writing and commercial language review
+Owner: Product Writer Agent
+Tasks
+- Fill startup-page text fields with commercially realistic prefill placeholder copy.
+- Review all visible merchant-facing website text for typos, awkward wording, and non-commercial phrasing.
+- Ensure digital-goods and physical-goods copy matches the respective product-display patterns and buying intent.
+- Flag wording that is technically correct but unfriendly for real merchant presentations.
+Output
+- Approved placeholder copy set and wording review notes.
+Dependencies
+- Phase 1, Phase 2.5, Phase 5.5
+
+Phase 6 - Accessibility, readability, and presenter controls
+Owner: UX Quality Agent
+Tasks
+- Ensure typography, spacing, and contrast support projector environments.
+- Add presenter mode options:
+  - font scale
+  - collapse/expand technical panel
+  - focused step mode
+- Add keyboard navigation and aria labels.
+Output
+- Production-ready presentation experience
+Dependencies
+- Phase 4
+Parallelizable
+- Can run mostly in parallel with Phase 5
+
+Phase 7 - Integration and verification
+Owner: Test and Integration Agent
+Tasks
+- Smoke test on desktop widths only.
+- Verify startup gate blocks entry until all required fields are complete.
+- Verify startup values propagate correctly into demo content.
+- Verify language switching does not break state.
+- Verify scenario/tab switching always updates all panes consistently.
+- Verify no layout overlap at desktop widths (for example: 1920, 1600, 1440, 1280).
+- Verify BACK and EXIT controls on every demo page.
+- Verify EXIT returns directly to startup page.
+Output
+- Defect list + final fixes
+Dependencies
+- All prior phases including Phase 5.5
+
+============================================================
+6) Parallelization Plan
+============================================================
+Parallel Track A
+- Phase 1 (content model)
+- Phase 2 (layout shell)
+- Phase 2.5 (startup page)
+Rationale
+- Fastest path to visible progress while keeping clear contract boundaries.
+
+Parallel Track B
+- Phase 5 (scenario consistency review)
+- Phase 6 (accessibility/presenter controls)
+- Phase 6.5 (product writing and language review)
+Rationale
+- One track hardens correctness, one track hardens usability.
+
+Phase 2.8 (PDF export system)
+- Shell and export trigger can start in parallel with Phase 3.
+- Full content capture and binding requires Phase 3 and Phase 4 to complete first.
+Rationale
+- Prevents PDF system from blocking the critical state engine and rendering engine paths.
+
+Sequential constraints
+- Phase 3 must wait for stable schema from Phase 1 and shell from Phase 2.
+- Phase 3 must also wait for startup contract from Phase 2.5.
+- Phase 2.8 full implementation requires Phase 3 and Phase 4.
+- Phase 7 requires all tracks merged, Oversight signoff from Phase 5.5, Phase 2.8 stable, and placeholder/wording review from Phase 6.5.
+
+============================================================
+7) Agent Instructions (Execution Contracts)
+============================================================
+Instruction pack for Content Modeling Agent
+- Do not invent endpoint capabilities beyond demonstrated platform patterns.
+- Keep explanatory strings concise and non-repetitive.
+- Every lifecycle step must map to exactly one UX action, one frontend operation, one backend operation, and zero or more webhook events.
+- Provide both English and Simplified Chinese text keys for UX/explanatory non-code lines only.
+- Keep code snippets and webhook payload examples in English.
+- Ensure all UX copy supports startup-driven merchant name and text content substitution.
+- Define explicit text-content groups that mirror:
+  - gift-cards item card titles, short descriptions, and delivery-oriented labels
+  - phone-case-catalog item titles, item descriptions, and shipping-related labels
+- Ensure content model supports payment configuration context from startupContext:
+  - paymentStack drives which scenario steps are active and which integration examples are surfaced
+  - enabledPaymentMethods drives which payment option components render in the UX stage
+  - threeDsEnabled drives whether the 3DS step is shown in the authorization flow
+  - storedCardStrategy and paymentType affect which returned-buyer and recurring-credential sections are shown
+- Ensure product content tokens (productName, productDescription, productPrice) are defined as substitutable text keys in UX stage specs.
+
+Instruction pack for Frontend Experience Agent
+- Prioritize readability over density.
+- Never use narrow multi-column cards for dense technical text.
+- Desktop-only optimization is mandatory in this phase.
+- Use full screen width on desktop and avoid unused side gutters.
+- No overlapping panels allowed at target desktop breakpoints.
+- Implement merchant vertical switch and ensure visible UX differences between digital-goods and physical-goods journeys.
+- For digital-goods mode, mirror the express checkout interaction style from gift-cards as the showcase reference.
+- Build mandatory startup setup page and enforce required-field gate.
+- Add BACK and EXIT controls on every demo page.
+- EXIT must always route to startup page.
+- Group startup text inputs by merchant-facing content area so presenters understand what each field controls.
+- Build payment configuration section in startup page:
+  - Payment stack selector (determines scenario)
+  - Stored card strategy selector
+  - Payment type selector
+  - Payment method checkboxes (card, Apple Pay, Google Pay)
+  - 3DS toggle
+- Build product content section with prefilled-but-editable fields (product name, description, price).
+- Add PDF export trigger button at demo-export-pdf; position in demo header or presenter utility area.
+- Ensure PDF export control is visually distinct and labeled (e.g., 'Export as PDF').
+
+Instruction pack for State Logic Agent
+- All view state must be driven by one source of truth.
+- Scenario changes must reset step and tab safely.
+- Language changes must not reset current scenario/step.
+- Vertical switch changes must update UX and technical panels consistently without stale state leakage.
+- Startup context must be treated as required parent state for all demo routes.
+- BACK and EXIT controls must be deterministic and conflict-free across pages.
+- On demo initialization, derive state.currentScenarioId from startupContext.paymentStack:
+  - flow → scenario-flow-card
+  - hpp → scenario-hpp-redirect
+  - custom_api → scenario-custom-api
+- Expose state snapshot to PDF export system so the generator can read current startupContext and step data.
+
+Instruction pack for Domain QA Agent
+- Validate each scenario against realistic payment lifecycle progression.
+- Flag ambiguous states explicitly in notes.
+- Ensure webhook sequence explains eventual consistency and retry/idempotency behavior.
+- Validate digital-goods vs physical-goods flow differences, especially shipping data behavior.
+
+Instruction pack for UX Quality Agent
+- Optimize for projection (large room readability):
+  - minimum body text 16px
+  - high contrast
+  - strong spacing rhythm
+- Provide quick presenter controls for live demo pacing.
+- Ensure index-entry rollout states (dim pre-launch vs highlighted launch) are visually distinct and unambiguous.
+- Ensure code panels clearly look like code editor surfaces with black background and readable monospace styling.
+
+Instruction pack for Product Writer Agent
+- Work only after core UI and content structure are stable enough to expose actual text fields.
+- Provide commercially realistic placeholder copy for startup-page text inputs.
+- Prefill the following product content fields with realistic, vertical-appropriate values:
+  - productName: specific product name suited to the merchant vertical (e.g., a digital gift card name or a phone case model name)
+  - productDescription: a 1-2 sentence product description matching the vertical
+  - productPrice: a realistic display price consistent with the demo currency (e.g., HK$129.00, €15.00)
+- Ensure digital-goods product content sounds natural for a digital purchase (gift card, subscription, etc.).
+- Ensure physical-goods product content sounds natural for a physical item purchase (accessories, cases, etc.).
+- Review visible merchant-facing text for typos, awkward phrasing, and wording that sounds too technical or unnatural for real commercial presentations.
+- Preserve technical correctness while improving readability and trust.
+- Do not rewrite code examples or webhook payloads.
+
+Instruction pack for Developer Education Agent
+- Render syntax-styled code panels with optional line emphasis.
+- Render webhook event payloads and sequence status from actual returned result path in test-card runs.
+- Implement fallback rendering path for pre-scripted webhook branch simulation when live webhook receiver output is unavailable.
+- Render parameter toggles with behavior explanations.
+- Enforce code-panel visual consistency with black background and coding-editor style.
+- Build PDF export system (Phase 2.8):
+  - Use html2pdf.js (CDN) or browser print API with dedicated print stylesheet.
+  - Capture startup config cover section and per-step sections.
+  - Cover section must include: merchant name, paymentStack, vertical, currency, enabledPaymentMethods, threeDsEnabled, storedCardStrategy, paymentType, and product content snapshot.
+  - Per-step sections must include: step label, UX visual rendering, active code panel content, and webhook payload if applicable.
+  - Ensure exported UX text reflects startup context token substitution.
+  - Export trigger must be wired to demo-export-pdf component ID.
+  - Export must be self-contained; no live browser or network dependency after generation.
+
+Instruction pack for Oversight Agent
+- Monitor all agents for schema, UI, navigation, and styling ownership conflicts.
+- Stop conflicting merges until implementation contract compliance is restored.
+- Publish authoritative conflict resolution decisions and handoff approvals.
+- Maintain a single source-of-truth registry for schema keys and component IDs.
+
+Instruction pack for Test and Integration Agent
+- Run deterministic state transition checks for all scenarios.
+- Test language toggles while auto-play is running.
+- Test tab changes while step transitions occur.
+- Verify webhook panel reflects actual approved/declined result path from executed test-card scenarios.
+- If live webhook receiver is not available, verify fallback pre-scripted webhook branch simulation triggers correctly per scenario outcome branch.
+- Capture and report visual regressions on desktop target widths.
+- Validate startup-gate behavior, BACK/EXIT controls, and startup-context propagation.
+- Verify that paymentStack selection on startup page correctly initializes the expected scenario.
+- Verify that enabledPaymentMethods selection causes correct payment option widgets to appear and others to be absent.
+- Verify that threeDsEnabled toggle visibly shows or hides the 3DS step in the authorization flow.
+- Verify PDF export produces a valid downloadable file for each scenario.
+- Verify PDF cover section accurately reflects startup configuration values.
+- Verify PDF per-step sections include code panel content and webhook payload where applicable.
+- Validate product content fields (productName, productDescription, productPrice) appear correctly in UX stage and PDF output.
+
+============================================================
+8) Acceptance Criteria
+============================================================
+Functional
+- At least 5 complete scenarios available, including vertical-differentiated journey.
+- Each scenario has synchronized UX, frontend code, backend code, config notes, and webhook events.
+- Startup page exists and blocks demo entry until all required setup fields are complete.
+- Startup page includes payment configuration section: payment stack, stored card strategy, payment type, payment methods, and 3DS toggle — all required before demo entry.
+- Startup page product content fields (product name, description, price) are prefilled by Product Writer but remain editable by the user.
+- Startup page explicitly defines the full configurable website-text set and exposes the required subset as mandatory inputs.
+- Language toggle supports English and Simplified Chinese for UX/explanatory text.
+- Code and webhook displays remain English-only.
+- Merchant vertical switch is available and clearly changes digital-goods vs physical-goods UX behavior.
+- Digital-goods vertical demonstrates gift-cards-style express checkout behavior with no shipping collection.
+- Physical-goods vertical demonstrates phone-case-catalog-style product and shipping language patterns.
+- Payment stack selection on startup page pre-selects the primary scenario shown.
+- Enabled payment methods selection drives which payment option widgets appear in the UX stage.
+- 3DS toggle controls whether the 3DS step is shown in the authorization flow.
+- Presenter can navigate steps manually and automatically.
+- Every demo page includes BACK and EXIT controls.
+- EXIT returns user directly to startup page.
+- PDF export produces a self-contained document with startup config summary and all scenario steps.
+- PDF document includes code panel content and webhook events for each step.
+
+Quality
+- No text overlap or clipping at target viewports.
+- No panel collision in split mode.
+- Transition latency acceptable for live speaking pace.
+- Content can be understood by both commercial and technical audiences using audience mode switch.
+- Desktop screen width is effectively utilized without cramped content columns.
+- Code panels have black coding-editor-style background with high readability.
+- Prefilled startup copy (including product name, description, and price) is commercially realistic and free of obvious typos or unfriendly wording.
+- PDF export output is readable, structured, and suitable as a leave-behind after a live presentation.
+- Startup page payment configuration section is clearly organized and its relationship to demo behavior is self-explanatory.
+
+Technical
+- No console errors during scenario playback.
+- State remains stable across mode/language/tab switches.
+- State remains stable across vertical switch changes.
+- Webhook panel output corresponds to the actual payment result produced during test-card runs.
+- If real webhook receiver integration is unavailable, webhook panel reliably switches to pre-scripted branch simulation output.
+- Startup context is correctly applied to UX content (merchant name, locale, currency, custom text, product content).
+- No navigation dead-ends for BACK/EXIT behavior.
+- Initial scenario selection is derived from startupContext.paymentStack without manual override required.
+- PDF export completes without console errors and produces a valid downloadable file.
+- PDF reflects the active startupContext at the time of export.
+
+============================================================
+9) Risks And Mitigations
+============================================================
+Risk: Content overload for technical audience
+Mitigation
+- Progressive disclosure with tabbed right pane and step-driven reveals.
+
+Risk: Visual crowding in split layout
+Mitigation
+- Cap line length, increase whitespace, and allocate wider desktop pane ratios for dense technical content.
+
+Risk: Desktop-only scope accidentally diluted by mobile-first compromises
+Mitigation
+- Explicitly optimize for desktop widths and defer mobile treatment to a later phase.
+
+Risk: Vertical switch does not produce meaningful UX differences
+Mitigation
+- Define mandatory visible deltas (shipping form presence, validation fields, and payload differences).
+
+Risk: Startup setup is bypassed, causing inconsistent demo context
+Mitigation
+- Enforce required startup gate and block entry until validation passes.
+
+Risk: BACK and EXIT navigation logic diverges between pages
+Mitigation
+- Define a strict navigation contract and validate through deterministic route tests.
+
+Risk: Agent work collisions across schema and component naming
+Mitigation
+- Oversight Agent enforces implementation contract and blocks non-compliant merges.
+
+Risk: Webhook narrative drifts from actual run result
+Mitigation
+- Bind webhook panel to real returned result path from executed test-card scenario in demo runs.
+
+Risk: Real webhook receiver not ready within phase timeline
+Mitigation
+- Provide explicit fallback to pre-scripted branch simulation for approved, declined, and captured event paths.
+
+Risk: Inconsistent bilingual updates
+Mitigation
+- Single key-value content model; no duplicated inline text outside model.
+
+Risk: Startup text fields are under-scoped and fail to cover visible merchant-facing content
+Mitigation
+- Define full website-text inventory up front and map each input to a specific visible UI area.
+
+Risk: Placeholder copy sounds unnatural in real merchant presentations
+Mitigation
+- Product Writer Agent performs late-stage commercial wording review and placeholder curation.
+
+Risk: Webhook confusion due to async behavior
+Mitigation
+- Add explicit "possible order variance" notes and retry/idempotency hints per event section.
+
+Risk: PDF output is incomplete or fails to render all steps
+Mitigation
+- Phase 2.8 must validate PDF generation across all 5 scenarios before Phase 7 QA.
+- Fallback: if html2pdf.js fails, provide window.print + print-specific CSS as a secondary path.
+
+Risk: Payment configuration on startup page does not visibly affect demo content
+Mitigation
+- Content Modeling Agent must define content branches for: paymentStack, enabledPaymentMethods, threeDsEnabled, storedCardStrategy, paymentType.
+- Test and Integration Agent must verify each configuration switch produces observable demo differences.
+
+============================================================
+10) Suggested First Execution Sprint
+============================================================
+Sprint objective
+- Deliver a working vertical slice for Scenario A (Flow component) end-to-end.
+
+Sprint tasks
+1. Build startup page with required setup gate and context persistence, including payment configuration section and product content fields.
+2. Build shell + timeline + tab structure.
+3. Implement content model for one scenario only.
+4. Implement language toggle, audience mode toggle, merchant vertical switch, BACK, and EXIT controls.
+5. Populate frontend/backend/config/webhook panes for Scenario A.
+6. Define startup text inventory and wire first-pass text inputs to visible UI areas.
+7. Validate desktop behavior, readability, and startup/navigation behavior.
+8. Validate that paymentStack selection on startup page drives correct scenario initialization.
+9. Implement PDF export shell for Scenario A (cover page + one populated step section).
+
+Sprint 1 scope note
+- During Sprint 1, webhook display should reflect actual approved/declined path returned by test-card execution.
+
+Definition of done
+- One scenario demo-ready for a live pitch to both commercial and engineering participants.
+- Architecture supports plugging in Scenarios B/C/D without redesign.
+- Startup-gated entry and BACK/EXIT controls are fully operational.
+
+============================================================
+11) Review Checklist For Stakeholder Approval
+============================================================
+- Is the page objective aligned with merchant integration-team training?
+- Are the four required dimensions covered side-by-side?
+- Is code-level detail sufficient but not overwhelming?
+- Is bilingual support adequate for mixed audience demos?
+- Is the merchant vertical switch behavior clear and educational (digital-goods vs physical-goods)?
+- Is desktop-only width usage effective and readable in live presentation conditions?
+- Is startup setup gating complete and clear for presenters?
+- Is the startup-page text inventory complete and mapped to visible website areas?
+- Is the startup payment configuration section (payment stack, stored card strategy, payment type, payment methods, 3DS) clear and complete?
+- Do product content fields (product name, description, price) have realistic prefilled values from the Product Writer Agent?
+- Are BACK and EXIT controls available and consistent on each demo page?
+- Is code panel visual treatment clearly code-editor-like (black background, readable contrast)?
+- Is placeholder copy commercially realistic and appropriate for merchant-facing demos?
+- Is the PDF export usable as a standalone leave-behind document after a live presentation?
+- Is the phased plan acceptable for sequential agent execution?
+- Should we start with only Scenario A vertical slice or build all scenarios in one pass?
+- Is the index-page rollout plan accepted (dim pre-launch button, highlighted launch button with solution-engineering description, and retirement of network-tokens-auditorium path)?
+
+============================================================
+12) Implementation Contract Appendix (Strict)
+============================================================
+Purpose
+- Prevent merge conflicts and cross-agent collisions by enforcing fixed schemas and component IDs.
+
+Contract A: Startup context schema (required keys)
+- startupContext.vertical
+  - allowed: digital_goods | physical_goods
+- startupContext.locale
+  - allowed: en | zh-Hans
+- startupContext.currency
+  - allowed: configurable ISO-4217 set for demo (for example: USD, EUR, HKD)
+- startupContext.merchantName
+  - non-empty string
+- startupContext.paymentStack
+  - allowed: flow | hpp | custom_api
+  - required: yes
+  - effect: pre-selects primary scenario shown in demo
+- startupContext.storedCardStrategy
+  - allowed: remember_me | self_built | none
+  - required: yes
+  - effect: determines returning-buyer stored-card experience shown
+- startupContext.paymentType
+  - allowed: one_time | recurring
+  - required: yes
+  - effect: drives emphasis on recurring credential examples in technical console
+- startupContext.enabledPaymentMethods
+  - type: string[] (multi-select checkboxes)
+  - allowed values: card, apple_pay, google_pay
+  - required: at least one value present
+  - default: all three enabled
+  - effect: determines which payment option widgets render in UX stage
+- startupContext.threeDsEnabled
+  - type: boolean
+  - required: yes (must be explicitly set)
+  - default: true
+  - effect: controls whether 3DS authentication step is shown in authorization flow
+- startupContext.websiteText
+  - object with required keys:
+    - heroTitle
+    - heroSubtitle
+    - checkoutCta
+    - productName (prefilled by Product Writer; non-empty; editable)
+    - productDescription (prefilled by Product Writer; non-empty; editable)
+    - productPrice (display string; prefilled by Product Writer; editable; must match currency)
+    - successMessage
+    - catalogHeader
+    - catalogSubheader
+    - productCardTitleTemplate
+    - productCardDescriptionTemplate
+    - orderSummaryHeader
+    - shippingSectionHeader
+    - shippingSectionDescription
+    - deliverySectionHeader
+    - deliverySectionDescription
+
+Contract A.1: Startup text field policy
+- Required user-input fields (user must type):
+  - merchantName
+  - heroTitle
+  - heroSubtitle
+  - checkoutCta
+- Required user selections (must select before demo entry):
+  - vertical
+  - locale
+  - currency
+  - paymentStack
+  - storedCardStrategy
+  - paymentType
+  - threeDsEnabled
+  - enabledPaymentMethods (at least one)
+- Prefilled editable product content fields (Product Writer prefills; user may change):
+  - productName
+  - productDescription
+  - productPrice
+- Optional but prefilled editable text fields:
+  - catalogHeader
+  - catalogSubheader
+  - productCardTitleTemplate
+  - productCardDescriptionTemplate
+  - orderSummaryHeader
+  - shippingSectionHeader
+  - shippingSectionDescription
+  - deliverySectionHeader
+  - deliverySectionDescription
+  - successMessage
+
+Contract A.2: Vertical-specific text mapping
+- digital_goods must use:
+  - catalogHeader / catalogSubheader for gift-card style product landing
+  - productCardTitleTemplate / productCardDescriptionTemplate for gift-card item cards
+  - deliverySectionHeader / deliverySectionDescription for email or digital delivery messaging
+  - shippingSectionHeader / shippingSectionDescription hidden or unused
+- physical_goods must use:
+  - catalogHeader / catalogSubheader for phone-case-catalog style landing
+  - productCardTitleTemplate / productCardDescriptionTemplate for physical product item cards
+  - shippingSectionHeader / shippingSectionDescription for shipping form guidance
+  - deliverySectionHeader / deliverySectionDescription optional or suppressed based on flow
+
+Contract B: Runtime state schema keys
+- state.startupContext
+- state.currentScenarioId
+- state.currentStepIndex
+- state.currentTab
+- state.audienceMode
+- state.locale
+- state.vertical
+- state.paymentStack
+- state.storedCardStrategy
+- state.paymentType
+- state.enabledPaymentMethods
+- state.threeDsEnabled
+- state.isExportingPdf
+
+Contract C: Core UI component IDs (reserved)
+- startup-page
+- startup-form
+- startup-vertical
+- startup-locale
+- startup-currency
+- startup-merchant-name
+- startup-payment-stack
+- startup-stored-card-strategy
+- startup-payment-type
+- startup-payment-methods
+- startup-payment-method-card
+- startup-payment-method-apple-pay
+- startup-payment-method-google-pay
+- startup-3ds-enabled
+- startup-text-hero-title
+- startup-text-hero-subtitle
+- startup-text-checkout-cta
+- startup-text-product-name
+- startup-text-product-description
+- startup-text-product-price
+- startup-text-success-message
+- startup-enter-demo
+- demo-page
+- demo-back
+- demo-exit
+- demo-scenario-select
+- demo-audience-mode
+- demo-vertical-switch
+- demo-language-switch
+- demo-ux-stage
+- demo-technical-console
+- demo-tab-frontend
+- demo-tab-backend
+- demo-tab-config
+- demo-tab-webhooks
+- demo-code-panel
+- demo-webhook-panel
+- demo-timeline
+- demo-export-pdf
+- demo-export-status
+
+Contract D: Ownership map
+- Content Modeling Agent owns content schema and bilingual UX strings.
+- Frontend Experience Agent owns markup IDs and layout classes.
+- State Logic Agent owns state transitions and navigation contracts.
+- Developer Education Agent owns code/webhook renderer logic and code-panel theming.
+- Product Writer Agent owns placeholder-copy authoring and merchant-facing wording review.
+- Oversight Agent owns conflict arbitration and contract compliance.
+
+Contract E: Merge policy
+- No agent may rename reserved schema keys or reserved component IDs without Oversight approval.
+- No phase handoff is valid until contract compliance checklist is signed off.

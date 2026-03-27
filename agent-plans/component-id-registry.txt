@@ -1,0 +1,226 @@
+Reserved Component ID Registry
+Source Plan Version: 1.5
+Priority: Create this before scenario rendering work so multiple agents can build safely in parallel.
+Purpose: Define stable DOM/component identifiers and ownership boundaries for the integration lifecycle demo.
+
+============================================================
+1) Why This Document Exists
+============================================================
+This registry is the first coordination contract for parallel implementation.
+
+It prevents:
+- duplicate or conflicting DOM IDs
+- UI/state wiring mismatches
+- brittle test selectors
+- merge conflicts between frontend, state, testing, and oversight workstreams
+
+This document should be treated as authoritative for reserved IDs.
+No agent should rename or repurpose these IDs without Oversight approval.
+
+============================================================
+2) Parallel-Safe Implementation Order
+============================================================
+Recommended order
+1. Startup page field spec
+2. Reserved component ID registry
+3. Scenario-content schema spec
+4. UI shell implementation
+5. State wiring and rendering
+
+Reason
+- Agents can build markup, bindings, and tests safely only when IDs are stable.
+
+============================================================
+3) Global Naming Rules
+============================================================
+Rules
+- Use kebab-case only.
+- IDs must be unique across the entire demo experience.
+- Prefix startup-page elements with startup-.
+- Prefix demo runtime elements with demo-.
+- Prefix scenario-specific repeated containers with data attributes, not duplicate IDs.
+- Repeated items must use data-role/data-step/data-scenario attributes instead of repeated IDs.
+
+============================================================
+4) Reserved Top-Level IDs
+============================================================
+| ID | Purpose | Owner |
+| --- | --- | --- |
+| startup-page | Root of startup experience | Frontend Experience Agent |
+| demo-page | Root of demo runtime experience | Frontend Experience Agent |
+| demo-layout | Main split-view layout wrapper | Frontend Experience Agent |
+| demo-header | Demo header wrapper | Frontend Experience Agent |
+| demo-main | Main content area wrapper | Frontend Experience Agent |
+| demo-footer | Optional footer/presenter utility region | Frontend Experience Agent |
+
+============================================================
+5) Startup Page IDs
+============================================================
+| ID | Purpose | Notes |
+| --- | --- | --- |
+| startup-form | Required setup form root | Validation attaches here |
+| startup-vertical | Merchant vertical selector | Values: digital_goods, physical_goods |
+| startup-locale | Locale selector | Values: en, zh-Hans |
+| startup-currency | Currency selector | ISO-4217 demo set |
+| startup-merchant-name | Merchant name input | Required |
+| startup-text-hero-title | Hero title input | Required |
+| startup-text-hero-subtitle | Hero subtitle input | Required |
+| startup-text-checkout-cta | Checkout CTA input | Required |
+| startup-text-success-message | Success message input | Optional prefilled |
+| startup-text-catalog-header | Catalog header input | Optional prefilled |
+| startup-text-catalog-subheader | Catalog subheader input | Optional prefilled |
+| startup-text-product-card-title-template | Product card title template input | Optional prefilled |
+| startup-text-product-card-description-template | Product card description template input | Optional prefilled |
+| startup-text-order-summary-header | Order summary header input | Optional prefilled |
+| startup-text-shipping-section-header | Shipping section header input | Optional prefilled |
+| startup-text-shipping-section-description | Shipping section description input | Optional prefilled |
+| startup-text-delivery-section-header | Delivery section header input | Optional prefilled |
+| startup-text-delivery-section-description | Delivery section description input | Optional prefilled |
+| startup-payment-stack | Payment stack selector | Values: flow, hpp, custom_api; required |
+| startup-stored-card-strategy | Stored card strategy selector | Values: remember_me, self_built, none; required |
+| startup-payment-type | Payment type selector | Values: one_time, recurring; required |
+| startup-payment-methods | Payment method checkboxes container | Min 1 required |
+| startup-payment-method-card | Card payment method checkbox | Child of startup-payment-methods |
+| startup-payment-method-apple-pay | Apple Pay checkbox | Child of startup-payment-methods |
+| startup-payment-method-google-pay | Google Pay checkbox | Child of startup-payment-methods |
+| startup-3ds-enabled | 3DS enabled toggle | Boolean; default true |
+| startup-text-product-name | Product name input | Prefilled by Product Writer; editable |
+| startup-text-product-description | Product description input | Prefilled by Product Writer; editable |
+| startup-text-product-price | Product price input | Display value; prefilled by Product Writer; editable |
+| startup-required-fields-summary | Required-field guidance block | Optional informational block |
+| startup-vertical-specific-help | Vertical-specific copy guidance block | Optional informational block |
+| startup-enter-demo | Enter Demo primary action | Disabled until valid |
+| startup-reset-defaults | Restore default placeholders action | Optional helper |
+
+============================================================
+6) Demo Header And Control IDs
+============================================================
+| ID | Purpose | Notes |
+| --- | --- | --- |
+| demo-back | Back control | Navigates to previous page/step |
+| demo-exit | Exit control | Returns directly to startup page |
+| demo-page-title | Main header title | Runtime visible copy |
+| demo-page-subtitle | Supporting header copy | Runtime visible copy |
+| demo-audience-mode | Audience mode switch | commercial / engineering |
+| demo-vertical-switch | Merchant vertical switch | digital_goods / physical_goods |
+| demo-language-switch | UX language switch | en / zh-Hans |
+| demo-scenario-select | Scenario selector | A/B/C/D/E |
+| demo-status-banner | Optional current-state summary | Presenter-friendly |
+
+============================================================
+7) UX Stage IDs
+============================================================
+| ID | Purpose | Notes |
+| --- | --- | --- |
+| demo-ux-stage | Root visual UX stage | Left panel |
+| demo-ux-stage-header | UX stage title and step label area | |
+| demo-ux-stage-content | Current page visualization container | Main render mount |
+| demo-ux-stage-actions | Simulated page action zone | Buttons/CTAs |
+| demo-ux-stage-context | Merchant/context summary area | Locale/currency/merchant info |
+
+============================================================
+8) Technical Console IDs
+============================================================
+| ID | Purpose | Notes |
+| --- | --- | --- |
+| demo-technical-console | Root technical console | Right panel |
+| demo-tablist | Tab control container | Frontend/Backend/Config/Webhooks |
+| demo-tab-frontend | Frontend tab trigger | |
+| demo-tab-backend | Backend tab trigger | |
+| demo-tab-config | Config tab trigger | |
+| demo-tab-webhooks | Webhooks tab trigger | |
+| demo-panel-frontend | Frontend panel body | |
+| demo-panel-backend | Backend panel body | |
+| demo-panel-config | Config panel body | |
+| demo-panel-webhooks | Webhooks panel body | |
+| demo-code-panel | Shared code display surface | Black editor-like background |
+| demo-code-caption | Code panel caption area | Optional file/step label |
+| demo-code-highlight-legend | Active line explanation | Optional |
+| demo-webhook-panel | Webhook payload display surface | Black editor-like background |
+| demo-config-panel | Config comparison region | pass vs omit behavior |
+
+============================================================
+9) Timeline And Navigation IDs
+============================================================
+| ID | Purpose | Notes |
+| --- | --- | --- |
+| demo-timeline | Timeline rail root | Bottom or side timeline |
+| demo-timeline-steps | Timeline step list container | Repeated step items use data attrs |
+| demo-prev-step | Previous step control | Optional dedicated control |
+| demo-next-step | Next step control | Optional dedicated control |
+| demo-auto-play | Auto-play toggle/control | Optional presenter control |
+| demo-step-summary | Current step summary block | Presenter aid |
+
+============================================================
+10) Presenter Utility IDs
+============================================================
+| ID | Purpose | Notes |
+| --- | --- | --- |
+| demo-presenter-controls | Presenter utility area | Optional |
+| demo-font-scale | Font scale control | Presenter mode |
+| demo-focus-mode | Focus mode toggle | Optional |
+| demo-export-pdf | PDF export trigger button | Primary export action; always visible during demo |
+| demo-export-status | Export progress / status indicator | Visible during and after export generation |
+| demo-collapse-technical | Collapse/expand technical panel | Optional |
+
+============================================================
+11) Repeated Element Policy
+============================================================
+Repeated collections must not create unique IDs for every item unless explicitly reserved here.
+Use data attributes instead.
+
+Required data attributes
+- data-scenario-id
+- data-step-index
+- data-tab-id
+- data-vertical
+- data-audience-mode
+- data-line-group
+- data-webhook-event
+
+Suggested repeated roles
+- data-role="timeline-step"
+- data-role="ux-page"
+- data-role="code-block"
+- data-role="webhook-event"
+- data-role="config-row"
+
+============================================================
+12) Ownership Boundaries
+============================================================
+Frontend Experience Agent
+- Owns structural markup IDs and layout wrappers.
+
+State Logic Agent
+- Owns event binding to reserved controls and navigation/state transitions.
+- Must not rename IDs.
+
+Developer Education Agent
+- Owns rendering inside code/config/webhook panels.
+- Must reuse demo-code-panel, demo-webhook-panel, and tab panel IDs.
+
+Test and Integration Agent
+- Uses these IDs as stable selectors.
+- Must report any missing or duplicated ID as a contract violation.
+
+Oversight Agent
+- Arbitrates conflicts and approves changes.
+
+============================================================
+13) Change Control
+============================================================
+Any requested change to a reserved ID requires:
+1. documented reason
+2. Oversight approval
+3. update to this registry before code changes are merged
+4. update to test selectors and implementation contract references
+
+============================================================
+14) Minimum Acceptance For UI Contract Compliance
+============================================================
+- All required reserved IDs exist exactly once where applicable.
+- No duplicate reserved IDs appear in DOM.
+- Repeated structures use data attributes instead of copied IDs.
+- BACK and EXIT controls are present and bindable.
+- Startup gate inputs use the exact startup-* IDs defined here.
+- Technical console tabs and panels use the exact demo-tab-* and demo-panel-* IDs defined here.

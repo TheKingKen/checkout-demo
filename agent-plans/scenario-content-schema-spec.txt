@@ -1,0 +1,448 @@
+Scenario Content Schema Specification
+Source Plan Version: 1.5
+Priority: Create after the component ID registry so content and renderer agents can work in parallel safely.
+Purpose: Define the exact content model shape for integration-lifecycle-content.js so scenario data, runtime state, and renderers remain compatible.
+
+============================================================
+1) Why This Document Exists
+============================================================
+This schema spec is the data contract for the demo.
+
+It answers:
+- what a scenario object looks like
+- how each lifecycle step is represented
+- how UX text, code blocks, config notes, and webhook payloads are structured
+- how bilingual UX copy coexists with English-only code and webhooks
+
+Without this contract, each agent would invent incompatible field names.
+
+============================================================
+2) Design Principles
+============================================================
+Rules
+- All scenarios share one structure.
+- UX/explanatory text supports English and Simplified Chinese.
+- Code snippets remain English/source-only.
+- Webhook payloads remain English/source-only.
+- Vertical-specific behavior is expressed through explicit fields, not hidden assumptions.
+- Startup context tokens can be substituted into UX copy.
+
+============================================================
+3) Top-Level Module Shape
+============================================================
+Expected export shape
+
+{
+  metadata: { ... },
+  startupBindings: { ... },
+  scenarios: [ ... ]
+}
+
+Top-level field rules
+- metadata is required
+- startupBindings is required
+- scenarios is required and non-empty
+
+============================================================
+4) Top-Level Schema
+============================================================
+metadata
+- version: string
+- defaultScenarioId: string
+- supportedLocales: string[]
+- supportedVerticals: string[]
+- supportedAudienceModes: string[]
+- supportedTabs: string[]
+
+startupBindings
+- tokenKeys: string[]
+- requiredStartupFields: string[]
+- optionalStartupFields: string[]
+- scenarioMapping: Record<string, string>
+  - maps startupContext.paymentStack values to default scenario IDs
+  - example: { flow: "scenario-flow-card", hpp: "scenario-hpp-redirect", custom_api: "scenario-custom-api" }
+- paymentMethodFilterField: string
+  - reference to startupContext field that drives payment method widget visibility
+  - value: "enabledPaymentMethods"
+- threeDsField: string
+  - reference to startupContext field that drives 3DS step visibility
+  - value: "threeDsEnabled"
+
+scenarios
+- array of Scenario objects
+
+============================================================
+5) Scenario Object Schema
+============================================================
+Scenario object
+- id: string
+- title: LocalizedText
+- summary: LocalizedText
+- audienceSummary: {
+    commercial: LocalizedText,
+    engineering: LocalizedText
+  }
+- supportedVerticals: string[]
+- integrationType: string
+- primaryRouteType: string
+- orderType: string
+- steps: Step[]
+- configGlossary: ConfigGlossaryEntry[]
+- webhookStrategy: WebhookStrategy
+- notes?: LocalizedText
+
+Field guidance
+- id examples: scenario-flow-card, scenario-hpp-redirect
+- integrationType examples: flow, hpp, custom_api, stored_card
+- primaryRouteType examples: frontend_component, redirect, direct_api
+- orderType examples: digital_goods, physical_goods, mixed
+
+============================================================
+6) Step Object Schema
+============================================================
+Step object
+- id: string
+- index: number
+- label: LocalizedText
+- audienceLabel?: {
+    commercial?: LocalizedText,
+    engineering?: LocalizedText
+  }
+- description: LocalizedText
+- pageType: string
+- userAction: LocalizedText
+- frontendAction: LocalizedText
+- backendAction: LocalizedText
+- visibleInVerticals: string[]
+- uxStage: UXStageSpec
+- frontendCode: CodeBlockSpec
+- backendCode: CodeBlockSpec
+- configView: ConfigViewSpec
+- webhookView: WebhookViewSpec
+- stepStatusHint?: string
+
+============================================================
+7) Localized Text Schema
+============================================================
+LocalizedText
+- en: string
+- zhHans: string
+
+Rules
+- Use zhHans key consistently instead of mixing naming variants.
+- Only merchant-facing explanatory text uses LocalizedText.
+- Code and raw webhook payloads do not use LocalizedText.
+
+============================================================
+8) UX Stage Spec
+============================================================
+UXStageSpec
+- pageId: string
+- pageTitle: LocalizedText
+- pageSubtitle?: LocalizedText
+- layoutVariant: string
+- components: UXComponent[]
+- primaryCta?: UXActionSpec
+- secondaryCta?: UXActionSpec
+- notes?: LocalizedText
+
+UXComponent
+- type: string
+- id: string
+- label?: LocalizedText
+- valueToken?: string
+- visibleInVerticals?: string[]
+- props?: Record<string, string | number | boolean>
+
+UXActionSpec
+- label: LocalizedText
+- actionType: string
+- nextStepId?: string
+- notes?: LocalizedText
+
+Examples of UX component types
+- hero
+- product-card
+- order-summary
+- shipping-form
+- delivery-form
+- payment-widget
+- success-panel
+- error-panel
+
+============================================================
+9) Code Block Schema
+============================================================
+CodeBlockSpec
+- id: string
+- language: string
+- title: string
+- fileLabel?: string
+- theme: string
+- snippet: string
+- highlightedLineGroups?: HighlightGroup[]
+- annotations?: CodeAnnotation[]
+
+Rules
+- language examples: javascript, json, html
+- theme must default to dark/black coding-editor style
+- snippet remains English/source-only
+
+HighlightGroup
+- id: string
+- lines: number[]
+- explanation?: LocalizedText
+
+CodeAnnotation
+- line: number
+- text: LocalizedText
+
+============================================================
+10) Config View Schema
+============================================================
+ConfigViewSpec
+- id: string
+- mode: string
+- entries: ConfigGlossaryEntry[]
+- focusEntryIds?: string[]
+
+ConfigGlossaryEntry
+- id: string
+- parameter: string
+- passExample?: string
+- omitBehavior?: LocalizedText
+- passBehavior?: LocalizedText
+- appliesToScenarios?: string[]
+- appliesToVerticals?: string[]
+- notes?: LocalizedText
+
+Examples
+- enabled_payment_methods
+- disabled_payment_methods
+- success_url
+- failure_url
+- cancel_url
+- processing.provision_network_token
+- stored_credential.type
+- stored_credential.initiator
+
+============================================================
+11) Webhook View Schema
+============================================================
+WebhookViewSpec
+- strategy: string
+- source: string
+- actualResultBinding?: string
+- fallbackBranchId?: string
+- events: WebhookEventSpec[]
+- notes?: LocalizedText
+
+WebhookStrategy
+- mode: string
+- preferredSource: string
+- fallbackSource: string
+- notes?: LocalizedText
+
+WebhookEventSpec
+- id: string
+- eventType: string
+- state: string
+- payloadTitle: string
+- payloadLanguage: string
+- payload: string
+- timingNote?: LocalizedText
+- possibleOrderVariance?: boolean
+
+Rules
+- payload remains English/json/source-only
+- eventType examples: payment_approved, payment_declined, payment_captured
+- source examples: actual_result, scripted_fallback
+
+============================================================
+12) Startup Token Binding Rules
+============================================================
+All UX-facing text can reference startup-context tokens.
+
+Allowed token examples
+- {{merchantName}}
+- {{currency}}
+- {{heroTitle}}
+- {{heroSubtitle}}
+- {{checkoutCta}}
+- {{productName}}
+- {{productDescription}}
+- {{productPrice}}
+- {{catalogHeader}}
+- {{catalogSubheader}}
+- {{orderSummaryHeader}}
+- {{shippingSectionHeader}}
+- {{deliverySectionHeader}}
+
+Payment configuration context bindings
+- startupContext.paymentStack drives the initially selected scenario (via scenarioMapping).
+- startupContext.enabledPaymentMethods drives which UX payment method components are visible.
+  - Steps with payment-method-specific UX components must declare visibility using the visibleInVerticals pattern extended to method context.
+  - Example: a Google Pay button component should only render if apple_pay is in enabledPaymentMethods.
+- startupContext.threeDsEnabled drives whether steps with pageType: 'authentication' are shown.
+  - UX stage steps with a 3DS challenge page type should declare a requiredStartupCondition.
+- startupContext.storedCardStrategy drives whether Scenario D (stored card) steps are available.
+  - value: none means Scenario D is not presented.
+- startupContext.paymentType drives whether recurring-credential config examples are highlighted.
+
+Rules
+- Token substitution applies only to UX/explanatory text.
+- Token substitution must not modify source code snippets.
+- Token substitution must not modify raw webhook payload samples unless explicitly needed for demo coherence.
+
+============================================================
+13) PDF Export Schema
+============================================================
+The PDF export system reads from scenario step data and generates a self-contained document.
+No new schema keys are required for standard steps, but optional fields support richer output.
+
+PDF export collects from each step in index order:
+- step.label (en or zhHans depending on export locale)
+- step.uxStage.pageTitle (rendered with startup token substitution)
+- step.frontendCode.snippet (raw source, English)
+- step.backendCode.snippet (raw source, English)
+- step.configView.entries (rendered as parameter table)
+- step.webhookView.events[].payload (raw JSON, English)
+
+Optional step-level fields supporting PDF output
+- pdfCaption?: LocalizedText
+  - An optional override caption for the step page in the PDF.
+  - Falls back to step.label if not provided.
+- pdfPriority?: string
+  - Allowed values: primary | supporting | reference
+  - Default: primary for all steps
+  - Agents may mark low-importance steps as 'reference' to allow compact rendering in PDF.
+
+PDF cover section sources
+- startupContext.merchantName
+- startupContext.paymentStack (displayed as human-readable: Flow Component / HPP Redirect / Full Card Payments API)
+- startupContext.vertical (Digital Goods / Physical Goods)
+- startupContext.currency
+- startupContext.enabledPaymentMethods (comma-joined display list)
+- startupContext.threeDsEnabled (Yes / No)
+- startupContext.storedCardStrategy (displayed as human-readable)
+- startupContext.paymentType (One-Time / Recurring)
+- startupContext.websiteText.productName
+- startupContext.websiteText.productDescription
+- startupContext.websiteText.productPrice
+
+Rules
+- PDF export reads live state; no separate data copy is needed.
+- Startup token substitution must be applied before rendering to PDF.
+- Code snippets in PDF are plain text (no interactive highlighting).
+- PDF output does not need to be interactive.
+
+============================================================
+14) Minimum Scenario Coverage Requirements
+============================================================
+Every scenario must include:
+- at least one step with UXStageSpec
+- one frontend code block
+- one backend code block
+- one config view
+- one webhook view
+- at least one localized title and description
+- supportedVerticals declaration
+
+Required scenarios
+- Scenario A: Flow component card payment
+- Scenario B: HPP redirect
+- Scenario C: Custom card UI + Payments API
+- Scenario D: Stored card follow-up payment
+- Scenario E: Vertical-differentiated checkout journey
+
+============================================================
+15) Vertical Behavior Rules In Data
+============================================================
+Digital goods behavior
+- shipping-form components must not appear in visibleInVerticals for digital_goods
+- delivery-related components should appear where applicable
+- copy should align to gift-cards express checkout patterns
+
+Physical goods behavior
+- shipping-form components must appear where applicable
+- shipping-related config notes should be available where relevant
+- copy should align to phone-case-catalog patterns
+
+============================================================
+16) Example Skeleton
+============================================================
+{
+  metadata: {
+    version: "1.0",
+    defaultScenarioId: "scenario-flow-card",
+    supportedLocales: ["en", "zh-Hans"],
+    supportedVerticals: ["digital_goods", "physical_goods"],
+    supportedAudienceModes: ["commercial", "engineering"],
+    supportedTabs: ["frontend", "backend", "config", "webhooks"]
+  },
+  startupBindings: {
+    tokenKeys: ["merchantName", "currency", "heroTitle", "checkoutCta", "productName", "productDescription", "productPrice"],
+    requiredStartupFields: ["vertical", "locale", "currency", "merchantName", "heroTitle", "heroSubtitle", "checkoutCta", "paymentStack", "storedCardStrategy", "paymentType", "threeDsEnabled", "enabledPaymentMethods"],
+    optionalStartupFields: ["catalogHeader", "catalogSubheader", "successMessage", "productName", "productDescription", "productPrice"],
+    scenarioMapping: {
+      flow: "scenario-flow-card",
+      hpp: "scenario-hpp-redirect",
+      custom_api: "scenario-custom-api"
+    },
+    paymentMethodFilterField: "enabledPaymentMethods",
+    threeDsField: "threeDsEnabled"
+  },
+  scenarios: [
+    {
+      id: "scenario-flow-card",
+      title: { en: "Flow Component Card Payment", zhHans: "Flow 组件卡支付" },
+      summary: { en: "Teach session creation and embedded checkout behavior.", zhHans: "讲解 session 创建与嵌入式支付行为。" },
+      audienceSummary: {
+        commercial: { en: "Show a streamlined embedded checkout.", zhHans: "展示流畅的嵌入式结账体验。" },
+        engineering: { en: "Show session creation, callbacks, and result handling.", zhHans: "展示 session 创建、回调和结果处理。" }
+      },
+      supportedVerticals: ["digital_goods", "physical_goods"],
+      integrationType: "flow",
+      primaryRouteType: "frontend_component",
+      orderType: "mixed",
+      steps: []
+    }
+  ]
+}
+
+============================================================
+17) Ownership And Change Control
+============================================================
+Content Modeling Agent
+- Owns schema-conformant content authoring.
+
+Developer Education Agent
+- Consumes frontendCode, backendCode, configView, webhookView without redefining schema.
+- Owns PDF export rendering logic; reads step-level pdfCaption and pdfPriority if present.
+
+State Logic Agent
+- Reads scenario/step/tab structure only from this schema.
+
+Test and Integration Agent
+- Validates presence and shape of required fields.
+
+Oversight Agent
+- Blocks schema drift and unauthorized naming changes.
+
+Change policy
+- No field rename without Oversight approval.
+- New optional fields must be documented here before use.
+- Required field additions require update to startupBindings and test expectations.
+
+============================================================
+18) Minimum Acceptance For Content Contract Compliance
+============================================================
+- All required top-level schema keys exist.
+- Every scenario validates against the same object shape.
+- All UX/explanatory text uses LocalizedText.
+- Code and webhook content remain English/source-only.
+- Webhook view supports actual-result and fallback-scripted modes.
+- Vertical visibility rules are represented explicitly in data.
+- startupBindings.scenarioMapping covers all three paymentStack values (flow, hpp, custom_api).
+- startupBindings.tokenKeys includes productName, productDescription, and productPrice.
+- PDF export schema section requirements are honored (cover section sources, per-step fields present).

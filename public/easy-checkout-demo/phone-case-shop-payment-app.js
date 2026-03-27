@@ -3,6 +3,39 @@
 const shared = window.CheckoutShared || {};
 const getPhoneCountryCode = shared.getPhoneCountryCode || function () { return '+1'; };
 
+function debugStoredCardLog(tag, details) {
+    console.log(`[StoredCardDebug] ${tag}`, details || {});
+}
+
+function getStoredCardMode() {
+    return sessionStorage.getItem('phoneShopStoredCardMode') || 'remember_me';
+}
+
+function getStoredCardModeLabel(mode) {
+    return mode === 'merchant_stored_card' ? 'Merchant Stored Cards' : 'Remember Me';
+}
+
+function updateStoredCardModeBadge() {
+    const badge = document.getElementById('stored-card-mode-badge');
+    if (!badge) return;
+
+    const mode = getStoredCardMode();
+    const label = getStoredCardModeLabel(mode);
+    badge.textContent = `Mode: ${label}`;
+
+    if (mode === 'merchant_stored_card') {
+        badge.style.background = '#fff3e8';
+        badge.style.color = '#7a2f00';
+        badge.style.borderColor = '#ffccab';
+    } else {
+        badge.style.background = '#eef4ff';
+        badge.style.color = '#12335b';
+        badge.style.borderColor = '#c7d9fb';
+    }
+
+    debugStoredCardLog('Mode badge updated', { mode, label });
+}
+
 // Helper: Get stored customer ID based on email (returns null for new customers)
 function getCustomerId(email) {
     if (!email) return null;
@@ -119,6 +152,11 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
         const flowHppToggle = document.getElementById('flow-hpp-toggle');
         if (flowHppToggle) {
+            const defaultUseFlow = sessionStorage.getItem('phoneShopDefaultUseFlow');
+            if (defaultUseFlow === 'true' || defaultUseFlow === 'false') {
+                localStorage.setItem('useFlow', defaultUseFlow);
+            }
+
             const useFlow = localStorage.getItem('useFlow') === 'true';
             flowHppToggle.innerText = useFlow ? 'Flow' : 'HPP';
             flowHppToggle.classList.toggle('active', useFlow);
@@ -127,11 +165,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.setItem('useFlow', now ? 'true' : 'false');
                 flowHppToggle.innerText = now ? 'Flow' : 'HPP';
                 flowHppToggle.classList.toggle('active', now);
+                debugStoredCardLog('Flow/HPP toggle changed', { useFlow: now, mode: getStoredCardMode() });
             });
         }
     } catch (e) {
         console.warn('Flow/HPP toggle init failed', e);
     }
+
+    updateStoredCardModeBadge();
 
     // Keep the Flow/HPP toggle enabled/disabled based on confirm-checkbox state
     try {
@@ -170,6 +211,9 @@ function loadPaymentData() {
         }
 
         const customerData = JSON.parse(customerDataStr);
+        const storedCardMode = getStoredCardMode();
+        const customerId = getCustomerId(customerData.email);
+        const instrumentIds = getInstrumentIds(customerData.email);
 
         // Build the payment payload using customer-selected currency/amount
         const currency = (customerData.currency || '').toUpperCase();
@@ -184,6 +228,7 @@ function loadPaymentData() {
             country: customerData.country,
             currency: currency,
             amount: amount,
+            storage_mode: storedCardMode,
             customer: {
                 name: customerData.name,
                 email: customerData.email,
@@ -200,6 +245,23 @@ function loadPaymentData() {
                 }
             ]
         };
+
+        if (customerId) {
+            payload.customer.id = customerId;
+        }
+
+        if (instrumentIds.length > 0) {
+            payload.instrument_ids = instrumentIds;
+        }
+
+        debugStoredCardLog('Payment payload prepared', {
+            storage_mode: storedCardMode,
+            customer_email: customerData.email,
+            has_customer_id: !!customerId,
+            instrument_count: instrumentIds.length,
+            currency,
+            amount
+        });
 
         // Store payload in sessionStorage for use in toggleActionButtons
         sessionStorage.setItem('paymentPayload', JSON.stringify(payload));
@@ -261,6 +323,7 @@ function toggleActionButtons() {
         actionButtons.style.display = 'flex';
 
         const useFlow = localStorage.getItem('useFlow') === 'true';
+        debugStoredCardLog('Action buttons enabled', { useFlow, mode: getStoredCardMode() });
 
         if (useFlow) {
             if (backButton) {
@@ -277,7 +340,14 @@ function toggleActionButtons() {
                     }
                     const payload = JSON.parse(payloadStr);
 
-                    console.log('Flow mode: Creating payment session');
+                    const storedCardMode = getStoredCardMode();
+                    payload.storage_mode = storedCardMode;
+
+                    debugStoredCardLog('Calling /create-payment-sessions', {
+                        storage_mode: storedCardMode,
+                        has_customer_id: !!(payload.customer && payload.customer.id),
+                        instrument_count: Array.isArray(payload.instrument_ids) ? payload.instrument_ids.length : 0
+                    });
 
                     const response = await fetch('/create-payment-sessions', {
                         method: 'POST',
@@ -289,11 +359,19 @@ function toggleActionButtons() {
 
                     if (!response.ok) {
                         console.error('Error creating payment session', paymentSession);
+                        debugStoredCardLog('/create-payment-sessions failed', {
+                            status: response.status,
+                            response: paymentSession
+                        });
                         alert('Failed to create payment session: ' + (paymentSession.error || JSON.stringify(paymentSession)));
                         return;
                     }
 
                     console.log('Payment session created:', paymentSession);
+                    debugStoredCardLog('/create-payment-sessions success', {
+                        storage_mode: storedCardMode,
+                        has_session_id: !!paymentSession.id
+                    });
 
                     try {
                         const configResponse = await fetch('/api/checkout-config');
@@ -317,6 +395,11 @@ function toggleActionButtons() {
                             },
                             onPaymentCompleted: async (_component, paymentResponse) => {
                                 console.log('Payment completed', paymentResponse);
+                                debugStoredCardLog('Flow payment completed', {
+                                    storage_mode: storedCardMode,
+                                    payment_id: paymentResponse && paymentResponse.id,
+                                    payment_status: paymentResponse && paymentResponse.status
+                                });
                                 
                                 if (paymentResponse && paymentResponse.id) {
                                     const payloadStr = sessionStorage.getItem('paymentPayload');
@@ -415,7 +498,14 @@ function toggleActionButtons() {
                         }
                         const payload = JSON.parse(payloadStr);
 
-                        console.log('HPP mode - Creating payment link');
+                        const storedCardMode = getStoredCardMode();
+                        payload.storage_mode = storedCardMode;
+
+                        debugStoredCardLog('Calling /create-payment-link2', {
+                            storage_mode: storedCardMode,
+                            has_customer_id: !!(payload.customer && payload.customer.id),
+                            instrument_count: Array.isArray(payload.instrument_ids) ? payload.instrument_ids.length : 0
+                        });
 
                         const response = await fetch('/create-payment-link2', {
                             method: 'POST',
@@ -428,10 +518,18 @@ function toggleActionButtons() {
                         try { data = JSON.parse(text); } catch (e) { data = { raw: text }; }
 
                         if (response.ok && data.link) {
+                            debugStoredCardLog('/create-payment-link2 success', {
+                                storage_mode: storedCardMode,
+                                redirect_link_present: true
+                            });
                             window.location.href = data.link;
                             return;
                         }
 
+                        debugStoredCardLog('/create-payment-link2 failed', {
+                            status: response.status,
+                            response: data
+                        });
                         const errMsg = data.error || data.details || data.message || JSON.stringify(data);
                         alert('Error creating payment link: ' + errMsg);
                         pay.disabled = false;

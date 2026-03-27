@@ -1,0 +1,254 @@
+Startup Page Field Specification
+Source Plan Version: 1.5
+Purpose: Provide an implementation-ready reference for startup-page fields, validation, ownership, and runtime mapping without rereading the full master plan.
+
+============================================================
+1) Startup Page Purpose
+============================================================
+The startup page is a mandatory gateway before entering the integration lifecycle demo.
+
+It must:
+- collect required setup context
+- apply that context to the demo experience
+- block entry until mandatory fields are complete
+- distinguish required fields from optional prefilled editable fields
+
+============================================================
+2) Field Groups
+============================================================
+Group A: Required selections
+- Merchant vertical
+- Website locale
+- Order-item currency
+
+Group B: Required text inputs
+- Merchant name
+- Hero title
+- Hero subtitle
+- Checkout CTA
+
+Group C: Optional prefilled editable text inputs
+- Catalog header
+- Catalog subheader
+- Product card title template
+- Product card description template
+- Order summary header
+- Shipping section header
+- Shipping section description
+- Delivery section header
+- Delivery section description
+- Success message
+
+Group D: Required payment configuration selections
+- Payment stack (determines integration scenario shown: Flow component / HPP redirect / Full card payments API)
+- Stored card strategy (returning-buyer experience: Remember Me / self-built stored card / no aids)
+- Payment type (one-time payment / recurring payment)
+- Payment methods (multi-select checkboxes: Card, Apple Pay, Google Pay; default all; at least one required)
+- 3DS enabled (yes/no toggle; default yes)
+
+Group E: Prefilled editable product content (Product Writer Agent prefills; user may change)
+- Product name
+- Product description
+- Product price (display value; must be consistent with selected currency)
+
+============================================================
+3) Field Specification Table
+============================================================
+| UI Label | Schema Key | UI Component ID | Type | Required | Default / Placeholder Strategy | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| Merchant Vertical | startupContext.vertical | startup-vertical | select | Yes | No default selection unless stakeholder wants one | Allowed values: digital_goods, physical_goods |
+| Website Locale | startupContext.locale | startup-locale | select | Yes | Prefer explicit selection; if preselected, must still be visible | Allowed values: en, zh-Hans |
+| Currency | startupContext.currency | startup-currency | select | Yes | Configurable ISO-4217 demo set such as USD, EUR, HKD | Affects item pricing presentation |
+| Merchant Name | startupContext.merchantName | startup-merchant-name | text | Yes | Placeholder should be commercially realistic | Used across UX copy |
+| Hero Title | startupContext.websiteText.heroTitle | startup-text-hero-title | text | Yes | Prefilled but editable | Main landing/checkout heading |
+| Hero Subtitle | startupContext.websiteText.heroSubtitle | startup-text-hero-subtitle | textarea or text | Yes | Prefilled but editable | Supporting message under hero title |
+| Checkout CTA | startupContext.websiteText.checkoutCta | startup-text-checkout-cta | text | Yes | Prefilled but editable | Primary CTA text on key checkout action |
+| Success Message | startupContext.websiteText.successMessage | startup-text-success-message | textarea or text | No | Prefilled editable | Used on success/confirmation state |
+| Payment Stack | startupContext.paymentStack | startup-payment-stack | select | Yes | No default; must select | Allowed values: flow, hpp, custom_api; pre-selects primary demo scenario |
+| Stored Card Strategy | startupContext.storedCardStrategy | startup-stored-card-strategy | select | Yes | No default; must select | Allowed values: remember_me, self_built, none |
+| Payment Type | startupContext.paymentType | startup-payment-type | select | Yes | No default; must select | Allowed values: one_time, recurring |
+| Payment Methods | startupContext.enabledPaymentMethods | startup-payment-methods | checkbox group | Yes (min 1) | Default: all three checked | Values: card, apple_pay, google_pay; controls payment option widgets in UX stage |
+| 3DS Enabled | startupContext.threeDsEnabled | startup-3ds-enabled | toggle | Yes | Default: true | Controls whether 3DS step is shown in authorization flow |
+| Product Name | startupContext.websiteText.productName | startup-text-product-name | text | No | Prefilled by Product Writer; editable | Featured product name for demo |
+| Product Description | startupContext.websiteText.productDescription | startup-text-product-description | textarea or text | No | Prefilled by Product Writer; editable | Short product description for demo |
+| Product Price | startupContext.websiteText.productPrice | startup-text-product-price | text | No | Prefilled by Product Writer; editable; must match currency | Display price string (e.g., HK$129.00) |
+| Catalog Header | startupContext.websiteText.catalogHeader | startup-text-catalog-header | text | No | Prefilled editable | Product-listing page header |
+| Catalog Subheader | startupContext.websiteText.catalogSubheader | startup-text-catalog-subheader | text | No | Prefilled editable | Supporting product-listing copy |
+| Product Card Title Template | startupContext.websiteText.productCardTitleTemplate | startup-text-product-card-title-template | text | No | Prefilled editable | Template/pattern for item title presentation |
+| Product Card Description Template | startupContext.websiteText.productCardDescriptionTemplate | startup-text-product-card-description-template | textarea or text | No | Prefilled editable | Template/pattern for item short description |
+| Order Summary Header | startupContext.websiteText.orderSummaryHeader | startup-text-order-summary-header | text | No | Prefilled editable | Header for basket/order summary |
+| Shipping Section Header | startupContext.websiteText.shippingSectionHeader | startup-text-shipping-section-header | text | No | Prefilled editable | Visible in physical_goods, hidden or unused in digital_goods |
+| Shipping Section Description | startupContext.websiteText.shippingSectionDescription | startup-text-shipping-section-description | textarea or text | No | Prefilled editable | Visible in physical_goods, hidden or unused in digital_goods |
+| Delivery Section Header | startupContext.websiteText.deliverySectionHeader | startup-text-delivery-section-header | text | No | Prefilled editable | Visible in digital_goods, optional/suppressed in physical_goods |
+| Delivery Section Description | startupContext.websiteText.deliverySectionDescription | startup-text-delivery-section-description | textarea or text | No | Prefilled editable | Visible in digital_goods, optional/suppressed in physical_goods |
+
+============================================================
+4) Validation Rules
+============================================================
+Entry gating rule
+- The Enter Demo action must remain disabled until all required fields are valid.
+
+Required selection validation
+- startupContext.vertical must be one of:
+  - digital_goods
+  - physical_goods
+- startupContext.locale must be one of:
+  - en
+  - zh-Hans
+- startupContext.currency must be in the approved demo currency list.
+- startupContext.paymentStack must be one of:
+  - flow
+  - hpp
+  - custom_api
+- startupContext.storedCardStrategy must be one of:
+  - remember_me
+  - self_built
+  - none
+- startupContext.paymentType must be one of:
+  - one_time
+  - recurring
+- startupContext.enabledPaymentMethods must be a non-empty array containing only values from:
+  - card, apple_pay, google_pay
+  - At least one checkbox must be selected.
+- startupContext.threeDsEnabled must be a boolean (toggle, not a free text field).
+
+Required text validation
+- startupContext.merchantName must be non-empty after trim.
+- startupContext.websiteText.heroTitle must be non-empty after trim.
+- startupContext.websiteText.heroSubtitle must be non-empty after trim.
+- startupContext.websiteText.checkoutCta must be non-empty after trim.
+
+Recommended validation constraints
+- Merchant Name: 2 to 60 visible characters
+- Hero Title: 3 to 80 visible characters
+- Hero Subtitle: 10 to 180 visible characters
+- Checkout CTA: 2 to 30 visible characters
+
+============================================================
+5) Vertical-Specific Display Rules
+============================================================
+Digital goods mode
+- Reference journey: gift-cards express checkout
+- No shipping address collection
+- Use these text areas prominently:
+  - catalogHeader
+  - catalogSubheader
+  - productCardTitleTemplate
+  - productCardDescriptionTemplate
+  - deliverySectionHeader
+  - deliverySectionDescription
+- shippingSectionHeader and shippingSectionDescription must be hidden or unused
+
+Physical goods mode
+- Reference journey: phone-case-catalog
+- Shipping address collection is visible and required in relevant UX steps
+- Use these text areas prominently:
+  - catalogHeader
+  - catalogSubheader
+  - productCardTitleTemplate
+  - productCardDescriptionTemplate
+  - shippingSectionHeader
+  - shippingSectionDescription
+  - orderSummaryHeader
+- deliverySectionHeader and deliverySectionDescription may be suppressed unless a specific flow needs them
+
+Payment configuration display rules
+- Payment stack selector must always be visible and required regardless of vertical.
+- Stored card strategy selector must always be visible and required.
+- Payment type selector must always be visible and required.
+- Payment method checkboxes must always be visible; at minimum one must be checked.
+- 3DS toggle must always be visible; default to enabled.
+- Product name, product description, and product price must always be visible.
+  - For digital_goods, product name / description should reflect a digital item (e.g., gift card, voucher).
+  - For physical_goods, product name / description should reflect a physical item (e.g., phone case, accessory).
+  - Product price display string must match the selected currency format.
+
+============================================================
+6) Runtime Mapping Rules
+============================================================
+All startup fields must map into startupContext and become readable by the demo runtime.
+
+Required runtime keys
+- state.startupContext.vertical
+- state.startupContext.locale
+- state.startupContext.currency
+- state.startupContext.merchantName
+- state.startupContext.paymentStack
+- state.startupContext.storedCardStrategy
+- state.startupContext.paymentType
+- state.startupContext.enabledPaymentMethods
+- state.startupContext.threeDsEnabled
+- state.startupContext.websiteText.heroTitle
+- state.startupContext.websiteText.heroSubtitle
+- state.startupContext.websiteText.checkoutCta
+- state.startupContext.websiteText.productName
+- state.startupContext.websiteText.productDescription
+- state.startupContext.websiteText.productPrice
+- state.startupContext.websiteText.successMessage
+- state.startupContext.websiteText.catalogHeader
+- state.startupContext.websiteText.catalogSubheader
+- state.startupContext.websiteText.productCardTitleTemplate
+- state.startupContext.websiteText.productCardDescriptionTemplate
+- state.startupContext.websiteText.orderSummaryHeader
+- state.startupContext.websiteText.shippingSectionHeader
+- state.startupContext.websiteText.shippingSectionDescription
+- state.startupContext.websiteText.deliverySectionHeader
+- state.startupContext.websiteText.deliverySectionDescription
+
+============================================================
+7) UX Requirements For Startup Page
+============================================================
+The page should visibly group fields by meaning:
+- Demo Setup (vertical, locale, currency)
+- Payment Configuration (payment stack, stored card strategy, payment type, payment methods, 3DS)
+- Brand And Checkout Copy (merchant name, hero title, hero subtitle, checkout CTA)
+- Product Content (product name, product description, product price — prefilled by Product Writer)
+- Product Listing Copy (catalog header, catalog subheader, product card templates)
+- Fulfillment / Delivery Copy (shipping section, delivery section)
+- Order Summary / Confirmation Copy (order summary header, success message)
+
+The page should explain to presenters:
+- Payment Configuration section determines which payment scenario is shown.
+- Product Content fields are pre-filled with realistic copy — review and edit before starting.
+- Fields marked as affecting digital_goods only are hidden or dimmed when physical_goods is selected.
+- Fields marked as affecting physical_goods only are hidden or dimmed when digital_goods is selected.
+
+The page should visibly mark:
+- required fields
+- optional editable prefilled fields
+
+- Note: this block is superseded above. See updated grouping and explanation rules above.
+
+============================================================
+8) Ownership
+============================================================
+Lead Integration Architect Agent
+- Defines final required field set and validation rules.
+
+Content Modeling Agent
+- Maps fields into schema and runtime content model.
+
+Frontend Experience Agent
+- Builds startup form UI, field grouping, and validation state.
+
+State Logic Agent
+- Persists startup context and blocks demo entry until valid.
+
+Product Writer Agent
+- Writes prefilled placeholder copy and reviews wording quality.
+
+Oversight Agent
+- Prevents field/schema/component naming conflicts.
+
+============================================================
+9) Minimum Done Criteria For Startup Page
+============================================================
+- All required fields exist and are validated.
+- Enter Demo remains disabled until required fields are valid.
+- Payment configuration section is complete and all five payment config fields are required before demo entry.
+- Product content section exists with Product Writer prefilled values visible.
+- Vertical-specific optional text fields are clearly documented in UI.
+- startupContext persists and is available to the demo runtime.
+- Placeholder copy for product name, description, and price is commercially realistic and vertical-appropriate.
+- Field IDs match reserved implementation contract names.
+- paymentStack selection maps correctly to the scenario initialized in the demo.

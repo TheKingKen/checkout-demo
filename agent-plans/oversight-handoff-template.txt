@@ -1,0 +1,271 @@
+Oversight Agent Phase Handoff Template
+Source Plan Version: 1.5
+Purpose: Provide a consistent, verifiable sign-off record for each development phase. One completed instance per phase per review cycle.
+Usage: Oversight Agent fills one copy of this template for each phase handoff. Append completed records to oversight-handoff-log.txt or file individually per phase.
+
+============================================================
+TEMPLATE: PHASE HANDOFF RECORD
+(Copy and complete this section for each phase)
+============================================================
+
+Phase Number:         [e.g., 0 / 0.5 / 1 / 2 / 2.5 / 2.8 / 3 / 4 / 5 / 5.5 / 6 / 6.5 / 7]
+Phase Name:           [e.g., Foundation and Guardrails]
+Primary Owner:        [Agent name]
+Downstream Phases:    [List phases that are unblocked by this sign-off]
+Review Date:          [YYYY-MM-DD]
+Oversight Reviewer:   Oversight Agent
+
+============================================================
+SECTION 1 - DELIVERABLE COMPLETENESS
+============================================================
+
+Instructions: Verify all outputs listed in the WBS for this phase exist and meet described quality.
+
+[ ]  All phase output files exist and are accessible.
+[ ]  No required output is deferred to a later phase without explicit approval.
+[ ]  Output content corresponds to the phase description in integration-lifecycle-demo-plan.txt.
+[ ]  Output does not contain placeholder stubs that block downstream agents.
+
+Completeness notes (required if any item above is unchecked):
+-
+
+============================================================
+SECTION 2 - CONTRACT COMPLIANCE: COMPONENT IDs
+============================================================
+
+Instructions: Cross-reference any new or modified DOM elements against component-id-registry.txt.
+
+[ ]  No new DOM IDs were introduced without appearing in component-id-registry.txt.
+[ ]  All IDs follow kebab-case naming.
+[ ]  Startup-page elements carry startup- prefix.
+[ ]  Demo-runtime elements carry demo- prefix.
+[ ]  Repeated-item containers use data-role / data-step / data-scenario attributes, not duplicate IDs.
+
+Conflicts found (write NONE if clear):
+-
+Resolution actions taken:
+-
+
+============================================================
+SECTION 3 - CONTRACT COMPLIANCE: SCHEMA KEYS
+============================================================
+
+Instructions: Cross-reference content keys and schema fields against scenario-content-schema-spec.txt.
+
+[ ]  All scenario object fields match the approved Scenario object schema.
+[ ]  All step object fields match the approved Step object schema.
+[ ]  Bilingual text uses the { en, zhHans } LocalizedText shape exclusively.
+[ ]  No undocumented keys were introduced in integration-lifecycle-content.js.
+[ ]  Code snippets and webhook payloads are English-only (no zhHans key present on them).
+[ ]  PDF export-relevant step data (label, code blocks, webhook view) is present and structurally valid.
+
+Conflicts found (write NONE if clear):
+-
+Resolution actions taken:
+-
+
+============================================================
+SECTION 4 - CONTRACT COMPLIANCE: STARTUP CONTEXT SCHEMA
+============================================================
+
+Instructions: Verify startup context fields match Contract A and A.1 in the master plan.
+
+[ ]  startupContext.vertical uses only: digital_goods | physical_goods
+[ ]  startupContext.locale uses only: en | zh-Hans
+[ ]  startupContext.currency is from the approved ISO-4217 demo set.
+[ ]  startupContext.merchantName is non-empty string.
+[ ]  startupContext.paymentStack uses only: flow | hpp | custom_api
+[ ]  startupContext.storedCardStrategy uses only: remember_me | self_built | none
+[ ]  startupContext.paymentType uses only: one_time | recurring
+[ ]  startupContext.enabledPaymentMethods is a non-empty string[] from: card, apple_pay, google_pay
+[ ]  startupContext.threeDsEnabled is a boolean.
+[ ]  startupContext.websiteText required text keys are all present (heroTitle, heroSubtitle, checkoutCta).
+[ ]  startupContext.websiteText product content fields are present (productName, productDescription, productPrice).
+
+Conflicts found (write NONE if clear):
+-
+Resolution actions taken:
+-
+
+============================================================
+SECTION 5 - CONTRACT COMPLIANCE: RUNTIME STATE KEYS
+============================================================
+
+Instructions: Verify runtime state object keys match Contract B in the master plan.
+
+[ ]  state.startupContext is populated from startup page before demo entry.
+[ ]  state.currentScenarioId is set based on startupContext.paymentStack at demo initialization.
+[ ]  state.currentStepIndex is reset appropriately on scenario change.
+[ ]  state.currentTab persists only within the same scenario or resets to default.
+[ ]  state.audienceMode is one of: commercial | engineering
+[ ]  state.locale matches startupContext.locale at init.
+[ ]  state.vertical matches startupContext.vertical at init.
+
+Conflicts found (write NONE if clear):
+-
+Resolution actions taken:
+-
+
+============================================================
+SECTION 6 - INTER-AGENT DEPENDENCY REVIEW
+============================================================
+
+Instructions: Confirm this phase does not leave downstream agents in a blocked state.
+
+[ ]  All upstream phase dependencies confirmed complete before this phase began.
+[ ]  Handoff data exposed to downstream agents is complete (content keys, IDs, state keys, PDF schema).
+[ ]  No downstream phase will encounter a missing required interface from this phase.
+[ ]  Any conditional outputs (e.g., vertical-specific text, fallback webhook data) are flagged clearly.
+
+Dependency issues (write NONE if clear):
+-
+Mitigations applied:
+-
+
+============================================================
+SECTION 7 - PDF EXPORT COMPLIANCE
+(Complete only for phases that touch PDF export surface)
+============================================================
+
+Instructions: Verify PDF export functionality complies with the export requirements in the plan.
+
+[ ]  Export trigger control exists at ID: demo-export-pdf
+[ ]  Export includes a startup configuration cover section.
+[ ]  Export iterates all steps in index order.
+[ ]  Each step section includes: step label, UX content, code block, webhook payload.
+[ ]  Exported document is self-contained (no live browser or network dependency after generation).
+[ ]  pdf2html.js or equivalent CDN library is loaded without blocking demo experience.
+[ ]  Startup context token substitution is reflected in exported UX text.
+
+Notes (write N/A if this section is not applicable to this phase):
+-
+
+============================================================
+SECTION 8 - WORDING AND COMMERCIAL QUALITY (Phase 6.5 only)
+(Complete only for Product Writer Agent phase review)
+============================================================
+
+[ ]  Product name, description, and price placeholders are commercially realistic.
+[ ]  Hero title, hero subtitle, and CTA copy sounds natural and merchant-appropriate.
+[ ]  Digital-goods copy (catalog header, delivery section) matches gift-cards journey tone.
+[ ]  Physical-goods copy (catalog header, shipping section) matches phone-case-catalog journey tone.
+[ ]  No visible text is left in developer placeholder format (e.g., [PLACEHOLDER], TODO, ???).
+[ ]  No code examples or webhook payloads were rewritten or altered by this phase.
+
+Notes (write N/A if this section is not applicable to this phase):
+-
+
+============================================================
+SECTION 9 - CONFLICT LOG
+============================================================
+
+Instructions: Document each conflict detected during this phase review, regardless of severity.
+
+Conflict 1:
+  Type:             [ ] ID collision  [ ] Schema key conflict  [ ] Styling ownership
+                    [ ] Navigation contract  [ ] PDF export format  [ ] Content authority  [ ] Other
+  Description:
+  Detected at:
+  Resolution:
+  Resolved by:
+  Date resolved:
+  Upstream cause:
+
+[Add further conflict blocks as needed. Write NONE for no conflicts.]
+
+============================================================
+SECTION 10 - OPEN RISKS INHERITED INTO NEXT PHASE
+============================================================
+
+Instructions: List any risks, deferred items, or conditions that downstream phases must watch.
+
+Open item 1:
+  Risk:
+  Severity:         [ ] Low  [ ] Medium  [ ] High
+  Owner:
+  Mitigation expected by:
+
+[Add further risk blocks as needed. Write NONE if clear.]
+
+============================================================
+SECTION 11 - PHASE SIGN-OFF DECISION
+============================================================
+
+Downstream phase(s) unblocked by this sign-off:
+
+Approval decision:    [ ] APPROVED
+                      [ ] APPROVED WITH CONDITIONS
+                      [ ] BLOCKED - DO NOT PROCEED
+
+Conditions if APPROVED WITH CONDITIONS:
+-
+
+Reason if BLOCKED:
+-
+
+Oversight Agent:      Oversight Agent
+Date:                 [YYYY-MM-DD]
+
+------------------------------------------------------------------
+END OF PHASE HANDOFF RECORD
+------------------------------------------------------------------
+
+
+============================================================
+REFERENCE: PHASE SEQUENCE AND PRIMARY OWNERS
+============================================================
+
+| Phase   | Name                                      | Primary Owner                    |
+| ------- | ----------------------------------------- | -------------------------------- |
+| 0       | Foundation and Guardrails                 | Lead Integration Architect Agent |
+| 0.5     | Cross-Agent Oversight Governance          | Oversight Agent                  |
+| 1       | Content System and Scenario Config        | Content Modeling Agent           |
+| 2       | UI Shell and Split Layout                 | Frontend Experience Agent        |
+| 2.5     | Startup Page and Gate Logic               | Frontend Experience Agent        |
+| 2.8     | PDF Export System                         | Developer Education Agent        |
+| 3       | Runtime State Engine                      | State Logic Agent                |
+| 4       | Code and Webhook Rendering Engine         | Developer Education Agent        |
+| 5       | Scenario Quality Pass                     | Payments Domain QA Agent         |
+| 5.5     | Oversight Conflict Audit                  | Oversight Agent                  |
+| 6       | Accessibility, Readability, Presenter Ctrls | UX Quality Agent               |
+| 6.5     | Product Writing and Commercial Language   | Product Writer Agent             |
+| 7       | Integration and Verification              | Test and Integration Agent       |
+
+
+============================================================
+REFERENCE: SIGN-OFF DEPENDENCY CHAIN
+============================================================
+
+Phase 0 sign-off      → unblocks Phase 0.5, Phase 1, Phase 2, Phase 2.5
+Phase 0.5 sign-off    → unblocks Phase 1, Phase 2, Phase 2.5 (all parallel)
+Phase 1 sign-off      → required for Phase 3
+Phase 2 sign-off      → required for Phase 3; partial dependency for Phase 2.8
+Phase 2.5 sign-off    → required for Phase 3
+Phase 2.8 sign-off    → required for Phase 7 (PDF export must be stable before final QA)
+Phase 3 sign-off      → required for Phase 4
+Phase 4 sign-off      → required for Phase 5; parallel with Phase 6
+Phase 5 sign-off      → required for Phase 5.5; parallel with Phase 6, Phase 6.5
+Phase 5.5 sign-off    → required for Phase 7
+Phase 6 sign-off      → feeds Phase 7
+Phase 6.5 sign-off    → required for Phase 7 (product writing must be done before final QA)
+Phase 7 sign-off      → LAUNCH READY
+
+
+============================================================
+REFERENCE: FAST-CONFLICT LOOKUP TABLE
+============================================================
+
+When a conflict is detected, use this table to identify the authoritative resolution source.
+
+| Conflict Area              | Authoritative Source                       | Owner               |
+| -------------------------- | ------------------------------------------ | ------------------- |
+| DOM/component IDs          | component-id-registry.txt                  | Oversight Agent     |
+| Schema field names         | scenario-content-schema-spec.txt           | Content Modeling    |
+| Runtime state keys         | Contract B (master plan appendix)          | State Logic Agent   |
+| startupContext keys        | Contract A (master plan appendix)          | Lead Architect      |
+| Navigation behavior        | Contract B + phase 3 state contract        | State Logic Agent   |
+| Code panel styling         | UX Quality Agent + plan visual requirement | UX Quality Agent    |
+| Bilingual text extent      | Plan language scope rule (UX only, not code) | Content Modeling  |
+| PDF export format          | Plan v1.5 Section 1 + Phase 2.8 spec       | Developer Education |
+| Payment config values      | Contract A.1 (startup field policy)        | Lead Architect      |
+| Placeholder copy wording   | Product Writer Agent (Phase 6.5)           | Product Writer      |

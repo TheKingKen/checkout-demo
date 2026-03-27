@@ -1,0 +1,513 @@
+Phase-by-Phase Execution Checklist
+Source Plan Version: 1.5
+Mapped Specs:
+1. startup-page-field-spec.txt
+2. component-id-registry.txt
+3. scenario-content-schema-spec.txt
+Purpose: Give each agent an execution-ready checklist showing which spec to read first, what to build, and what must be approved before handoff.
+
+============================================================
+0) Read Order Before Any Work Starts
+============================================================
+Mandatory read order for all implementation agents
+1. integration-lifecycle-demo-plan.txt
+2. startup-page-field-spec.txt
+3. component-id-registry.txt
+4. scenario-content-schema-spec.txt
+
+Reason
+- The plan defines goals and sequencing.
+- The startup field spec defines required setup inputs.
+- The component registry prevents DOM and binding conflicts.
+- The schema spec prevents content and renderer conflicts.
+
+============================================================
+1) Phase 0 - Foundation And Guardrails
+============================================================
+Primary owner
+- Lead Integration Architect Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- startup-page-field-spec.txt
+- component-id-registry.txt
+- scenario-content-schema-spec.txt
+
+Execution checklist
+- Confirm final scope is desktop-only.
+- Confirm startup page is mandatory-gated.
+- Confirm the full startup text inventory is sufficient.
+- Confirm reserved IDs and schema keys are accepted as baseline contracts.
+- Confirm required scenarios A/B/C/D/E remain in scope.
+
+Outputs
+- Approved foundation notes
+- Finalized scope assumptions
+- Go/no-go approval for Phase 0.5 onward
+
+Handoff gate
+- No unresolved ambiguity on startup fields, reserved IDs, or scenario shape.
+
+============================================================
+2) Phase 0.5 - Cross-Agent Oversight Governance
+============================================================
+Primary owner
+- Oversight Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- component-id-registry.txt
+- scenario-content-schema-spec.txt
+
+Execution checklist
+- Create conflict monitoring baseline.
+- Register reserved IDs as protected assets.
+- Register protected schema keys and runtime state keys.
+- Define how agents escalate naming/content/styling collisions.
+- Define approval checkpoints for each downstream phase.
+
+Outputs
+- Conflict log template
+- Handoff approval template
+- Protected contract registry acknowledgment
+
+Handoff gate
+- All agent owners acknowledge reserved IDs and schema authority.
+
+============================================================
+3) Phase 1 - Content System And Scenario Config
+============================================================
+Primary owner
+- Content Modeling Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- startup-page-field-spec.txt
+- scenario-content-schema-spec.txt
+
+Reference document to honor
+- component-id-registry.txt
+
+Execution checklist
+- Build top-level content module shape exactly as defined in the schema spec.
+- Define startup token bindings.
+- Define localized UX/explanatory strings in English and Simplified Chinese.
+- Keep code and webhook payloads in English only.
+- Model all 5 required scenarios with consistent object shape.
+- Model vertical-specific text behavior for digital_goods and physical_goods.
+- Ensure startup-config-driven text token substitution is supported.
+
+Outputs
+- First draft of integration-lifecycle-content.js structure
+- Scenario objects for A/B/C/D/E
+- Config glossary entries
+- Webhook strategy definitions
+
+Handoff gate
+- Schema validates against scenario-content-schema-spec.txt.
+- No field names invented outside the approved schema.
+
+============================================================
+4) Phase 2 - UI Shell And Split Layout
+============================================================
+Primary owner
+- Frontend Experience Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- component-id-registry.txt
+
+Reference documents to honor
+- startup-page-field-spec.txt
+- scenario-content-schema-spec.txt
+
+Execution checklist
+- Build demo-page structural layout using reserved IDs only.
+- Use full desktop width effectively.
+- Create split view: UX stage + technical console.
+- Add header controls: audience mode, vertical switch, language switch, scenario selector, BACK, EXIT.
+- Add code panels with black coding-editor-style background.
+- Create timeline region and presenter utility region.
+- Do not introduce duplicate IDs for repeated structures.
+- Use data attributes for repeated steps/items.
+
+Outputs
+- integration-lifecycle-studio.html baseline
+- integration-lifecycle-studio.css baseline
+
+Handoff gate
+- All reserved IDs used exactly as defined.
+- No overlapping layout at design review stage.
+
+============================================================
+5) Phase 2.5 - Startup Page And Gate Logic
+============================================================
+Primary owner
+- Frontend Experience Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- startup-page-field-spec.txt
+- component-id-registry.txt
+
+Reference document to honor
+- scenario-content-schema-spec.txt
+
+Execution checklist
+- Build startup-page using exact startup-* IDs from the registry.
+- Render field groups in presenter-friendly sections (Demo Setup, Payment Configuration, Brand and Checkout Copy, Product Content, Catalog and Listing Copy, Fulfillment and Confirmation Copy, Order Summary and Confirmation Copy).
+- Distinguish required inputs from optional prefilled editable inputs.
+- Implement validation states for required selections and text fields.
+- Keep Enter Demo disabled until valid.
+- Surface digital_goods vs physical_goods field guidance.
+- Ensure inputs map cleanly to startupContext schema.
+- Build Payment Configuration section with: payment stack selector, stored card strategy selector, payment type selector, payment method checkboxes (card, Apple Pay, Google Pay; default all selected; min 1 required), 3DS toggle (default yes).
+- Build Product Content section with prefilled-but-editable fields: product name, product description, product price.
+- Ensure product price input label notes that value must match selected currency format.
+
+Outputs
+- integration-lifecycle-startup.html
+- integration-lifecycle-startup.css
+- integration-lifecycle-startup.js
+
+Handoff gate
+- All required startup fields present.
+- Validation logic matches startup-page-field-spec.txt.
+- Startup form uses only reserved IDs.
+- Payment configuration section complete with all five fields validated.
+- Product content section present with Product Writer placeholder values visible.
+
+============================================================
+6) Phase 2.8 - PDF Export System
+============================================================
+Primary owner
+- Developer Education Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- component-id-registry.txt
+- scenario-content-schema-spec.txt
+
+Reference documents to honor
+- startup-page-field-spec.txt
+
+Execution checklist
+- Implement export trigger at reserved ID demo-export-pdf.
+- Implement export status indicator at demo-export-status.
+- Use html2pdf.js (CDN) or browser print API with print-specific CSS as fallback.
+- Render PDF cover section from startupContext fields (see scenario-content-schema-spec.txt Section 13 for full list).
+- Iterate all steps in index order for PDF per-step sections.
+- Each step section must include: step label, UX rendering snapshot, code block, webhook payload if present.
+- Ensure startup context token substitution is applied to UX text before export.
+- Respect audience mode (commercial/engineering) at time of export.
+- Verify export produces a valid downloadable file without console errors.
+
+Outputs
+- PDF export capability integrated into demo runtime
+- demo-export-pdf trigger wired and functional
+- demo-export-status indicator functional
+
+Handoff gate
+- Export produces a readable self-contained PDF for at least Scenario A.
+- Cover section accurately reflects active startupContext.
+- Per-step sections contain all required content types.
+
+============================================================
+7) Phase 3 - Runtime State Engine
+============================================================
+Primary owner
+- Frontend State Logic Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- component-id-registry.txt
+- scenario-content-schema-spec.txt
+- startup-page-field-spec.txt
+
+Execution checklist
+- Implement state shape exactly as defined in the plan/schema contracts.
+- Treat startupContext as required parent state.
+- Bind startup context into the demo runtime.
+- Implement scenario/step/tab/language/audience/vertical transitions.
+- On demo initialization, derive state.currentScenarioId from startupContext.paymentStack using the scenarioMapping defined in startupBindings.
+- Expose enabledPaymentMethods from startupContext to UX stage renderer for payment widget visibility.
+- Expose threeDsEnabled from startupContext to step renderer for 3DS step show/hide logic.
+- Expose storedCardStrategy and paymentType to content renderer for conditional content branching.
+- Implement BACK behavior.
+- Implement EXIT behavior returning to startup page.
+- Ensure language changes do not reset scenario/step unexpectedly.
+- Ensure vertical changes do not leak stale content.
+- Expose state snapshot to PDF export system (read access to startupContext and all step data).
+- Add state.isExportingPdf flag to prevent navigation during export.
+
+Outputs
+- integration-lifecycle-studio.js state manager
+- startup-to-demo state persistence logic
+
+Handoff gate
+- Runtime state keys match approved contract.
+- BACK and EXIT are deterministic in all known paths.
+- paymentStack correctly initializes scenario on demo entry.
+- PDF export system can read state without triggering state transitions.
+
+============================================================
+8) Phase 4 - Code And Webhook Rendering Engine
+============================================================
+Primary owner
+- Developer Education Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- component-id-registry.txt
+- scenario-content-schema-spec.txt
+
+Reference documents to honor
+- startup-page-field-spec.txt
+
+Execution checklist
+- Render frontend code panel from schema-driven frontendCode blocks.
+- Render backend code panel from schema-driven backendCode blocks.
+- Render config comparison panel from configView entries.
+- Render webhook panel from webhookView definitions.
+- Keep code and webhook payloads English-only.
+- Use black coding-editor-style surfaces for code and webhook panels.
+- Support actual-result webhook mode.
+- Support scripted fallback webhook mode.
+- Support optional line highlighting and annotations.
+- Integrate with PDF export system: ensure code blocks and webhook payloads are readable in export output.
+
+Outputs
+- Code renderer
+- Config renderer
+- Webhook renderer
+- Dark code-panel theme implementation
+
+Handoff gate
+- Renderer consumes only approved schema fields.
+- No hardcoded alternate content shape introduced.
+
+============================================================
+9) Phase 5 - Scenario Quality Pass
+============================================================
+Primary owner
+- Payments Domain QA Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- scenario-content-schema-spec.txt
+- startup-page-field-spec.txt
+
+Reference document to honor
+- component-id-registry.txt
+
+Execution checklist
+- Validate step ordering in every scenario.
+- Validate parameter examples are technically coherent.
+- Validate webhook branch plausibility.
+- Validate digital_goods and physical_goods differences.
+- Validate shipping text/fields appear only where appropriate.
+- Validate startup text inventory covers visible merchant-facing areas.
+- Add notes for async behavior, decline/retry, and duplicate webhook handling.
+- Validate that Scenario A (flow), B (hpp), C (custom_api) are each reachable from the corresponding paymentStack selection.
+- Validate that storedCardStrategy=none correctly suppresses Scenario D.
+- Validate that threeDsEnabled=false correctly suppresses the 3DS authentication step.
+- Validate that payment method config shows correct method widgets depending on enabledPaymentMethods values.
+
+Outputs
+- QA review notes
+- Scenario corrections list
+
+Handoff gate
+- No unresolved technical inconsistency in scenarios A/B/C/D/E.
+
+============================================================
+10) Phase 5.5 - Oversight Conflict Audit
+============================================================
+Primary owner
+- Oversight Agent
+
+Required documents to consume
+- component-id-registry.txt
+- scenario-content-schema-spec.txt
+- startup-page-field-spec.txt
+
+Execution checklist
+- Audit actual implementation against reserved IDs.
+- Audit actual implementation against schema contract.
+- Audit startup page against field spec.
+- Resolve naming collisions.
+- Resolve ownership overlap.
+- Confirm PDF export system uses demo-export-pdf and demo-export-status IDs.
+- Confirm all new startup payment config IDs are present and correctly wired.
+- Complete oversight-handoff-template.txt record for each phase reviewed.
+- Approve or reject phase handoff.
+
+Outputs
+- Conflict-free integration signoff report
+- Completed handoff template records for each reviewed phase
+- Required remediation list if needed
+
+Handoff gate
+- All contract violations resolved or explicitly waived by Oversight.
+- Handoff template records exist for Phases 0 through 6.5.
+
+============================================================
+11) Phase 6 - Accessibility, Readability, And Presenter Controls
+============================================================
+Primary owner
+- UX Quality Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- component-id-registry.txt
+
+Reference documents to honor
+- startup-page-field-spec.txt
+- scenario-content-schema-spec.txt
+
+Execution checklist
+- Validate projector readability.
+- Validate contrast on black code panels.
+- Add presenter controls: font scale, focus mode, collapse technical panel.
+- Verify control discoverability in startup and demo pages.
+- Ensure full desktop width is used without crowding content.
+- Ensure technical console remains legible for live presentation.
+- Verify PDF export button (demo-export-pdf) is discoverable and clearly labeled.
+
+Outputs
+- Presenter control refinements
+- Readability fixes
+
+Handoff gate
+- Presenter mode usable in a large-room environment.
+
+============================================================
+12) Phase 6.5 - Product Writing And Commercial Language Review
+============================================================
+Primary owner
+- Product Writer Agent
+
+Required documents to consume
+- startup-page-field-spec.txt
+- integration-lifecycle-demo-plan.txt
+
+Reference documents to honor
+- scenario-content-schema-spec.txt
+
+Execution checklist
+- Fill startup-page placeholders with commercially realistic copy.
+- Provide vertical-appropriate prefill values for product name, product description, and product price.
+  - Digital-goods: product name and description suited to a digital/gift item; price consistent with currency.
+  - Physical-goods: product name and description suited to a physical accessory; price consistent with currency.
+- Review all merchant-facing text for typos.
+- Replace awkward or overly technical phrasing in UX copy.
+- Ensure digital_goods copy fits gift-card style shopping intent.
+- Ensure physical_goods copy fits phone-case-catalog style product merchandising.
+- Do not alter code snippets or webhook payload content.
+
+Outputs
+- Placeholder copy set
+- Product content values (productName, productDescription, productPrice) per vertical
+- Wording review notes
+
+Handoff gate
+- Placeholder copy approved for merchant-facing use.
+- Product content fields are commercially realistic for both verticals.
+
+============================================================
+13) Phase 7 - Integration And Verification
+============================================================
+Primary owner
+- Test and Integration Agent
+
+Required documents to consume
+- integration-lifecycle-demo-plan.txt
+- startup-page-field-spec.txt
+- component-id-registry.txt
+- scenario-content-schema-spec.txt
+
+Execution checklist
+- Verify startup gate blocks invalid entry.
+- Verify startup context persists into demo.
+- Verify required startup text fields map to visible UI areas.
+- Verify payment configuration section: all five fields present, all five validated, all five drive observable demo behavior.
+- Verify paymentStack selection initializes expected scenario on demo entry.
+- Verify enabledPaymentMethods drives visible payment method widgets correctly.
+- Verify threeDsEnabled toggle shows/hides 3DS step in authorization flow.
+- Verify storedCardStrategy=none suppresses Scenario D.
+- Verify reserved IDs exist and are unique.
+- Verify scenario transitions update all panes.
+- Verify BACK and EXIT on every page.
+- Verify language switching behavior.
+- Verify vertical switching behavior.
+- Verify code panels use black coding-editor style and remain legible.
+- Verify actual-result webhook path if available.
+- Verify scripted fallback webhook path if actual receiver is unavailable.
+- Verify desktop-width layouts at 1920, 1600, 1440, 1280.
+- Verify PDF export produces a valid downloadable file for at least Scenario A.
+- Verify PDF cover section fields are accurate (merchant name, paymentStack, vertical, currency, enabledPaymentMethods, threeDsEnabled, product content).
+- Verify PDF per-step sections include code panel content and webhook payload where applicable.
+- Verify product content fields (productName, productDescription, productPrice) appear in UX stage correctly.
+
+Outputs
+- Final defect list
+- Verification report
+
+Release gate
+- No blocking defects in startup gating, navigation, ID compliance, schema compliance, desktop readability, or PDF export.
+
+============================================================
+14) Quick Mapping Summary By Agent
+============================================================
+Lead Integration Architect Agent
+- Read all four source docs
+- Owns scope and gate alignment
+
+Oversight Agent
+- Prioritize component-id-registry.txt and scenario-content-schema-spec.txt
+- Enforces contract compliance
+- Completes oversight-handoff-template.txt for each phase sign-off
+
+Content Modeling Agent
+- Prioritize scenario-content-schema-spec.txt
+- Uses startup-page-field-spec.txt for token and text modeling
+- Must define scenarioMapping in startupBindings
+- Must include productName, productDescription, productPrice in tokenKeys
+
+Frontend Experience Agent
+- Prioritize component-id-registry.txt and startup-page-field-spec.txt
+- Uses schema spec only as reference
+- Builds Payment Configuration section in startup page
+- Builds Product Content section in startup page
+- Adds PDF export trigger (demo-export-pdf)
+
+State Logic Agent
+- Prioritize component-id-registry.txt and scenario-content-schema-spec.txt
+- Uses startup-page-field-spec.txt for startup state persistence
+- Must derive initial scenario from startupContext.paymentStack
+- Must expose state to PDF export system
+
+Developer Education Agent
+- Prioritize scenario-content-schema-spec.txt
+- Must honor component-id-registry.txt for panel targets
+- Owns PDF export system (Phase 2.8 and Phase 4 integration)
+
+Payments Domain QA Agent
+- Prioritize plan + schema spec
+- Uses startup-page-field-spec.txt for vertical copy/field completeness checks
+- Must validate paymentStack-to-scenario mapping behavior
+
+UX Quality Agent
+- Prioritize plan + component-id-registry.txt
+- References startup field spec for startup usability
+- Validates PDF export button discoverability
+
+Product Writer Agent
+- Prioritize startup-page-field-spec.txt
+- References plan for commercial goals
+- Owners of productName, productDescription, productPrice prefill values
+
+Test and Integration Agent
+- Must use all three specs
+- Especially relies on component-id-registry.txt for stable selectors
+- Must include PDF export verification for Scenario A at minimum

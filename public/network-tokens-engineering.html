@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Network Tokens Engineering View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="engineering-page">
+<div class="auditorium-shell">
+    <div class="auditorium-topbar">
+        <a class="auditorium-home-link" href="/" data-i18n-en="Back to Demo Portal" data-i18n-zh="返回演示入口">Back to Demo Portal</a>
+        <div class="auditorium-topbar-actions">
+            <a class="auditorium-tech-link" href="/network-tokens-auditorium.html" data-i18n-en="Non-technical Version" data-i18n-zh="非技术版">Non-technical Version</a>
+            <button id="auditorium-lang-toggle" type="button" class="auditorium-lang-btn" data-lang="en">简体中文</button>
+            <div class="auditorium-badge" data-i18n-en="Built for merchant integration teams" data-i18n-zh="为商户集成团队打造">Built for merchant integration teams</div>
+        </div>
+    </div>
+
+    <section class="engineering-hero">
+        <h1 data-i18n-en="Network Tokens for Merchant Integration Teams" data-i18n-zh="面向商户集成团队的网络代币说明">Network Tokens for Merchant Integration Teams</h1>
+        <p data-i18n-en="This version is for engineers integrating Checkout.com as one processor in a broader payments stack. The key point: network tokenization is usually processor-managed by Checkout.com, but explicit provisioning APIs become relevant when you need deterministic control, migration coverage, or cross-platform token portability." data-i18n-zh="这一版面向将 Checkout.com 作为支付处理商之一接入网站的工程团队。核心点是：网络代币通常由 Checkout.com 代为管理，但当你需要确定性控制、迁移覆盖率或跨平台代币可移植性时，显式 provisioning API 就会变得重要。">This version is for engineers integrating Checkout.com as one processor in a broader payments stack. The key point: network tokenization is usually processor-managed by Checkout.com, but explicit provisioning APIs become relevant when you need deterministic control, migration coverage, or cross-platform token portability.</p>
+    </section>
+    <section class="engineering-callout" aria-label="How to read the examples" data-aria-en="How to read the examples" data-aria-zh="如何阅读这些示例">
+        <h2 data-i18n-en="How to read these examples" data-i18n-zh="如何阅读这些示例">How to read these examples</h2>
+        <p data-i18n-en="In most Checkout.com integrations, your application stores a Checkout.com payment handle such as src_xxx or an instrument reference. The network token may exist underneath that handle without your application ever storing the raw token number. The examples below show where your code usually stops and where explicit token APIs start becoming useful." data-i18n-zh="在大多数 Checkout.com 集成中，你的应用保存的是 Checkout.com 的支付句柄，例如 src_xxx 或 instrument 引用。网络代币可能存在于这个句柄之下，而你的应用并不会直接保存原始 network token number。下面的示例会展示：你的代码通常在什么地方结束，以及从什么地方开始显式 token API 才真正有用。">In most Checkout.com integrations, your application stores a Checkout.com payment handle such as src_xxx or an instrument reference. The network token may exist underneath that handle without your application ever storing the raw token number. The examples below show where your code usually stops and where explicit token APIs start becoming useful.</p>
+    </section>
+
+    <section class="engineering-grid" aria-label="Relevant API touchpoints" data-aria-en="Relevant API touchpoints" data-aria-zh="相关 API 触点">
+    <section class="engineering-grid" aria-label="Core engineering ideas" data-aria-en="Core engineering ideas" data-aria-zh="核心工程视角">
+            <h2 data-i18n-en="Relevant API touchpoints: first card payment" data-i18n-zh="相关 API 触点：首笔卡支付">Relevant API touchpoints: first card payment</h2>
+            <p data-i18n-en="If you want the first card payment to also request network token provisioning, the control point is the payment request itself. This is the normal starting point for explaining the concept to engineers." data-i18n-zh="如果你希望首笔卡支付同时触发 network token provisioning，控制点就在 payment request 本身。这通常是向工程团队解释该概念时最合适的起点。">If you want the first card payment to also request network token provisioning, the control point is the payment request itself. This is the normal starting point for explaining the concept to engineers.</p>
+            <h3 data-i18n-en="Sample request" data-i18n-zh="示例请求">Sample request</h3>
+            <div class="engineering-code-strip">POST /payments
+{
+  "source": {
+    "type": "card",
+    "number": "4242424242424242",
+    "expiry_month": 12,
+    "expiry_year": 2030
+  },
+  "amount": 6500,
+  "currency": "USD",
+  "processing_channel_id": "pc_123",
+  "processing": {
+    "provision_network_token": true
+  }
+}</div>
+            <p data-i18n-en="Your merchant code still stores and reuses a Vault instrument or card source reference. The difference is what Checkout.com chooses to present downstream to the schemes and issuer during authorization." data-i18n-zh="你的商户代码通常仍然是保存并复用 Vault instrument 或 card source 引用。真正的差别在于授权时，Checkout.com 向卡组织和发卡行下游提交的凭证类型发生了变化。">Your merchant code still stores and reuses a Vault instrument or card source reference. The difference is what Checkout.com chooses to present downstream to the schemes and issuer during authorization.</p>
+                <li data-i18n-en="Your app submits FPAN once, but asks Checkout.com to provision a network token in parallel." data-i18n-zh="你的应用首次提交 FPAN，同时要求 Checkout.com 并行开通 network token。">Your app submits FPAN once, but asks Checkout.com to provision a network token in parallel.</li>
+                <li data-i18n-en="In asynchronous mode, the initial authorization may still run on FPAN while tokenization completes in the background." data-i18n-zh="在异步模式下，首笔授权仍可能先走 FPAN，而 tokenization 在后台完成。">In asynchronous mode, the initial authorization may still run on FPAN while tokenization completes in the background.</li>
+                <li data-i18n-en="Later payments can then benefit from tokenized rails without changing your basic application contract." data-i18n-zh="之后的支付就可以受益于 tokenized rails，而不需要改变你的基础应用契约。">Later payments can then benefit from tokenized rails without changing your basic application contract.</li>
+                <li data-i18n-en="Card lifecycle updates are maintained by the network, not by the cardholder re-entering details." data-i18n-zh="卡片生命周期更新由卡组织维护，而不是依赖持卡人重新输入卡信息。">Card lifecycle updates are maintained by the network, not by the cardholder re-entering details.</li>
+            </ul>
+        </article>
+
+            <h2 data-i18n-en="Stored card example: later merchant-initiated payment" data-i18n-zh="Stored card 示例：后续商户发起支付">Stored card example: later merchant-initiated payment</h2>
+            <p data-i18n-en="This is the example most merchants actually operate in production. Your application stores the Checkout.com handle and reuses it later. Checkout.com may use the network token underneath without asking your application to submit token details." data-i18n-zh="这才是大多数商户在生产环境里真正运行的路径。你的应用保存 Checkout.com 句柄，并在后续复用它。Checkout.com 可能会在底层使用 network token，而不会要求你的应用提交 token 细节。">This is the example most merchants actually operate in production. Your application stores the Checkout.com handle and reuses it later. Checkout.com may use the network token underneath without asking your application to submit token details.</p>
+            <h3 data-i18n-en="Sample stored card charge" data-i18n-zh="示例：stored card 扣款">Sample stored card charge</h3>
+            <div class="engineering-code-strip">POST /payments
+{
+  "source": {
+    "type": "id",
+    "id": "src_wmlfc3zyhqzehihu7giusaaawu"
+  },
+  "amount": 1500,
+  "currency": "EUR",
+  "processing_channel_id": "pc_123",
+  "stored_credential": {
+    "type": "recurring",
+    "initiator": "merchant"
+  }
+}</div>
+            <p data-i18n-en="For a standard Checkout.com Vault flow, your first implementation goal is still card capture, consent, storage, and later reuse of the instrument identifier. In many cases, no separate network-token code path is needed." data-i18n-zh="对于标准的 Checkout.com Vault 流程，你的首要实现目标仍然是采集卡信息、获取授权同意、保存凭证，并在后续复用 instrument 标识符。很多情况下，不需要单独写一条 network token 代码路径。">For a standard Checkout.com Vault flow, your first implementation goal is still card capture, consent, storage, and later reuse of the instrument identifier. In many cases, no separate network-token code path is needed.</p>
+                <li data-i18n-en="This is the merchant-facing stored-card contract: your code keeps src_xxx, not the PAN and usually not the network token number." data-i18n-zh="这是面向商户代码的 stored-card 契约：你的代码保存的是 src_xxx，而不是 PAN，也通常不是 network token number。">This is the merchant-facing stored-card contract: your code keeps src_xxx, not the PAN and usually not the network token number.</li>
+                <li data-i18n-en="If Checkout.com has a network token available, it can optimize this payment path behind the scenes." data-i18n-zh="如果 Checkout.com 已持有可用的 network token，它就可以在后台优化这笔支付路径。">If Checkout.com has a network token available, it can optimize this payment path behind the scenes.</li>
+                <li data-i18n-en="This is why network tokens and merchant-stored cards are complementary rather than competing designs." data-i18n-zh="这就是为什么 network tokens 与 merchant-stored cards 是互补关系，而不是相互竞争的设计。">This is why network tokens and merchant-stored cards are complementary rather than competing designs.</li>
+                <li data-i18n-en="Observability shifts to provisioning success metrics and token lifecycle events." data-i18n-zh="可观测性的重点会转向 provisioning 成功率和代币生命周期事件。">Observability shifts to provisioning success metrics and token lifecycle events.</li>
+            </ul>
+        </article>
+    </section>
+    <section class="engineering-grid" aria-label="Explicit provisioning examples" data-aria-en="Explicit provisioning examples" data-aria-zh="显式 provisioning 示例">
+    <section class="engineering-grid" aria-label="When explicit provisioning matters" data-aria-en="When explicit provisioning matters" data-aria-zh="何时显式 provisioning 很重要">
+            <h2 data-i18n-en="Explicit provisioning for an existing stored card" data-i18n-zh="针对已有 stored card 的显式 provisioning">Explicit provisioning for an existing stored card</h2>
+            <p data-i18n-en="This is the API you teach when the merchant already has Vaulted cards and wants to backfill tokenization before the next billing cycle, instead of waiting for the next live payment to trigger it." data-i18n-zh="当商户已经有一批存入 Vault 的卡，并希望在下一次账单周期前先补齐 tokenization，而不是等下一次真实支付才触发时，这就是你需要讲解的 API。">This is the API you teach when the merchant already has Vaulted cards and wants to backfill tokenization before the next billing cycle, instead of waiting for the next live payment to trigger it.</p>
+            <h3 data-i18n-en="Sample explicit provisioning request" data-i18n-zh="示例：显式 provisioning 请求">Sample explicit provisioning request</h3>
+            <div class="engineering-code-strip">POST /network-tokens
+{
+  "source": {
+    "type": "id",
+    "id": "src_wmlfc3zyhqzehihu7giusaaawu"
+  }
+}</div>
+            <h2 data-i18n-en="When explicit provisioning matters" data-i18n-zh="何时显式 provisioning 很重要">When explicit provisioning matters</h2>
+                <li data-i18n-en="This is useful for backfill campaigns across an existing stored-card portfolio." data-i18n-zh="这适合用于对既有 stored-card 组合进行批量补齐。">This is useful for backfill campaigns across an existing stored-card portfolio.</li>
+                <li data-i18n-en="A 200-style outcome means a token already existed; a 201-style outcome means Checkout.com provisioned one now." data-i18n-zh="返回类似 200 的结果表示代币原本就存在；返回类似 201 的结果表示 Checkout.com 刚刚完成开通。">A 200-style outcome means a token already existed; a 201-style outcome means Checkout.com provisioned one now.</li>
+                <li data-i18n-en="This is the moment where explicit token APIs add value beyond the normal stored-card flow." data-i18n-zh="这正是显式 token API 真正超出普通 stored-card 流程价值的地方。">This is the moment where explicit token APIs add value beyond the normal stored-card flow.</li>
+                <li data-i18n-en="Exporting network tokens and cryptograms for another processor or acquirer." data-i18n-zh="导出 network token 和 cryptogram，供其他处理商或收单方使用。">Exporting network tokens and cryptograms for another processor or acquirer.</li>
+            </ul>
+        </article>
+
+            <h2 data-i18n-en="Exporting the token and requesting a cryptogram" data-i18n-zh="导出 token 并请求 cryptogram">Exporting the token and requesting a cryptogram</h2>
+            <p data-i18n-en="Only teach this section when the merchant needs network-token portability across processors or acquirers. Many teams never need this in a standard single-processor Checkout.com deployment." data-i18n-zh="只有当商户需要跨处理商或跨收单方使用 network token 时，才需要讲解这一节。在标准的单处理商 Checkout.com 部署中，很多团队永远不会用到。">Only teach this section when the merchant needs network-token portability across processors or acquirers. Many teams never need this in a standard single-processor Checkout.com deployment.</p>
+            <h3 data-i18n-en="Sample portability flow" data-i18n-zh="示例：可移植性流程">Sample portability flow</h3>
+            <div class="engineering-code-strip">GET /network-tokens/nt_xgu3isllqfyu7ktpk5z2yxbwna
+
+POST /network-tokens/nt_xgu3isllqfyu7ktpk5z2yxbwna/cryptograms
+{
+  "transaction_type": "recurring"
+}</div>
+            <h2 data-i18n-en="When explicit provisioning does not matter" data-i18n-zh="何时不需要显式 provisioning">When explicit provisioning does not matter</h2>
+                <li data-i18n-en="This is the advanced path for multi-processor portability, not the default path for most merchants." data-i18n-zh="这是面向多处理商可移植性的高级路径，不是大多数商户的默认路径。">This is the advanced path for multi-processor portability, not the default path for most merchants.</li>
+                <li data-i18n-en="The network token number alone is not enough; the cryptogram is part of the transaction authorization package." data-i18n-zh="仅有 network token number 还不够；cryptogram 也是交易授权包的一部分。">The network token number alone is not enough; the cryptogram is part of the transaction authorization package.</li>
+                <li data-i18n-en="If the merchant never needs token portability, this whole section can usually stay out of their application code." data-i18n-zh="如果商户根本不需要 token portability，这整部分通常都不必进入他们的应用代码。">If the merchant never needs token portability, this whole section can usually stay out of their application code.</li>
+                <li data-i18n-en="You are not migrating a pre-existing portfolio of stored cards." data-i18n-zh="你并没有在迁移一批既有保存卡。">You are not migrating a pre-existing portfolio of stored cards.</li>
+            </ul>
+        </article>
+    </section>
+    <section class="engineering-grid" aria-label="Stored card data model" data-aria-en="Stored card data model" data-aria-zh="Stored card 数据模型">
+        <article class="engineering-card">
+            <h2 data-i18n-en="What your database usually stores" data-i18n-zh="你的数据库通常真正保存什么">What your database usually stores</h2>
+            <p data-i18n-en="For most merchants, the correct stored-card implementation is not to store PAN or even the network token number. It is to store Checkout.com references plus business metadata and consent state." data-i18n-zh="对于大多数商户，正确的 stored-card 实现并不是保存 PAN，甚至也不是保存 network token number。正确做法是保存 Checkout.com 引用，以及业务元数据和授权同意状态。">For most merchants, the correct stored-card implementation is not to store PAN or even the network token number. It is to store Checkout.com references plus business metadata and consent state.</p>
+            <h3 data-i18n-en="Sample merchant-side record" data-i18n-zh="示例：商户侧保存记录">Sample merchant-side record</h3>
+            <div class="engineering-code-strip">{
+  "customer_email": "alice@example.com",
+  "checkout_customer_id": "cus_abc123",
+  "checkout_instrument_id": "src_wmlfc3zyhqzehihu7giusaaawu",
+  "scheme": "visa",
+  "last4": "4242",
+  "consent_type": "recurring",
+  "processor": "checkout_com"
+}</div>
+            <ul class="engineering-list">
+                <li data-i18n-en="This record is enough for normal stored-card reuse with Checkout.com." data-i18n-zh="对于在 Checkout.com 中进行普通 stored-card 复用，这样的记录已经足够。">This record is enough for normal stored-card reuse with Checkout.com.</li>
+                <li data-i18n-en="It separates merchant-side state from sensitive card credentials." data-i18n-zh="它把商户侧状态与敏感卡凭证明确分离开来。">It separates merchant-side state from sensitive card credentials.</li>
+                <li data-i18n-en="In many implementations, the raw network token never needs to enter this table at all." data-i18n-zh="在很多实现里，原始 network token 根本不需要进入这张表。">In many implementations, the raw network token never needs to enter this table at all.</li>
+            </ul>
+        </article>
+
+        <article class="engineering-card">
+            <h2 data-i18n-en="How to explain the difference to your team" data-i18n-zh="如何向你的团队解释这两者的区别">How to explain the difference to your team</h2>
+            <p data-i18n-en="Use this framing in architecture review meetings: the stored card handle is the object your application integrates with; the network token is the scheme-grade credential Checkout.com may use underneath to improve auth performance and lifecycle resilience." data-i18n-zh="在架构评审会议里，可以这样解释：stored card handle 是你的应用直接集成的对象；network token 则是 Checkout.com 可能在底层使用的、面向卡组织级别的支付凭证，用来提升授权表现和生命周期韧性。">Use this framing in architecture review meetings: the stored card handle is the object your application integrates with; the network token is the scheme-grade credential Checkout.com may use underneath to improve auth performance and lifecycle resilience.</p>
+            <ul class="engineering-list">
+                <li data-i18n-en="Merchant-stored card answers: what does my app save and reuse?" data-i18n-zh="Merchant-stored card 回答的是：我的应用保存并复用什么？">Merchant-stored card answers: what does my app save and reuse?</li>
+                <li data-i18n-en="Network token answers: what optimized credential reaches the schemes and issuer?" data-i18n-zh="Network token 回答的是：最终抵达卡组织和发卡行的优化凭证是什么？">Network token answers: what optimized credential reaches the schemes and issuer?</li>
+                <li data-i18n-en="Explicit provisioning answers: when do I need direct operational control over token readiness?" data-i18n-zh="显式 provisioning 回答的是：我何时需要直接控制 token readiness？">Explicit provisioning answers: when do I need direct operational control over token readiness?</li>
+            </ul>
+        </article>
+POST /network-tokens/{id}/cryptograms</div>
+    </section>
+
+    <section class="engineering-table" aria-label="Decision matrix" data-aria-en="Decision matrix" data-aria-zh="决策矩阵">
+        <table>
+            <thead>
+            <tr>
+                <th data-i18n-en="Question" data-i18n-zh="问题">Question</th>
+                <th data-i18n-en="If the answer is yes" data-i18n-zh="如果答案是是">If the answer is yes</th>
+                <th data-i18n-en="Implication" data-i18n-zh="含义">Implication</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td data-i18n-en="Do you already store cards with Checkout.com Vault?" data-i18n-zh="你是否已经使用 Checkout.com Vault 存卡？">Do you already store cards with Checkout.com Vault?</td>
+                <td data-i18n-en="Automatic provisioning often covers the normal path." data-i18n-zh="自动 provisioning 往往已覆盖常规路径。">Automatic provisioning often covers the normal path.</td>
+                <td data-i18n-en="You may not need additional application logic." data-i18n-zh="你可能不需要额外的应用层逻辑。">You may not need additional application logic.</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="Do you have a portfolio of old stored cards needing tokenization now?" data-i18n-zh="你是否有一批历史保存卡需要立即代币化？">Do you have a portfolio of old stored cards needing tokenization now?</td>
+                <td data-i18n-en="Use explicit provisioning or a provisioning campaign." data-i18n-zh="使用显式 provisioning 或批量 provisioning 方案。">Use explicit provisioning or a provisioning campaign.</td>
+                <td data-i18n-en="You avoid waiting for each card to be tokenized only when next used." data-i18n-zh="这样可以避免每张卡都等到下次使用时才开始代币化。">You avoid waiting for each card to be tokenized only when next used.</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="Do you need token portability across processors?" data-i18n-zh="你是否需要跨处理商的代币可移植性？">Do you need token portability across processors?</td>
+                <td data-i18n-en="Retrieve network token details and request cryptograms." data-i18n-zh="获取 network token 详情并请求 cryptogram。">Retrieve network token details and request cryptograms.</td>
+                <td data-i18n-en="You are moving from processor-managed convenience to explicit token operations." data-i18n-zh="这意味着你将从“处理商代管便利模式”转向“显式代币操作模式”。">You are moving from processor-managed convenience to explicit token operations.</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="Do you require first-transaction token use instead of FPAN fallback?" data-i18n-zh="你是否要求首笔交易直接使用代币，而不是 FPAN fallback？">Do you require first-transaction token use instead of FPAN fallback?</td>
+                <td data-i18n-en="Evaluate synchronous provisioning with Checkout.com support." data-i18n-zh="与 Checkout.com 评估同步 provisioning 方案。">Evaluate synchronous provisioning with Checkout.com support.</td>
+                <td data-i18n-en="Operational control increases, but latency and dependency on provisioning also increase." data-i18n-zh="操作控制力会增强，但延迟和对 provisioning 的依赖也会提高。">Operational control increases, but latency and dependency on provisioning also increase.</td>
+            </tr>
+            <tr>
+                <td data-i18n-en="Do you need failure analytics for provisioning?" data-i18n-zh="你是否需要 provisioning 失败分析？">Do you need failure analytics for provisioning?</td>
+                <td data-i18n-en="Monitor provisioning results and lifecycle updates." data-i18n-zh="监控 provisioning 结果和生命周期更新。">Monitor provisioning results and lifecycle updates.</td>
+                <td data-i18n-en="Token observability becomes part of your payments operations model." data-i18n-zh="代币可观测性会成为支付运营模型的一部分。">Token observability becomes part of your payments operations model.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="engineering-callout" aria-label="Critical distinction" data-aria-en="Critical distinction" data-aria-zh="关键区别">
+        <h2 data-i18n-en="Critical distinction to explain to engineering teams" data-i18n-zh="需要向工程团队讲清楚的关键区别">Critical distinction to explain to engineering teams</h2>
+        <p data-i18n-en="A Checkout.com Vault instrument is your merchant-facing reusable handle. A network token is the scheme-facing credential that can sit underneath it. In many integrations, the first is what your application stores and the second is what the processor optimizes with behind the scenes." data-i18n-zh="Checkout.com Vault instrument 是面向商户应用侧的可复用句柄；network token 则是面向卡组织侧、位于其底层的支付凭证。在很多集成中，前者是你的应用保存的对象，后者是处理商在后台优化使用的对象。">A Checkout.com Vault instrument is your merchant-facing reusable handle. A network token is the scheme-facing credential that can sit underneath it. In many integrations, the first is what your application stores and the second is what the processor optimizes with behind the scenes.</p>
+    </section>
+
+    <section class="engineering-card" aria-label="Implementation checklist" data-aria-en="Implementation checklist" data-aria-zh="实施检查清单">
+        <h2 data-i18n-en="Implementation checklist for merchants using Checkout.com as one processor" data-i18n-zh="对于将 Checkout.com 作为处理商之一的商户实施检查清单">Implementation checklist for merchants using Checkout.com as one processor</h2>
+        <ul class="engineering-list">
+            <li data-i18n-en="Confirm network tokenization is enabled on the relevant processing channel." data-i18n-zh="确认相关 processing channel 已启用 network tokenization。">Confirm network tokenization is enabled on the relevant processing channel.</li>
+            <li data-i18n-en="Ensure stored credential consent and MIT/CIT indicators are implemented correctly." data-i18n-zh="确保 stored credential consent 以及 MIT/CIT 标识实现正确。">Ensure stored credential consent and MIT/CIT indicators are implemented correctly.</li>
+            <li data-i18n-en="Track whether payments were processed using FPAN or tokenized rails when available." data-i18n-zh="跟踪支付在可用时究竟走了 FPAN 还是 tokenized rails。">Track whether payments were processed using FPAN or tokenized rails when available.</li>
+            <li data-i18n-en="Decide whether legacy portfolio token backfill is needed." data-i18n-zh="评估是否需要对历史卡组合做代币补齐。">Decide whether legacy portfolio token backfill is needed.</li>
+            <li data-i18n-en="Decide whether you need token export and cryptogram retrieval for multi-processor use." data-i18n-zh="评估是否需要为了多处理商场景导出 token 并获取 cryptogram。">Decide whether you need token export and cryptogram retrieval for multi-processor use.</li>
+            <li data-i18n-en="Subscribe to lifecycle notifications if token state changes matter to your platform operations." data-i18n-zh="如果代币状态变化会影响你的平台运营，请订阅生命周期通知。">Subscribe to lifecycle notifications if token state changes matter to your platform operations.</li>
+        </ul>
+    </section>
+
+    <p class="auditorium-footer" data-i18n-en="This page is the engineering companion to the non-technical network tokens auditorium page." data-i18n-zh="此页面是非技术版 network tokens 礼堂页面的工程团队配套版本。">This page is the engineering companion to the non-technical network tokens auditorium page.</p>
+</div>
+<script src="network-tokens-auditorium.js"></script>
+</body>
+</html>

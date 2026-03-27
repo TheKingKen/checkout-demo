@@ -412,7 +412,7 @@ function toggleActionButtons() {
                             },
                         });
 
-                        const flowComponent = checkout.create('flow');
+                        const flowComponent = checkout.create('flow')
                         const flowContainer = document.getElementById('flow-container');
                         if (flowContainer) {
                             flowContainer.style.minHeight = '400px';  // Ensure proper height for Flow component

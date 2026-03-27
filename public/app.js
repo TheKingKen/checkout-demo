@@ -4,6 +4,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const phoneCaseBtn = document.getElementById('phone-case-btn');
     const newPhoneCaseBtn = document.getElementById('new-phone-case-btn');
+    const networkTokenAuditoriumBtn = document.getElementById('network-token-auditorium-btn');
     const insuranceBtn = document.getElementById('insurance-btn');
     const loginModal = document.getElementById('insurance-login-modal');
     const loginForm = document.getElementById('insurance-login-form');
@@ -26,6 +27,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (newPhoneCaseBtn) {
         newPhoneCaseBtn.addEventListener('click', function () {
             window.location.href = '/omni-cart/all-products.html?from=index';
+        });
+    }
+
+    if (networkTokenAuditoriumBtn) {
+        networkTokenAuditoriumBtn.addEventListener('click', function () {
+            window.location.href = '/network-tokens-auditorium.html';
         });
     }
 

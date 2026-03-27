@@ -473,7 +473,7 @@ app.post('/pay-with-token', async (req, res) => {
 
 
 app.post('/create-payment-link2', async (req, res) => {
-    const { country, customer, amount, currency, product, products } = req.body;
+  const { country, customer, amount, currency, product, products, storage_mode, instrument_ids } = req.body;
 
     // Backward compatibility: accept both product (singular) and products (array)
     const productList = products || (product ? [product] : []);
@@ -487,23 +487,41 @@ app.post('/create-payment-link2', async (req, res) => {
     
     const firstProduct = productList[0];
 
-    // Card-only configuration for HPP mode in phone-case-shop payment page.
-    // Send both allow/disable and enabled/disabled keys for API compatibility.
-    // const allow_payment_methods = ['card'];
-    const disable_payment_methods = ['applepay', 'googlepay', 'alipay_hk', 'alipay_cn', 'tamara', 'octopus'];
-    // const disable_payment_methods = ['applepay', 'googlepay'];
+    // Keep a curated method list for this demo and toggle remember_me by storage mode.
+    const baseDisabledPaymentMethods = ['alipay_hk', 'alipay_cn', 'tamara', 'octopus'];
 
     // Determine base URL for redirect targets (prefer public tunnel when available)
     const baseUrl = resolvePublicBase(req);
 
-    // Always use collect_consent - let Flow/HPP handle saved card display automatically
-    const storePaymentDetails = 'disabled';
+    const storedCardMode = storage_mode === 'merchant_stored_card' ? 'merchant_stored_card' : 'remember_me';
+    const disable_payment_methods = [...baseDisabledPaymentMethods];
+    if (storedCardMode === 'merchant_stored_card' && !disable_payment_methods.includes('remember_me')) {
+      disable_payment_methods.push('remember_me');
+    }
+
+    const storePaymentDetails = storedCardMode === 'merchant_stored_card' ? 'collect_consent' : 'disabled';
+    const storedCardConfig = {};
+    if (storedCardMode === 'merchant_stored_card') {
+      if (Array.isArray(instrument_ids) && instrument_ids.length > 0) {
+        storedCardConfig.instrument_ids = instrument_ids;
+      } else if (customer.id) {
+        storedCardConfig.customer_id = customer.id;
+      }
+    }
+
+    console.log('[StoredCardDebug][/create-payment-link2] Mode decision:', JSON.stringify({
+      storage_mode: storedCardMode,
+      remember_me_disabled: disable_payment_methods.includes('remember_me'),
+      store_payment_details: storePaymentDetails,
+      has_customer_id: !!customer?.id,
+      instrument_ids_count: Array.isArray(instrument_ids) ? instrument_ids.length : 0,
+      stored_card_config: storedCardConfig
+    }, null, 2));
     
+    console.log('Creating HPP link with storage mode:', storedCardMode);
     console.log('Creating HPP link with store_payment_details:', storePaymentDetails);
-    if (customer.id) {
-        console.log('Customer ID provided:', customer.id, '- saved cards will be displayed if available');
-    } else {
-        console.log('No customer ID - new card form will be displayed');
+    if (storedCardMode === 'merchant_stored_card' && customer.id) {
+      console.log('Customer ID provided:', customer.id, '- merchant stored cards may be displayed');
     }
 
     // Prepare the payment request body
@@ -564,11 +582,11 @@ app.post('/create-payment-link2', async (req, res) => {
         payment_type: `Regular`,
         payment_method_configuration: {
             card: {
-                store_payment_details: storePaymentDetails  // Always 'collect_consent'
+            store_payment_details: storePaymentDetails
             },
-            ...(customer.id && {
+          ...(Object.keys(storedCardConfig).length > 0 && {
                 stored_card: {
-                    customer_id: customer.id  // Display saved cards for this customer
+              ...storedCardConfig
                 }
             })
         },
@@ -624,11 +642,11 @@ app.post('/create-payment-link2', async (req, res) => {
 
 app.post("/create-payment-sessions", async (req, res) => {
   try {
-    const { customer, amount, currency, products, country, enable_payment_methods, disable_payment_methods } = req.body;
+    const { customer, amount, currency, products, country, enable_payment_methods, disable_payment_methods, storage_mode, instrument_ids } = req.body;
 
     // Use provided payment methods or default values
     let enabledMethods = enable_payment_methods || ['card', 'applepay', 'googlepay', 'alipay_hk', 'alipay_cn','tamara', 'octopus'];
-    let disabledMethods = disable_payment_methods || [];
+    let disabledMethods = Array.isArray(disable_payment_methods) ? [...disable_payment_methods] : [];
     // let enabledMethods = ['card']
     // let disabledMethods = ['applepay', 'googlepay'];
 
@@ -646,10 +664,40 @@ app.post("/create-payment-sessions", async (req, res) => {
     // Determine base URL for redirect targets (prefer public tunnel when available)
     const baseUrl = resolvePublicBase(req);
 
-    // Always use Remember Me mode with collect_consent
-    console.log('Payment session mode: Remember Me (RM)');
-    const storePaymentDetails = 'collect_consent';
-    console.log('Using collect_consent for Remember Me feature');
+    const storedCardMode = storage_mode === 'merchant_stored_card' ? 'merchant_stored_card' : 'remember_me';
+    if (storedCardMode === 'merchant_stored_card') {
+      if (!disabledMethods.includes('remember_me')) {
+        disabledMethods.push('remember_me');
+      }
+    } else {
+      disabledMethods = disabledMethods.filter((method) => method !== 'remember_me');
+    }
+
+    const shouldSendEnabledPaymentMethods = Array.isArray(enabledMethods)
+      && enabledMethods.length > 0
+      && disabledMethods.length === 0;
+
+    const storePaymentDetails = storedCardMode === 'merchant_stored_card' ? 'collect_consent' : 'disabled';
+    const storedCardConfig = {};
+    if (storedCardMode === 'merchant_stored_card') {
+      if (Array.isArray(instrument_ids) && instrument_ids.length > 0) {
+        storedCardConfig.instrument_ids = instrument_ids;
+      } else if (customer.id) {
+        storedCardConfig.customer_id = customer.id;
+      }
+    }
+
+    console.log('[StoredCardDebug][/create-payment-sessions] Mode decision:', JSON.stringify({
+      storage_mode: storedCardMode,
+      remember_me_disabled: disabledMethods.includes('remember_me'),
+      store_payment_details: storePaymentDetails,
+      has_customer_id: !!customer?.id,
+      instrument_ids_count: Array.isArray(instrument_ids) ? instrument_ids.length : 0,
+      stored_card_config: storedCardConfig,
+      enabled_payment_methods: enabledMethods,
+      disabled_payment_methods: disabledMethods,
+      should_send_enabled_payment_methods: shouldSendEnabledPaymentMethods
+    }, null, 2));
 
     // Construct the payment session request body dynamically from the incoming payload
     const paymentSessionBody = {
@@ -707,28 +755,25 @@ app.post("/create-payment-sessions", async (req, res) => {
       payment_type: `Regular`,
       payment_method_configuration: {
         card: {
-          store_payment_details: storePaymentDetails  // Always 'collect_consent' for Remember Me
+          store_payment_details: storePaymentDetails
         },
-        ...(customer.id && {
+        ...(Object.keys(storedCardConfig).length > 0 && {
           stored_card: {
-            customer_id: customer.id  // Display saved cards for this customer
+            ...storedCardConfig
           }
         })
       },
-      enabled_payment_methods: enabledMethods,
+      ...(shouldSendEnabledPaymentMethods && { enabled_payment_methods: enabledMethods }),
       ...(disabledMethods.length > 0 && { disabled_payment_methods: disabledMethods }),
-      // disabled_payment_methods: disabledMethods,
       processing_channel_id: PROCESSING_CHANNEL_ID
     };
 
     // Log the request for debugging
     console.log('=== Payment Session Configuration ===');
-    console.log('Mode: Remember Me (RM)');
+    console.log('Stored card mode:', storedCardMode);
     console.log('store_payment_details:', storePaymentDetails);
-    if (customer.id) {
-        console.log('Customer ID:', customer.id, '- saved cards will be displayed if available');
-    } else {
-        console.log('No customer ID - new customer, Remember Me consent will be shown');
+    if (storedCardMode === 'merchant_stored_card' && customer.id) {
+      console.log('Customer ID:', customer.id, '- merchant stored cards may be displayed');
     }
     console.log('=====================================');
     console.log('Payment session request payload:', JSON.stringify(paymentSessionBody, null, 2));
